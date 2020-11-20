@@ -25,7 +25,6 @@ use simple_asn1::{self, ASN1Block};
 ///   <tr>
 ///     <td>
 ///       <pre>
-///```asn1
 /// 30 6E
 /// | 30 6C
 /// |   30 45
@@ -44,12 +43,10 @@ use simple_asn1::{self, ASN1Block};
 /// |         04 12 04101CFC8FA3F5E15ED760707BC46670559B
 /// |
 /// |--- Sequence(30), 110 bytes(6E)
-///```
 ///       </pre>
 ///     </td>
 ///     <td>
 ///       <pre>
-/// ```asn1scheme
 /// SEQUENCE {
 ///   SEQUENCE {
 ///   | SEQUENCE {
@@ -75,7 +72,6 @@ use simple_asn1::{self, ASN1Block};
 ///   | }
 ///   }
 /// }
-///```
 ///       </pre>
 ///     </td>
 /// </table>
