@@ -2,11 +2,9 @@
 
 use simple_asn1::{self, ASN1Block};
 
-/// OCSP request in asn1 der 
+/// OCSP request structure
 ///
-/// following test case is generated from openssl
-/// 
-///```rust,
+///```rust
 ///let ocsp_req = "306e306c304530433041300906052b0e\
 ///03021a05000414694d18a9be42f78026\
 ///14d4844f23601478b788200414397be0\
@@ -17,7 +15,72 @@ use simple_asn1::{self, ASN1Block};
 ///let ocsp_bin = hex::decode(ocsp_req).unwrap();
 ///let asn1 = simple_asn1::from_der(&ocsp_bin[..]).unwrap();
 ///```
-struct OcspRequest {
+/// above binary data has ths following structure:
+///
+/// <table>
+///   <tr>
+///     <th>ASN1 hex</th>
+///     <th>ASN1 Scheme</th>
+///   </tr>
+///   <tr>
+///     <td>
+///       <pre>
+///```asn1
+/// 30 6E
+/// | 30 6C
+/// | 30 45
+/// |   30 43
+/// |     30 41
+/// |       30 09
+/// |         06 05 2B0E03021A  --- OID
+/// |         05 00             --- NULL
+/// |       04 14 694D18A9BE42F7802614D4844F23601478B78820  --- OCTET
+/// |       04 14 397BE002A2F571FD80DCEB52A17A7F8B632BE755  --- OCTET
+/// |       02 08 6378E51D448FF46D  --- INT
+/// | A2 23
+/// |   30 21
+/// |     30 1F
+/// |       06 09 2B0601050507300102
+/// |       04 12 04101CFC8FA3F5E15ED760707BC46670559B
+/// |
+/// |--- Sequence(30), 110 bytes(6E)
+///```
+///       </pre>
+///     </td>
+///     <td>
+///       <pre>
+/// ```asn1scheme
+/// SEQUENCE {
+///   SEQUENCE {
+///   | SEQUENCE {
+///   |   SEQUENCE {
+///   |     SEQUENCE {
+///   |     | SEQUENCE {
+///   |     |    OBJECTIDENTIFIER 1.3.14.3.2.26 (id_sha1)
+///   |     |    NULL
+///   |     | }
+///   |     | OCTETSTRING 694d18a9be42f7802614d4844f23601478b78820
+///   |     | OCTETSTRING 397be002a2f571fd80dceb52a17a7f8b632be755
+///   |     | INTEGER 0x6378e51d448ff46d
+///   |     }
+///   |   }
+///   | }
+///   | [2] {
+///   |   SEQUENCE {
+///   |   | SEQUENCE {
+///   |   |   OBJECTIDENTIFIER 1.3.6.1.5.5.7.48.1.2
+///   |   |   OCTETSTRING 04101cfc8fa3f5e15ed760707bc46670559b
+///   |   | }
+///   |   }
+///   | }
+///   }
+/// }
+///```
+///       </pre>
+///     </td>
+/// </table>
+///
+pub struct OcspRequest {
     data: Vec<ASN1Block>,
 }
 
