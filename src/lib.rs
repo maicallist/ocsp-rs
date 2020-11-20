@@ -20,7 +20,8 @@ use simple_asn1::{self, ASN1Block};
 /// <table>
 ///   <tr>
 ///     <th>ASN1 hex</th>
-///     <th>ASN1 Scheme</th>
+///     <th>ASN1 scheme</th>
+///     <th>simple_asn1 struct</th>
 ///   </tr>
 ///   <tr>
 ///     <td>
@@ -74,9 +75,8 @@ use simple_asn1::{self, ASN1Block};
 /// }
 ///       </pre>
 ///     </td>
-/// </table>
-/// 
-///```simple_asn1
+///     <td>
+///       <pre>
 /// [
 /// | Sequence(0, [
 /// | | Sequence(2, [
@@ -102,7 +102,10 @@ use simple_asn1::{self, ASN1Block};
 /// | | ])
 /// | ])
 /// ]
-///```
+///       </pre>    
+///     </td>
+/// </table>
+/// 
 /// 
 pub struct OcspRequest {
     data: Vec<ASN1Block>,
