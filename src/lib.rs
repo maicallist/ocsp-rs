@@ -15,7 +15,7 @@ use simple_asn1::{self, ASN1Block};
 ///let ocsp_bin = hex::decode(ocsp_req).unwrap();
 ///let asn1 = simple_asn1::from_der(&ocsp_bin[..]).unwrap();
 ///```
-/// above binary data has ths following structure:
+/// above binary data has the following structure:
 ///
 /// <table>
 ///   <tr>
