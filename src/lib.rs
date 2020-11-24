@@ -107,7 +107,7 @@ use simple_asn1::{self, ASN1Block};
 /// </table>
 /// 
 /// 
-pub struct OcspRequest {
+pub struct OcspRequestAsn1 {
     data: Vec<ASN1Block>,
 }
 
