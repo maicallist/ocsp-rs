@@ -7,16 +7,16 @@ clippy:
   stage: lint
   tags: 
     - rust
-  script: cargo clippy
+  script: cargo --offline clippy
 
 build:
   stage: build
-  script: cargo build
+  script: cargo --offline build
   tags:
     - rust
     
 test:
   stage: test 
-  script: cargo test
+  script: cargo --offline test
   tags:
     - rust

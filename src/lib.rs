@@ -1,19 +1,33 @@
 //! ocsp-rs provides de/serialization for ocsp request and response in asn.1 der
 
-use simple_asn1::{self, ASN1Block};
+use asn1_der::{
+    typed::{DerDecodable, Sequence},
+    DerObject,
+};
 
-/// OCSP request structure
+use log::error;
+
+mod err;
+use err::OcspError;
+
+/// OCSP request structure binary object
 ///
 ///```rust
-///let ocsp_req = "306e306c304530433041300906052b0e\
+/// use ocsp_rs::OcspRequestAsn1;
+/// use asn1_der::typed::DerDecodable;
+///
+/// let ocsp_req = "306e306c304530433041300906052b0e\
 ///03021a05000414694d18a9be42f78026\
 ///14d4844f23601478b788200414397be0\
 ///02a2f571fd80dceb52a17a7f8b632be7\
 ///5502086378e51d448ff46da223302130\
 ///1f06092b060105050730010204120410\
 ///1cfc8fa3f5e15ed760707bc46670559b";
-///let ocsp_bin = hex::decode(ocsp_req).unwrap();
-///let asn1 = simple_asn1::from_der(&ocsp_bin[..]).unwrap();
+/// let ocsp_bin = hex::decode(ocsp_req).unwrap();
+/// let asn1 = asn1_der::DerObject::decode(&ocsp_bin[..]).unwrap();
+/// println!("asn1 tag: {:02X}, asn1 header: {:02X?}, asn1 value: {:02X?}", asn1.tag(), asn1.header(), asn1.value());
+/// let seq = asn1_der::typed::Sequence::decode(asn1.raw()).unwrap();
+/// let req = OcspRequestAsn1{ seq: seq};
 ///```
 /// above binary data has the following structure:
 ///
@@ -75,49 +89,150 @@ use simple_asn1::{self, ASN1Block};
 /// }
 ///       </pre>
 ///     </td>
-///     <td>
-///       <pre>
-/// [
-/// | Sequence(0, [
-/// | | Sequence(2, [
-/// | | | Sequence(4, [
-/// | | |   Sequence(6, [
-/// | | |   | Sequence(8, [
-/// | | |   |   Sequence(10, [
-/// | | |   |   | ObjectIdentifier(12, OID([BigUint { data: [1] }, BigUint { data: [3] }, BigUint { data: [14] }, BigUint { data: [3] }, BigUint { data: [2] }, BigUint { data: [26] }])),
-/// | | |   |   | Null(19)
-/// | | |   |   ]),
-/// | | |   |   OctetString(21, [105, 77, 24, 169, 190, 66, 247, 128, 38, 20, 212, 132, 79, 35, 96, 20, 120, 183, 136, 32]),
-/// | | |   |   OctetString(43, [57, 123, 224, 2, 162, 245, 113, 253, 128, 220, 235, 82, 161, 122, 127, 139, 99, 43, 231, 85]),
-/// | | |   |   Integer(65, BigInt { sign: Plus, data: BigUint { data: [7167730720827241581] } })
-/// | | |   | ])
-/// | | |   ])
-/// | | | ]),
-/// | | | Explicit(ContextSpecific, 75, BigUint { data: [2] }, Sequence(77, [
-/// | | |   Sequence(79, [
-/// | | |       ObjectIdentifier(81, OID([BigUint { data: [1] }, BigUint { data: [3] }, BigUint { data: [6] }, BigUint { data: [1] }, BigUint { data: [5] }, BigUint { data: [5] }, BigUint { data: [7] }, BigUint { data: [48] }, BigUint { data: [1] }, BigUint { data: [2] }])),
-/// | | |       OctetString(92, [4, 16, 28, 252, 143, 163, 245, 225, 94, 215, 96, 112, 123, 196, 102, 112, 85, 155])
-/// | | |   ])
-/// | | | ]))
-/// | | ])
-/// | ])
-/// ]
-///       </pre>    
-///     </td>
 /// </table>
 ///
 ///
-pub struct OcspRequestAsn1 {
-    data: Vec<ASN1Block>,
+pub struct OcspRequestAsn1<'d> {
+    /// Sequence of ASN1 data
+    pub seq: Sequence<'d>,
 }
+
+/// see [OcspRequestAsn1::extract_certid()]
+pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
+
+impl<'d> OcspRequestAsn1<'d> {
+    fn parse(data: &'d DerObject) -> Result<(), OcspError> {
+        // ocsp request must be wrapped in sequence.
+        if data.tag() != 0x30 {
+            error!("OCSP request must start with a SEQUENCE.");
+            return Err(OcspError::Asn1UnexpectedType);
+        }; // error
+           //let sequence = Sequence::decode(data.raw()).map_err(OcspError::Asn1DecodingError)?;
+
+        unimplemented!()
+    }
+
+    /// Extracting CertId Sequence from ASN1 DER data.  
+    /// tags must match following hex order:  
+    /// 30(6, 5), 4, 4, 2  
+    ///
+    /// - **self.seq** A sequence to be examined
+    /// - **tag** CertId tag array  
+    /// per rfc 6960 CERTID matches sequence of OID, OCTET, OCTET, INTEGER,  
+    /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
+    /// In practice, openssl has 0x05 after OID 0x06.  
+    /// - **value** corresponding value of @tag array  
+    pub fn extract_certid(
+        &self,
+        tag: &mut Vec<u8>,
+        value: &mut Vec<Vec<u8>>,
+    ) -> Result<u8, OcspError> {
+        // push tag sequence
+        let mut examine = false;
+        for i in 0..self.seq.len() {
+            let tmp = self.seq.get(i).map_err(OcspError::Asn1DecodingError)?;
+            match tmp.tag() {
+                0x30 => {
+                    let seq = Sequence::decode(tmp.raw()).map_err(OcspError::Asn1DecodingError)?;
+
+                    match OcspRequestAsn1::extract_certid(
+                        &OcspRequestAsn1 { seq: seq },
+                        tag,
+                        value,
+                    )? {
+                        0 => {}
+                        1 => return Ok(1),
+                        2 => break,
+                        _ => return Err(OcspError::Asn1ExtractionUnknownError),
+                    }
+                }
+                _ => {
+                    tag.push(tmp.tag());
+                    value.push(tmp.value().to_vec());
+                    examine = true;
+                }
+            }
+        }
+
+        // check tag sequence
+        if examine {
+            if tag.len() > CERTID_TAG.len() {
+                // we should never reach this line, cuz if we get a mismatch
+                // we simply clear the result array.
+                return Err(OcspError::Asn1ExtractionUnknownError);
+            }
+            // only comparing what we have.OcspError
+            // when we start with inner sequence 30(6, 5)
+            // we should only compare 6, 5
+            // if it is the case, see if the remaining outer sequence matches 4, 4, 2
+            let partial = &CERTID_TAG[0..tag.len()];
+            if tag.iter().zip(partial).filter(|(t, p)| t == p).count() == tag.len() {
+                if tag.len() == 5 {
+                    // we have full the sequence
+                    return Ok(1);
+                } else {
+                    // so far matching, keep checking
+                    return Ok(0);
+                }
+            } else {
+                // mismatching tag array, this is not our sequence
+                tag.clear();
+                value.clear();
+                return Ok(2);
+            }
+        }
+        //if tag.len() == 2
+        //    && tag
+        //        .iter()
+        //        .zip(vec![6u8, 5u8])
+        //        .filter(|(a, b)| **a == *b)
+        //        .count()
+        //        == 2
+        //{
+        //    return Ok(0);
+        //} else if tag.len() == 5
+        //    && tag
+        //        .iter()
+        //        .zip(vec![6u8, 5u8, 4u8, 4u8, 2u8])
+        //        .filter(|(a, b)| **a == *b)
+        //        .count()
+        //        == 5
+        //{
+        //    println!("this is it");
+        //    return Ok(1);
+        //} else {
+        //    tag.clear();
+        //    value.clear();
+        //}
+
+        Ok(0)
+    }
+
+    /// list type of items in a sequence
+    fn list_sequence(seq: Sequence) -> Result<Vec<u8>, OcspError> {
+        let mut r = Vec::new();
+        for i in 0..seq.len() {
+            r.push(seq.get(i).map_err(OcspError::Asn1DecodingError)?.tag());
+        }
+        Ok(r)
+    }
+}
+
+pub struct OcspRequest {}
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use asn1_der::{
+        typed::{
+            Boolean, DerDecodable, DerEncodable, DerTypeView, Integer, Null, OctetString, Sequence,
+            SequenceVec, Utf8String,
+        },
+        DerObject, SliceSink,
+    };
     use hex;
-    use simple_asn1::*;
     /// test data produces an ocsp request generated by openssl.
     #[test]
-    //#[ignore]
     fn ocsp_req_from_der() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
 03021a05000414694d18a9be42f78026\
@@ -127,12 +242,29 @@ mod tests {
 1f06092b060105050730010204120410\
 1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
-        let asn1b = simple_asn1::from_der(&ocsp_req_bin[..]).unwrap();
-        match asn1b[0].clone() {
-            ASN1Block::Sequence(_, v) => {
-                println!("I am seq \n{:?}", v)
-            }
-            _ => {}
-        }
+        let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        let seq = Sequence::decode(asn1.raw()).unwrap();
+        let first_item = seq.get(0).unwrap();
+        let seq = Sequence::decode(first_item.raw()).unwrap();
+        let _second_item = seq.get(1).unwrap();
+    }
+
+    #[test]
+    fn ocsp_req_get_certid() {
+        let ocsp_req_hex = "306e306c304530433041300906052b0e\
+03021a05000414694d18a9be42f78026\
+14d4844f23601478b788200414397be0\
+02a2f571fd80dceb52a17a7f8b632be7\
+5502086378e51d448ff46da223302130\
+1f06092b060105050730010204120410\
+1cfc8fa3f5e15ed760707bc46670559b";
+        let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
+        let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        let seq = Sequence::decode(asn1.raw()).unwrap();
+        let asn1 = OcspRequestAsn1 { seq: seq };
+        let mut res = Vec::new();
+        let mut val: Vec<Vec<u8>> = Vec::new();
+        let _ = asn1.extract_certid(&mut res, &mut val);
+        println!("{:02X?} ++ {:02X?}", res, val);
     }
 }
