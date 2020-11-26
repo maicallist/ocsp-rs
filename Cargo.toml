@@ -7,5 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-simple_asn1 = "0.5"
 hex = "0.4"
+asn1_der = "0.7"
+serde_asn1_der = "0.7"
+log = "0.4"
+thiserror = "1.0"
