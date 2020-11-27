@@ -4,7 +4,7 @@ use asn1_der::{
 };
 use log::error;
 
-use super::asn1_common::CERTID_TAG;
+use super::asn1_common::{self, CERTID_TAG};
 use super::err::OcspError;
 /// OCSP request structure binary object
 ///
@@ -148,29 +148,18 @@ impl<'d> OcspRequestAsn1<'d> {
 
         // check tag sequence
         if examine {
-            if tag.len() > CERTID_TAG.len() {
-                // we should never reach this line, cuz if we get a mismatch
-                // we simply clear the result array.
-                return Err(OcspError::Asn1ExtractionUnknownError);
-            }
-            // only comparing what we have.
-            // when we start with inner sequence 30(6, 5)
-            // we should only compare 6, 5
-            // if it is the case, see if the remaining outer sequence matches 4, 4, 2
-            let partial = &CERTID_TAG[0..tag.len()];
-            if tag.iter().zip(partial).filter(|(t, p)| t == p).count() == tag.len() {
-                if tag.len() == 5 {
-                    // we have full the sequence
-                    return Ok(1);
-                } else {
-                    // so far matching, keep checking
-                    return Ok(0);
+            match asn1_common::count_match_tags(&CERTID_TAG.to_vec(), tag) {
+                // mismatching tag sequence, this is not our sequence
+                0 => {
+                    tag.clear();
+                    value.clear();
+                    return Ok(2);
                 }
-            } else {
-                // mismatching tag array, this is not our sequence
-                tag.clear();
-                value.clear();
-                return Ok(2);
+                // matching 30(6, 5), keep checking
+                2 => return Ok(0),
+                // we have the full sequence
+                5 => return Ok(1),
+                _ => return Err(OcspError::Asn1ExtractionUnknownError),
             }
         }
 
