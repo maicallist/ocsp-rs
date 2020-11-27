@@ -35,7 +35,6 @@ use err::OcspError;
 ///   <tr>
 ///     <th>ASN1 hex</th>
 ///     <th>ASN1 scheme</th>
-///     <th>simple_asn1 struct</th>
 ///   </tr>
 ///   <tr>
 ///     <td>
