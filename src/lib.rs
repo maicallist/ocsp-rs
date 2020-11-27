@@ -181,29 +181,6 @@ impl<'d> OcspRequestAsn1<'d> {
                 return Ok(2);
             }
         }
-        //if tag.len() == 2
-        //    && tag
-        //        .iter()
-        //        .zip(vec![6u8, 5u8])
-        //        .filter(|(a, b)| **a == *b)
-        //        .count()
-        //        == 2
-        //{
-        //    return Ok(0);
-        //} else if tag.len() == 5
-        //    && tag
-        //        .iter()
-        //        .zip(vec![6u8, 5u8, 4u8, 4u8, 2u8])
-        //        .filter(|(a, b)| **a == *b)
-        //        .count()
-        //        == 5
-        //{
-        //    println!("this is it");
-        //    return Ok(1);
-        //} else {
-        //    tag.clear();
-        //    value.clear();
-        //}
 
         Ok(0)
     }
