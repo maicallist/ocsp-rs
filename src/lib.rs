@@ -1,7 +1,7 @@
 //! ocsp-rs provides de/serialization for ocsp request and response in asn.1 der
 
-pub mod asn1_req;
 mod asn1_common;
+pub mod asn1_req;
 pub mod err;
 pub struct OcspRequest {}
 
