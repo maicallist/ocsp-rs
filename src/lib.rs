@@ -161,7 +161,7 @@ impl<'d> OcspRequestAsn1<'d> {
                 // we simply clear the result array.
                 return Err(OcspError::Asn1ExtractionUnknownError);
             }
-            // only comparing what we have.OcspError
+            // only comparing what we have.
             // when we start with inner sequence 30(6, 5)
             // we should only compare 6, 5
             // if it is the case, see if the remaining outer sequence matches 4, 4, 2
