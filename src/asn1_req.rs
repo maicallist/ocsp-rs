@@ -161,13 +161,4 @@ impl<'d> OcspRequestAsn1<'d> {
 
         Ok(0)
     }
-
-    /// list type of items in a sequence
-    fn list_sequence(seq: Sequence) -> Result<Vec<u8>, OcspError> {
-        let mut r = Vec::new();
-        for i in 0..seq.len() {
-            r.push(seq.get(i).map_err(OcspError::Asn1DecodingError)?.tag());
-        }
-        Ok(r)
-    }
 }
