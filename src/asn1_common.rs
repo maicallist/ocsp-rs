@@ -19,8 +19,11 @@ pub(crate) fn count_match_tags(target: &Vec<u8>, tbm: &Vec<u8>) -> usize {
     tbm.iter().zip(partial).filter(|(t, p)| t == p).count()
 }
 
+/// allow convert to asn1_der::typed::Sequence
 pub trait TryIntoSequence {
+    /// converting asn1_der::err
     type Error;
+    /// try converting to Sequence
     fn try_into(&self) -> Result<Sequence, Self::Error>;
 }
 

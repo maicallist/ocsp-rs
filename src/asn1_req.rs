@@ -144,6 +144,7 @@ impl DecodeAsn1 for OcspRequestAsn1<'_> {
 }
 
 impl<'d> OcspRequestAsn1<'d> {
+    /// create Sequence type from raw der
     pub fn new(t: &'d DerObject) -> Result<Self, OcspError> {
         match t.try_into() {
             Ok(v) => Ok(OcspRequestAsn1 { seq: v }),
