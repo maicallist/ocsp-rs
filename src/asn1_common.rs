@@ -32,9 +32,15 @@ impl TryIntoSequence for DerObject<'_> {
 
 /// common asn1 value extractions
 pub trait DecodeAsn1 {
-    /// extract CERTID sequence
-    /// - &self request or response with field 'seq' containing the sequence data
-    /// - tag extracted tag sequence
-    /// - value corresponding value of 'tag'
-    fn extract_certid(&self, tag: &mut Vec<u8>, value: &mut Vec<u8>) -> Result<u8, OcspError>;
+    /// Extracting CertId Sequence from ASN1 DER data.  
+    /// tags must match following hex order:  
+    /// 30(6, 5), 4, 4, 2  
+    ///
+    /// - **self.seq** A sequence to be examined
+    /// - **tag** CertId tag array  
+    /// per rfc 6960 CERTID matches sequence of OID, OCTET, OCTET, INTEGER,  
+    /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
+    /// In practice, openssl has 0x05 after OID 0x06.  
+    /// - **value** corresponding value of @tag array  
+    fn extract_certid(&self, tag: &mut Vec<u8>, value: &mut Vec<Vec<u8>>) -> Result<u8, OcspError>;
 }
