@@ -93,16 +93,6 @@ pub struct OcspRequestAsn1<'d> {
 }
 
 impl<'d> OcspRequestAsn1<'d> {
-    fn parse(data: &'d DerObject) -> Result<(), OcspError> {
-        // ocsp request must be wrapped in sequence.
-        if data.tag() != 0x30 {
-            error!("OCSP request must start with a SEQUENCE.");
-            return Err(OcspError::Asn1UnexpectedType);
-        }; // error
-           //let sequence = Sequence::decode(data.raw()).map_err(OcspError::Asn1DecodingError)?;
-
-        unimplemented!()
-    }
 
     /// Extracting CertId Sequence from ASN1 DER data.  
     /// tags must match following hex order:  
@@ -164,10 +154,6 @@ impl<'d> OcspRequestAsn1<'d> {
         }
 
         Ok(0)
-    }
-
-    fn check_certid(tags: &Vec<u8>) -> u8 {
-        unimplemented!()
     }
 
     /// list type of items in a sequence
