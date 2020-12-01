@@ -4,7 +4,7 @@ use asn1_der::{
 };
 use log::error;
 
-use super::asn1_common::{self, CERTID_TAG};
+use super::asn1_common::{self, TryIntoSequence, CERTID_TAG};
 use super::err::OcspError;
 /// OCSP request structure binary object
 ///
@@ -93,6 +93,12 @@ pub struct OcspRequestAsn1<'d> {
 }
 
 impl<'d> OcspRequestAsn1<'d> {
+    pub fn new<T>(t: T) -> Self
+    where
+        T: TryIntoSequence,
+    {
+        unimplemented!()
+    }
 
     /// Extracting CertId Sequence from ASN1 DER data.  
     /// tags must match following hex order:  

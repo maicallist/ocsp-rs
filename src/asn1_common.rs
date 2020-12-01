@@ -18,12 +18,12 @@ pub(crate) fn count_match_tags(target: &Vec<u8>, tbm: &Vec<u8>) -> usize {
     tbm.iter().zip(partial).filter(|(t, p)| t == p).count()
 }
 
-pub trait IntoSequence {
+pub trait TryIntoSequence {
     type Error;
     fn try_into(d: DerObject) -> Result<Sequence, Self::Error>;
 }
 
-impl IntoSequence for DerObject<'_> {
+impl TryIntoSequence for DerObject<'_> {
     type Error = OcspError;
     fn try_into(der: DerObject) -> Result<Sequence, Self::Error> {
         Sequence::decode(der.raw()).map_err(OcspError::Asn1DecodingError)
