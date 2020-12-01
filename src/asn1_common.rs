@@ -20,14 +20,21 @@ pub(crate) fn count_match_tags(target: &Vec<u8>, tbm: &Vec<u8>) -> usize {
 
 pub trait TryIntoSequence {
     type Error;
-    fn try_into(d: DerObject) -> Result<Sequence, Self::Error>;
+    fn try_into(&self) -> Result<Sequence, Self::Error>;
 }
 
 impl TryIntoSequence for DerObject<'_> {
     type Error = OcspError;
-    fn try_into(der: DerObject) -> Result<Sequence, Self::Error> {
-        Sequence::decode(der.raw()).map_err(OcspError::Asn1DecodingError)
+    fn try_into(&self) -> Result<Sequence, Self::Error> {
+        Sequence::decode(self.raw()).map_err(OcspError::Asn1DecodingError)
     }
 }
 
-pub trait DecodeAsn1 {}
+/// common asn1 value extractions
+pub trait DecodeAsn1 {
+    /// extract CERTID sequence
+    /// - &self request or response with field 'seq' containing the sequence data
+    /// - tag extracted tag sequence
+    /// - value corresponding value of 'tag'
+    fn extract_certid(&self, tag: &mut Vec<u8>, value: &mut Vec<u8>) -> Result<u8, OcspError>;
+}

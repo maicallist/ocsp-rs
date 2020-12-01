@@ -93,12 +93,13 @@ pub struct OcspRequestAsn1<'d> {
 }
 
 impl<'d> OcspRequestAsn1<'d> {
-    pub fn new<T>(t: T) -> Self
-    where
-        T: TryIntoSequence,
-    {
-        unimplemented!()
-    }
+    //pub fn new<T>(t: T) -> Self
+    //where
+    //    T: TryIntoSequence,
+    //{
+    //    //let s = t.try_into();
+    //    unimplemented!()
+    //}
 
     /// Extracting CertId Sequence from ASN1 DER data.  
     /// tags must match following hex order:  
