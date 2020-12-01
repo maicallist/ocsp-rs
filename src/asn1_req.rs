@@ -7,7 +7,7 @@ use log::error;
 
 use super::asn1_common::{self, DecodeAsn1, TryIntoSequence, CERTID_TAG};
 use super::err::OcspError;
-/// OCSP request structure binary object
+/// OCSP request binary object
 ///
 ///```rust
 /// use ocsp_rs::asn1_req::*;
