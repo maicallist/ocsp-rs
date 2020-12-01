@@ -1,3 +1,4 @@
+//! asn1_req contains impl for OCSP Request
 use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,

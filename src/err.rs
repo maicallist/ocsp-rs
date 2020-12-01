@@ -1,5 +1,6 @@
+//! error definitions
 use thiserror::Error;
-
+/// crate error enum
 #[derive(Error, Debug)]
 pub enum OcspError {
     /// raw data does not start with a sequence

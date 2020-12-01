@@ -1,3 +1,4 @@
+//! asn1_common contains common trait and fn for OCSP request and response
 use super::err::OcspError;
 use asn1_der::{
     typed::{DerDecodable, Sequence},
