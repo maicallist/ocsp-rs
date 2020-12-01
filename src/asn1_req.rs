@@ -96,7 +96,10 @@ impl<'d> OcspRequestAsn1<'d> {
     pub fn new(t: &'d DerObject) -> Result<Self, OcspError> {
         match t.try_into() {
             Ok(v) => Ok(OcspRequestAsn1 { seq: v }),
-            Err(e) => Err(e),
+            Err(e) => {
+                error!("Unable to parse ocsp request, due to {}.", e);
+                Err(e)
+            }
         }
     }
 
