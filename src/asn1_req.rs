@@ -9,7 +9,7 @@ use super::err::OcspError;
 /// OCSP request structure binary object
 ///
 ///```rust
-/// use ocsp_rs::asn1_req::OcspRequestAsn1;
+/// use ocsp_rs::asn1_req::*;
 /// use asn1_der::typed::DerDecodable;
 ///
 /// let ocsp_req = "306e306c304530433041300906052b0e\
@@ -23,7 +23,7 @@ use super::err::OcspError;
 /// let asn1 = asn1_der::DerObject::decode(&ocsp_bin[..]).unwrap();
 /// println!("asn1 tag: {:02X}, asn1 header: {:02X?}, asn1 value: {:02X?}", asn1.tag(), asn1.header(), asn1.value());
 /// let seq = asn1_der::typed::Sequence::decode(asn1.raw()).unwrap();
-/// let req = OcspRequestAsn1{ seq: seq};
+/// let req = OcspRequestAsn1::new(&asn1).unwrap();
 ///```
 /// above binary data has the following structure:
 ///
@@ -89,17 +89,16 @@ use super::err::OcspError;
 ///
 pub struct OcspRequestAsn1<'d> {
     /// Sequence of ASN1 data
-    pub seq: Sequence<'d>,
+    seq: Sequence<'d>,
 }
 
 impl<'d> OcspRequestAsn1<'d> {
-    //pub fn new<T>(t: T) -> Self
-    //where
-    //    T: TryIntoSequence,
-    //{
-    //    //let s = t.try_into();
-    //    unimplemented!()
-    //}
+    pub fn new(t: &'d DerObject) -> Result<Self, OcspError> {
+        match t.try_into() {
+            Ok(v) => Ok(OcspRequestAsn1 { seq: v }),
+            Err(_) => (Err(OcspError::Asn1ConversionError)),
+        }
+    }
 
     /// Extracting CertId Sequence from ASN1 DER data.  
     /// tags must match following hex order:  

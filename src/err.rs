@@ -11,4 +11,6 @@ pub enum OcspError {
     /// unexpected result from sequence matching fn
     #[error("Unable to extract data from asn1 due to traversal issue")]
     Asn1ExtractionUnknownError,
+    #[error("Unable to convert between asn1 types")]
+    Asn1ConversionError,
 }
