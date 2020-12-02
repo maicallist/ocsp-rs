@@ -72,7 +72,7 @@ mod tests {
 1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
         let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
-        let asn1 = OcspAsn1Der::new(&asn1).unwrap();
+        let asn1 = OcspAsn1Der::parse(&asn1).unwrap();
         let mut res = Vec::new();
         let mut val: Vec<Vec<u8>> = Vec::new();
         let _ = asn1.extract_certid(&mut res, &mut val);

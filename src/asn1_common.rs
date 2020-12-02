@@ -23,7 +23,7 @@ use log::error;
 /// let asn1 = asn1_der::DerObject::decode(&ocsp_bin[..]).unwrap();
 /// println!("asn1 tag: {:02X}, asn1 header: {:02X?}, asn1 value: {:02X?}", asn1.tag(), asn1.header(), asn1.value());
 /// let seq = asn1_der::typed::Sequence::decode(asn1.raw()).unwrap();
-/// let req = OcspAsn1Der::new(&asn1).unwrap();
+/// let req = OcspAsn1Der::parse(&asn1).unwrap();
 ///```
 /// above binary data has the following structure:
 ///
@@ -92,7 +92,7 @@ pub struct OcspAsn1Der<'d> {
 
 impl<'d> OcspAsn1Der<'d> {
     /// create Sequence type from raw der
-    pub fn new(t: &'d DerObject) -> Result<Self, OcspError> {
+    pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
         match t.try_into() {
             Ok(v) => Ok(OcspAsn1Der { seq: v }),
             Err(e) => {
