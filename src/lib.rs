@@ -82,4 +82,34 @@ mod tests {
         );
         assert_eq!(res, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
     }
+
+    #[test]
+    fn ocsp_req_multiple_certid() {
+        let ocsp_req_hex = "3081b53081b230818a30433041300906\
+052b0e03021a05000414694d18a9be42\
+f7802614d4844f23601478b788200414\
+397be002a2f571fd80dceb52a17a7f8b\
+632be755020841300983331f9d4f3043\
+3041300906052b0e03021a0500041469\
+4d18a9be42f7802614d4844f23601478\
+b788200414397be002a2f571fd80dceb\
+52a17a7f8b632be75502086378e51d44\
+8ff46da2233021301f06092b06010505\
+07300102041204105e7a74e51c861a3f\
+79454658bb090244";
+        let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
+        let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        let asn1 = OcspAsn1Der::parse(&asn1).unwrap();
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = asn1.extract_certid(&mut tag, &mut val);
+        println!(
+            "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
+            tag, val
+        );
+        assert_eq!(
+            tag,
+            vec![0x06u8, 0x05, 0x04, 0x04, 0x02, 0x06, 0x05, 0x04, 0x04, 0x02]
+        );
+    }
 }
