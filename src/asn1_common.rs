@@ -199,5 +199,6 @@ pub trait DecodeAsn1 {
     /// - **value** corresponding value of @tag array  
     fn extract_certid(&self, tag: &mut Vec<u8>, value: &mut Vec<Vec<u8>>) -> Result<u8, OcspError>;
 
+    /// get sequence type of asn1 data
     fn get_sequence(&self) -> &Sequence;
 }
