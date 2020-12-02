@@ -142,7 +142,7 @@ impl<'d> DecodeAsn1 for OcspAsn1Der<'d> {
                 0x30 => {
                     let seq = Sequence::decode(tmp.raw()).map_err(OcspError::Asn1DecodingError)?;
 
-                    match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq: seq }, tag, value)? {
+                    match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq }, tag, value)? {
                         0 => break,
                         1 => continue,
                         _ => return Err(OcspError::Asn1ExtractionUnknownError),
@@ -188,8 +188,8 @@ pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 /// count number of matching tag to a sequence
 /// - **target** target tag sequence
 /// - **tbm** tag sequence to be examined
-pub(crate) fn count_match_tags(target: &Vec<u8>, tbm: &Vec<u8>) -> usize {
-    let mut tt = target.clone();
+pub(crate) fn count_match_tags(target: &[u8], tbm: &[u8]) -> usize {
+    let mut tt = target.to_vec();
     while tt.len() < tbm.len() {
         tt.extend(target);
     }
