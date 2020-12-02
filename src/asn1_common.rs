@@ -87,7 +87,7 @@ use log::error;
 /// </table>
 ///
 /// Or Verifying two certificates in one request
-/// ```
+/// ```asn1
 /// 30 81B5(181)
 ///   30 81B2(178)
 ///     30 818A(138)
