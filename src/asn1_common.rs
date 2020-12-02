@@ -155,7 +155,7 @@ impl<'d> DecodeAsn1 for OcspAsn1Der<'d> {
     }
 }
 
-/// see [ocsp_rs::asn1_req::OcspRequestAsn1::extract_certid()]
+/// see [ocsp_rs::asn1_common::OcspAsn1Der::extract_certid()]
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
 /// count number of matching tag to a sequence
