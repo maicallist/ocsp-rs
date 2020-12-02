@@ -143,38 +143,37 @@ impl<'d> DecodeAsn1 for OcspAsn1Der<'d> {
                     let seq = Sequence::decode(tmp.raw()).map_err(OcspError::Asn1DecodingError)?;
 
                     match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq: seq }, tag, value)? {
-                        0 => {}
-                        1 => return Ok(1),
-                        2 => break,
+                        0 => break,
+                        1 => continue,
                         _ => return Err(OcspError::Asn1ExtractionUnknownError),
                     }
                 }
-                _ => {
+                0x02 | 0x04 | 0x05 | 0x06 => {
                     tag.push(tmp.tag());
                     value.push(tmp.value().to_vec());
                     examine = true;
                 }
+                _ => break,
             }
         }
 
         // check tag sequence
         if examine {
-            match count_match_tags(&CERTID_TAG.to_vec(), tag) {
-                // mismatching tag sequence, this is not our sequence
-                0 => {
-                    tag.clear();
-                    value.clear();
-                    return Ok(2);
-                }
+            match count_match_tags(&CERTID_TAG.to_vec(), tag) % CERTID_TAG.len() {
+                // we have the sequence
+                0 => return Ok(1),
                 // matching 30(6, 5), keep checking
-                2 => return Ok(0),
-                // we have the full sequence
-                5 => return Ok(1),
-                _ => return Err(OcspError::Asn1ExtractionUnknownError),
+                2 => return Ok(1),
+                // bad match
+                _ => {
+                    tag.truncate(tag.len() / CERTID_TAG.len());
+                    value.truncate(value.len() / CERTID_TAG.len());
+                    return Ok(0);
+                }
             }
         }
 
-        Ok(0)
+        Ok(1)
     }
 
     /// return sequence data
@@ -190,12 +189,12 @@ pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 /// - **target** target tag sequence
 /// - **tbm** tag sequence to be examined
 pub(crate) fn count_match_tags(target: &Vec<u8>, tbm: &Vec<u8>) -> usize {
-    if tbm.len() > target.len() {
-        return 0;
+    let mut tt = target.clone();
+    while tt.len() < tbm.len() {
+        tt.extend(target);
     }
-
-    let partial = &target[0..tbm.len()];
-    tbm.iter().zip(partial).filter(|(t, p)| t == p).count()
+    let tt = &tt[..tbm.len()];
+    tbm.iter().zip(tt).filter(|(m, t)| m == t).count()
 }
 
 /// allow convert to asn1_der::typed::Sequence

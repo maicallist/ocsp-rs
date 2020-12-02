@@ -76,10 +76,10 @@ mod tests {
         let mut tag = Vec::new();
         let mut val: Vec<Vec<u8>> = Vec::new();
         let _ = asn1.extract_certid(&mut tag, &mut val);
-        println!(
-            "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
-            tag, val
-        );
+        //println!(
+        //    "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
+        //    tag, val
+        //);
         assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
     }
 
