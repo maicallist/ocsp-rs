@@ -73,14 +73,14 @@ mod tests {
         let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
         let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
         let asn1 = OcspAsn1Der::parse(&asn1).unwrap();
-        let mut res = Vec::new();
+        let mut tag = Vec::new();
         let mut val: Vec<Vec<u8>> = Vec::new();
-        let _ = asn1.extract_certid(&mut res, &mut val);
+        let _ = asn1.extract_certid(&mut tag, &mut val);
         println!(
             "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
-            res, val
+            tag, val
         );
-        assert_eq!(res, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
+        assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
     }
 
     #[test]
