@@ -76,6 +76,6 @@ mod tests {
         let mut res = Vec::new();
         let mut val: Vec<Vec<u8>> = Vec::new();
         let _ = asn1.extract_certid(&mut res, &mut val);
-        println!("{:02X?} ++ {:02X?}", res, val);
+        println!("-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----", res, val);
     }
 }
