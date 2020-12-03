@@ -103,13 +103,43 @@ b788200414397be002a2f571fd80dceb\
         let mut tag = Vec::new();
         let mut val = Vec::new();
         let _ = asn1.extract_certid(&mut tag, &mut val);
-        println!(
-            "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
-            tag, val
-        );
+        //println!(
+        //    "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
+        //    tag, val
+        //);
         assert_eq!(
             tag,
             vec![0x06u8, 0x05, 0x04, 0x04, 0x02, 0x06, 0x05, 0x04, 0x04, 0x02]
         );
+    }
+
+    #[test]
+    fn ocsp_req_wrong_certid() {
+        // missing 05 after 06
+        let ocsp_req_hex = "306c\
+306a\
+3043\
+3041\
+303f\
+3007\
+06052b0e03021a\
+0414694d18a9be42f7802614d4844f23601478b78820\
+0414397be002a2f571fd80dceb52a17a7f8b632be755\
+02086378e51d448ff46d\
+a2233021\
+301f\
+06092b0601050507300102\
+041204101cfc8fa3f5e15ed760707bc46670559b";
+        let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
+        let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        let asn1 = OcspAsn1Der::parse(&asn1).unwrap();
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = asn1.extract_certid(&mut tag, &mut val);
+        println!(
+            "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
+            tag, val
+        );
+        assert_eq!(tag, vec![]);
     }
 }
