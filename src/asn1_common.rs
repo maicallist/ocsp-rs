@@ -140,7 +140,9 @@ impl<'d> DecodeAsn1 for OcspAsn1Der<'d> {
             let tmp = self.seq.get(i).map_err(OcspError::Asn1DecodingError)?;
             match tmp.tag() {
                 0x30 => {
-                    let seq = Sequence::decode(tmp.raw()).map_err(OcspError::Asn1DecodingError)?;
+                    let mut v = tmp.header().to_vec();
+                    v.extend(tmp.value());
+                    let seq = Sequence::decode(&v[..]).map_err(OcspError::Asn1DecodingError)?;
 
                     match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq }, tag, value)? {
                         0 => break,
