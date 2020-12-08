@@ -3,132 +3,12 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
-use async_recursion::async_recursion;
 
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
 pub struct OcspDer {
     der: Vec<u8>,
 }
-
-#[async_recursion]
-pub async fn extract_id(od: OcspDer) -> Result<u8, OcspError> {
-    let seq = Sequence::decode(&od.der).map_err(OcspError::Asn1DecodingError)?;
-    for i in 0..seq.len() {
-        let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
-        match tmp.tag() {
-            0x30 => {
-                let mut raw = tmp.header().to_vec();
-                raw.extend(tmp.value());
-                let d = OcspDer { der: raw };
-                match extract_id(d).await? {
-                    0 => break,
-                    1 => continue,
-                    _ => return Err(OcspError::Asn1ExtractionUnknownError),
-                }
-            }
-            _ => break,
-        }
-    }
-
-    Ok(1)
-}
-
-#[async_recursion(?Send)]
-async fn fib(n: u32) -> u64 {
-    match n {
-        0 => panic!("zero is not a valid argument to fib()!"),
-        1 | 2 => 1,
-        3 => 2,
-        _ => fib(n - 1).await + fib(n - 2).await,
-    }
-}
-
-//pub async fn ext_id(
-//    od: OcspDer,
-//    tag: Box<Mutex<Vec<u8>>>,
-//    val: Box<Mutex<Vec<Vec<u8>>>>,
-//) -> BoxFuture<'static, Result<u8, OcspError>> {
-//    Box::pin(async move {
-//        let mut examine = false;
-//        let seq = Sequence::decode(&od.der).map_err(OcspError::Asn1DecodingError)?;
-//
-//        for i in 0..seq.len() {
-//            let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
-//            match tmp.tag() {
-//                0x30 => {
-//                    let mut raw = tmp.header().to_vec();
-//                    raw.extend(tmp.value());
-//                    let d = OcspDer { der: raw };
-//                    let a = ext_id(d, tag, val);
-//                }
-//                _ => break,
-//            }
-//        }
-//        unimplemented!()
-//    })
-//
-//
-//    let mut examine = false;
-//    let seq = match Sequence::decode(&od.der) {
-//        Ok(s) => s,
-//        Err(e) => {
-//            error!(
-//                "Unable to parse DER data while extracting cert id, due to {}",
-//                e
-//            );
-//            return Box::pin(err::<u8, OcspError>(OcspError::Asn1DecodingError(e)));
-//        }
-//    };
-//
-//    for i in 0..seq.len() {
-//        //let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
-//        let tmp = match seq.get(i) {
-//            Ok(t) => t,
-//            Err(e) => {
-//                error!(
-//                    "Unable to parse sequence in DER data while extracting cert id, due to {}",
-//                    e
-//                );
-//                return Box::pin(err::<u8, OcspError>(OcspError::Asn1DecodingError(e)));
-//            }
-//        };
-//        match tmp.tag() {
-//            0x30 => {
-//                let mut v = tmp.header().to_vec().to_vec();
-//                v.extend(tmp.value());
-//                let d = OcspDer { der: v };
-//                let a = async move { ext_id(d, tag, val).await };
-//
-//                match ext_id(d, tag, val).await? {
-//                    0 => break,
-//                    1 => continue,
-//                    _ => return Box::pin(err::<u8, OcspError>(OcspError::Asn1ExtractionUnknownError)), //return Err(OcspError::Asn1ExtractionUnknownError),
-//                }
-//            }
-//            0x02 | 0x04 | 0x05 | 0x06 => {
-//                tag.push(tmp.tag());
-//                val.push(tmp.value().to_vec());
-//                examine = true;
-//            }
-//            _ => break,
-//        }
-//    }
-//
-//    let target_len = CERTID_TAG.len();
-//    if examine {
-//        match count_matching_tags(&CERTID_TAG, tag).await % target_len {
-//            0 => return Box::pin(ok::<u8, OcspError>(1)),
-//            2 => return Box::pin(ok::<u8, OcspError>(1)),
-//            _ => {
-//                tag.truncate(tag.len() / target_len);
-//                val.truncate(val.len() / target_len);
-//                return Box::pin(ok::<u8, OcspError>(0));
-//            }
-//        }
-//    }
-//    Box::pin(ok::<u8, OcspError>(1))
-//}
 
 async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
     let mut tt = target.to_vec();
@@ -157,7 +37,7 @@ mod test {
         //let mut tag = Vec::new();
         //let mut val = Vec::new();
 
-        let _ = extract_id(ocsp_der);
+        //let _ = extract_id(ocsp_der);
         //println!(
         //    "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
         //    tag, val
