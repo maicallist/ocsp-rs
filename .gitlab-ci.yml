@@ -2,10 +2,10 @@ stages:
   - lint
   - build
   - test
-    
+
 clippy:
   stage: lint
-  tags: 
+  tags:
     - rust
   script: cargo --offline clippy
 
@@ -14,9 +14,15 @@ build:
   script: cargo --offline build
   tags:
     - rust
-    
+
 test:
-  stage: test 
+  stage: test
   script: cargo --offline test
+  tags:
+    - rust
+
+test_sync:
+  stage: test
+  script: cargo --offline test --features sync
   tags:
     - rust
