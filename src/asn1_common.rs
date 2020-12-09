@@ -7,7 +7,7 @@ use asn1_der::{
 };
 use futures::future::{BoxFuture, FutureExt};
 
-use super::common::{CERTID_TAG, TryIntoSequence};
+use super::common::{TryIntoSequence, CERTID_TAG};
 
 /// OCSP request binary object
 ///
@@ -126,10 +126,7 @@ pub struct OcspAsn1Der<'d> {
 impl<'d> OcspAsn1Der<'d> {
     /// create Sequence type from raw der
     pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
-        match t.try_into() {
-            Ok(v) => Ok(OcspAsn1Der { seq: v }),
-            Err(e) => Err(e),
-        }
+        t.try_into().map(|s| OcspAsn1Der { seq: s })
     }
 
     /// Extracting CertId Sequence from ASN1 DER data.  

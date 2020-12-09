@@ -5,7 +5,6 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
-use log::error;
 
 use crate::common::TryIntoSequence;
 use crate::common::CERTID_TAG;
@@ -40,13 +39,7 @@ pub struct OcspAsn1Der<'d> {
 impl<'d> OcspAsn1Der<'d> {
     /// create Sequence type from raw der
     pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
-        match t.try_into() {
-            Ok(v) => Ok(OcspAsn1Der { seq: v }),
-            Err(e) => {
-                error!("Unable to parse ocsp request, due to {}.", e);
-                Err(e)
-            }
-        }
+        t.try_into().map(|s| OcspAsn1Der { seq: s })
     }
 
     /// see async counterpart
