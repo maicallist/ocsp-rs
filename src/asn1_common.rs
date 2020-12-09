@@ -1,15 +1,18 @@
 //! common functions for ocsp request and response
 
 use super::err::OcspError;
-use asn1_der::typed::{DerDecodable, Sequence};
+use asn1_der::{
+    typed::{DerDecodable, Sequence},
+    DerObject,
+};
 use futures::future::{BoxFuture, FutureExt};
 
-use super::common::CERTID_TAG;
+use super::common::{CERTID_TAG, TryIntoSequence};
 
 /// OCSP request binary object
 ///
 ///```rust
-/// use ocsp_rs::sync::asn1_common::*;
+/// use ocsp_rs::asn1_common::*;
 /// use asn1_der::typed::DerDecodable;
 ///
 /// let ocsp_req = "306e306c304530433041300906052b0e\
@@ -121,6 +124,14 @@ pub struct OcspAsn1Der<'d> {
 
 #[allow(dead_code)]
 impl<'d> OcspAsn1Der<'d> {
+    /// create Sequence type from raw der
+    pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
+        match t.try_into() {
+            Ok(v) => Ok(OcspAsn1Der { seq: v }),
+            Err(e) => Err(e),
+        }
+    }
+
     /// Extracting CertId Sequence from ASN1 DER data.  
     /// tags must match following hex order:  
     /// 30(6, 5), 4, 4, 2  
