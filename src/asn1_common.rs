@@ -115,7 +115,7 @@ use log::error;
 /// ```
 ///
 pub struct OcspAsn1Der<'d> {
-    seq: Sequence<'d>,
+    pub(crate) seq: Sequence<'d>,
 }
 
 impl<'d> OcspAsn1Der<'d> {

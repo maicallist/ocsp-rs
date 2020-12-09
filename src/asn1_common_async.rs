@@ -2,13 +2,10 @@ use super::err::OcspError;
 use asn1_der::typed::{DerDecodable, Sequence};
 use futures::future::{BoxFuture, FutureExt};
 
+use super::asn1_common::OcspAsn1Der;
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
-pub struct OcspAsn1DerAsync<'d> {
-    seq: Sequence<'d>,
-}
-
-impl<'d> OcspAsn1DerAsync<'d> {
+impl<'d> OcspAsn1Der<'d> {
     fn extract_certid(
         &'d self,
         tag: &'d mut Vec<u8>,
@@ -25,12 +22,8 @@ impl<'d> OcspAsn1DerAsync<'d> {
                         let tseq =
                             Sequence::decode(&raw[..]).map_err(OcspError::Asn1DecodingError)?;
 
-                        match OcspAsn1DerAsync::extract_certid(
-                            &OcspAsn1DerAsync { seq: tseq },
-                            tag,
-                            val,
-                        )
-                        .await?
+                        match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq: tseq }, tag, val)
+                            .await?
                         {
                             0 => break,
                             1 => continue,
@@ -88,7 +81,7 @@ mod test {
     1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
         let seq = Sequence::decode(&ocsp_req[..]).unwrap();
-        let der = OcspAsn1DerAsync { seq: seq };
+        let der = OcspAsn1Der { seq: seq };
         let mut tag = Vec::new();
         let mut val = Vec::new();
         let _ = der.extract_certid(&mut tag, &mut val).await;
