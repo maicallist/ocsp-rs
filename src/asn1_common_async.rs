@@ -3,11 +3,78 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
+use futures::future::{BoxFuture, FutureExt};
 
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
 pub struct OcspDer {
     der: Vec<u8>,
+}
+
+//impl OcspDer {
+//    fn extract_certid(
+//        &'static self,
+//        tag: &'static Vec<u8>,
+//        val: &'static Vec<Vec<u8>>,
+//    ) -> BoxFuture<'static, Result<u8, OcspError>> {
+//        async move {
+//            let mut check = false;
+//            let seq = Sequence::decode(&self.der).map_err(OcspError::Asn1DecodingError)?;
+//            for i in 0..self.der.len() {
+//                let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
+//                match tmp.tag() {
+//                    0x30 => {
+//                        let mut v = tmp.header().to_vec();
+//                        v.extend(tmp.value());
+//                        let od = OcspDer { der: v };
+//                        let p = od.extract_certid(tag, val).await;
+//                    }
+//                    0x02 => {
+//                        tag.push(tmp.tag());
+//                        val.push(tmp.value().to_vec());
+//                        check = true;
+//                    }
+//                    _ => break,
+//                }
+//            }
+//
+//            unimplemented!()
+//        }
+//        .boxed()
+//    }
+//}
+
+fn ext_id(od: OcspDer, tag: &'static Vec<u8>) -> BoxFuture<'static, Result<u8, OcspError>> {
+    //async move {
+    //    ext_id().await;
+    //    let a = count_matching_tags(&vec![1u8][..], &vec![2u8][..]).await;
+    //}
+    //.boxed()
+
+    async move {
+        let mut examine = false;
+        let seq = Sequence::decode(&od.der).map_err(OcspError::Asn1DecodingError)?;
+        for i in 0..od.der.len() {
+            let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
+            match tmp.tag() {
+                0x30 => {
+                    let mut v = tmp.header().to_vec();
+                    v.extend(tmp.value());
+                    examine = true;
+                    let d = OcspDer { der: v };
+                    match ext_id(d, tag).await? {
+                        0 => break,
+                        1 => continue,
+                        _ => return Err(OcspError::Asn1ExtractionUnknownError),
+                    }
+                }
+                _ => break,
+            }
+        }
+
+        unimplemented!()
+    }
+    .boxed()
 }
 
 async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
