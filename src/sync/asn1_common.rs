@@ -8,6 +8,7 @@ use asn1_der::{
 use log::error;
 
 use crate::common::TryIntoSequence;
+use crate::common::CERTID_TAG;
 
 /// OCSP request binary object
 ///
@@ -190,10 +191,6 @@ impl<'d> OcspAsn1Der<'d> {
         Ok(1)
     }
 }
-
-#[allow(dead_code)]
-/// see [ocsp_rs::asn1_common::OcspAsn1Der::extract_certid()]
-pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
 /// count number of matching tag to a sequence
 /// - **target** target tag sequence

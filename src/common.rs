@@ -5,6 +5,8 @@ use asn1_der::{
 
 use crate::err::OcspError;
 
+pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
+
 /// allow convert to asn1_der::typed::Sequence
 pub trait TryIntoSequence {
     /// converting asn1_der::err
