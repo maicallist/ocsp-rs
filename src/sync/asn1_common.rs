@@ -49,16 +49,7 @@ impl<'d> OcspAsn1Der<'d> {
         }
     }
 
-    /// Extracting CertId Sequence from ASN1 DER data.  
-    /// tags must match following hex order:  
-    /// 30(6, 5), 4, 4, 2  
-    ///
-    /// - **self.seq** A sequence to be examined
-    /// - **tag** CertId tag array  
-    /// per rfc 6960 CERTID matches sequence of OID, OCTET, OCTET, INTEGER,  
-    /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
-    /// In practice, openssl has 0x05 after OID 0x06.  
-    /// - **value** corresponding value of @tag array  
+    /// see async counterpart
     fn extract_certid(&self, tag: &mut Vec<u8>, value: &mut Vec<Vec<u8>>) -> Result<u8, OcspError> {
         // push tag sequence
         let mut examine = false;
@@ -105,9 +96,7 @@ impl<'d> OcspAsn1Der<'d> {
     }
 }
 
-/// count number of matching tag to a sequence
-/// - **target** target tag sequence
-/// - **tbm** tag sequence to be examined
+/// see async counterpart
 #[allow(dead_code)]
 pub(crate) fn count_match_tags(target: &[u8], tbm: &[u8]) -> usize {
     let mut tt = target.to_vec();
