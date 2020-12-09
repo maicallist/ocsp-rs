@@ -115,10 +115,12 @@ use log::error;
 ///     |     04 12 04105E7A74E51C861A3F79454658BB090244
 /// ```
 ///
+#[allow(dead_code)]
 pub struct OcspAsn1Der<'d> {
     seq: Sequence<'d>,
 }
 
+#[allow(dead_code)]
 impl<'d> OcspAsn1Der<'d> {
     /// create Sequence type from raw der
     pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
@@ -187,12 +189,14 @@ impl<'d> OcspAsn1Der<'d> {
     }
 }
 
+#[allow(dead_code)]
 /// see [ocsp_rs::asn1_common::OcspAsn1Der::extract_certid()]
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
 
 /// count number of matching tag to a sequence
 /// - **target** target tag sequence
 /// - **tbm** tag sequence to be examined
+#[allow(dead_code)]
 pub(crate) fn count_match_tags(target: &[u8], tbm: &[u8]) -> usize {
     let mut tt = target.to_vec();
     while tt.len() < tbm.len() {
