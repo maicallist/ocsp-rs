@@ -1,8 +1,5 @@
 use super::err::OcspError;
-use asn1_der::{
-    typed::{DerDecodable, Sequence},
-    DerObject,
-};
+use asn1_der::typed::{DerDecodable, Sequence};
 use futures::future::{BoxFuture, FutureExt};
 
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
@@ -65,63 +62,6 @@ impl<'d> OcspAsn1DerAsync<'d> {
         .boxed()
     }
 }
-
-//pub struct OcspDer {
-//    der: Vec<u8>,
-//}
-//
-//fn ext_id<'d>(
-//    od: OcspDer,
-//    tag: &'d mut Vec<u8>,
-//    val: &'d mut Vec<Vec<u8>>,
-//) -> BoxFuture<'d, Result<u8, OcspError>> {
-//    //async move {
-//    //    ext_id().await;
-//    //    let a = count_matching_tags(&vec![1u8][..], &vec![2u8][..]).await;
-//    //}
-//    //.boxed()
-//
-//    async move {
-//        let mut examine = false;
-//        let seq = Sequence::decode(&od.der).map_err(OcspError::Asn1DecodingError)?;
-//        for i in 0..od.der.len() {
-//            let tmp = seq.get(i).map_err(OcspError::Asn1DecodingError)?;
-//            match tmp.tag() {
-//                0x30 => {
-//                    let mut v = tmp.header().to_vec();
-//                    v.extend(tmp.value());
-//                    let d = OcspDer { der: v };
-//                    match ext_id(d, tag, val).await? {
-//                        0 => break,
-//                        1 => continue,
-//                        _ => return Err(OcspError::Asn1ExtractionUnknownError),
-//                    }
-//                }
-//                0x02 | 0x04 | 0x05 | 0x06 => {
-//                    tag.push(tmp.tag());
-//                    val.push(tmp.value().to_vec());
-//                    examine = true
-//                }
-//                _ => break,
-//            }
-//        }
-//
-//        if examine {
-//            let target_len = CERTID_TAG.len();
-//            match count_matching_tags(&CERTID_TAG, tag).await % target_len {
-//                0 | 2 => return Ok(1),
-//                _ => {
-//                    tag.truncate(tag.len() / target_len);
-//                    val.truncate(val.len() / target_len);
-//                    return Ok(0);
-//                }
-//            }
-//        }
-//
-//        Ok(1)
-//    }
-//    .boxed()
-//}
 
 async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
     let mut tt = target.to_vec();
