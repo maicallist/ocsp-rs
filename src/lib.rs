@@ -31,7 +31,7 @@
 //pub mod asn1_common_async;
 pub mod sync;
 pub mod err;
-//pub struct OcspRequest {}
+pub mod common;
 
 #[cfg(test)]
 mod tests {
