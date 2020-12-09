@@ -28,8 +28,8 @@
 //    unused_results
 //)]
 
-pub mod asn1_common_async;
-pub mod asn1_common;
+//pub mod asn1_common_async;
+pub mod sync;
 pub mod err;
 //pub struct OcspRequest {}
 
