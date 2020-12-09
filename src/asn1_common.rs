@@ -134,7 +134,7 @@ impl<'d> OcspAsn1Der<'d> {
     /// 30(6, 5), 4, 4, 2  
     ///
     /// - **self.seq** A sequence to be examined
-    /// - **tag** CertId tag array  
+    /// - **tag** CERTID tag array  
     /// per rfc 6960 CERTID matches sequence of OID, OCTET, OCTET, INTEGER,  
     /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
     /// In practice, openssl has 0x05 after OID 0x06.  
