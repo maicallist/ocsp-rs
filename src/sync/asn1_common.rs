@@ -1,5 +1,5 @@
 //! asn1_common contains common trait and fn for OCSP request and response
-//! this module provides sync functions only under 'sync' feature
+//! this module provides sync functions only under 'sync' feature.
 use crate::err::OcspError;
 use asn1_der::{
     typed::{DerDecodable, Sequence},

@@ -139,6 +139,8 @@ impl<'d> OcspAsn1Der<'d> {
     /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
     /// In practice, openssl has 0x05 after OID 0x06.  
     /// - **value** corresponding value of @tag array  
+    /// 
+    /// extracted CERTID tag and value stores in 'tag' and 'val'
     fn extract_certid(
         &'d self,
         tag: &'d mut Vec<u8>,
@@ -192,6 +194,7 @@ impl<'d> OcspAsn1Der<'d> {
 /// count number of matching tag to a sequence
 /// - **target** target tag sequence
 /// - **tbm** tag sequence to be examined
+/// - **@return** number of tags matching target
 async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
     let mut tt = target.to_vec();
     while tt.len() < tbm.len() {
