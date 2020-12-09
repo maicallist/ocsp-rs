@@ -1,3 +1,5 @@
+//! common functions for ocsp request and response
+
 use super::err::OcspError;
 use asn1_der::typed::{DerDecodable, Sequence};
 use futures::future::{BoxFuture, FutureExt};
