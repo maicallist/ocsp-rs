@@ -249,6 +249,42 @@ mod test {
     }
 
     #[tokio::test]
+    // sequence from parse method
+    async fn ocsp_sequence_parse() {
+        let ocsp_req_hex = "306e306c304530433041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46da223302130\
+    1f06092b060105050730010204120410\
+    1cfc8fa3f5e15ed760707bc46670559b";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let derobj = DerObject::decode(&ocsp_req[..]).unwrap();
+        let der = OcspAsn1Der::parse(&derobj).unwrap();
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid(&mut tag, &mut val).await;
+        assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
+        assert_eq!(
+            val,
+            vec![
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
+            ]
+        );
+    }
+
+    #[tokio::test]
+    // get two certid from request
     async fn ocsp_req_multiple_certid() {
         let ocsp_req_hex = "3081b53081b230818a30433041300906\
 052b0e03021a05000414694d18a9be42\
