@@ -302,8 +302,8 @@ b788200414397be002a2f571fd80dceb\
     }
 
     #[tokio::test]
+    // missing 05 after 06
     async fn ocsp_req_wrong_certid() {
-        // missing 05 after 06
         let ocsp_req_hex = "306c\
 306a\
 3043\
@@ -325,5 +325,53 @@ a2233021\
         let mut val = Vec::new();
         let _ = der.extract_certid(&mut tag, &mut val).await;
         assert_eq!(tag, vec![]);
+    }
+
+    #[tokio::test]
+    // second sequence mismatch
+    // removing first 04 from first certid
+    async fn ocsp_req_extract_second_certid() {
+        let ocsp_req_hex = "30819e\
+30819b\
+3074\
+302d\
+302b\
+3009\
+06052b0e03021a\
+0500\
+0414397be002a2f571fd80dceb52a17a7f8b632be755\
+020841300983331f9d4f\
+3043\
+3041\
+3009\
+06052b0e03021a\
+0500\
+0414694d18a9be42f7802614d4844f23601478b78820\
+0414397be002a2f571fd80dceb52a17a7f8b632be755\
+02086378e51d448ff46d\
+a2233021301f06092b0601050507300102041204105e7a74e51c861a3f79454658bb090244";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let seq = Sequence::decode(&ocsp_req[..]).unwrap();
+        let der = OcspAsn1Der { seq: seq };
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid(&mut tag, &mut val).await;
+        assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
+        assert_eq!(
+            val,
+            vec![
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
+            ]
+        );
     }
 }
