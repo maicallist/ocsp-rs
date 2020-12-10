@@ -15,5 +15,4 @@ serde_asn1_der = "0.7"
 log = "0.4"
 thiserror = "1.0"
 futures = "0.3"
-tokio-test = "0.3"
 tokio = { version = "0.3", features = ["rt-multi-thread", "macros"] }
