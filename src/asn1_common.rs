@@ -300,4 +300,30 @@ b788200414397be002a2f571fd80dceb\
             ]
         );
     }
+
+    #[tokio::test]
+    async fn ocsp_req_wrong_certid() {
+        // missing 05 after 06
+        let ocsp_req_hex = "306c\
+306a\
+3043\
+3041\
+303f\
+3007\
+06052b0e03021a\
+0414694d18a9be42f7802614d4844f23601478b78820\
+0414397be002a2f571fd80dceb52a17a7f8b632be755\
+02086378e51d448ff46d\
+a2233021\
+301f\
+06092b0601050507300102\
+041204101cfc8fa3f5e15ed760707bc46670559b";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let seq = Sequence::decode(&ocsp_req[..]).unwrap();
+        let der = OcspAsn1Der { seq: seq };
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid(&mut tag, &mut val).await;
+        assert_eq!(tag, vec![]);
+    }
 }
