@@ -139,7 +139,7 @@ impl<'d> OcspAsn1Der<'d> {
     /// thus tag should contain 0x06, 0x05, 0x04, 0x04, 0x02 as result.  
     /// In practice, openssl has 0x05 after OID 0x06.  
     /// - **value** corresponding value of @tag array  
-    /// 
+    ///
     /// extracted CERTID tag and value stores in 'tag' and 'val'
     fn extract_certid(
         &'d self,
@@ -209,6 +209,7 @@ mod test {
     use super::*;
     use tokio;
 
+    /// extracting single certid
     #[tokio::test]
     async fn ocsp_req_get_certid() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
@@ -243,6 +244,59 @@ mod test {
                     0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
                 ],
                 vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
+            ]
+        );
+    }
+
+    #[tokio::test]
+    async fn ocsp_req_multiple_certid() {
+        let ocsp_req_hex = "3081b53081b230818a30433041300906\
+052b0e03021a05000414694d18a9be42\
+f7802614d4844f23601478b788200414\
+397be002a2f571fd80dceb52a17a7f8b\
+632be755020841300983331f9d4f3043\
+3041300906052b0e03021a0500041469\
+4d18a9be42f7802614d4844f23601478\
+b788200414397be002a2f571fd80dceb\
+52a17a7f8b632be75502086378e51d44\
+8ff46da2233021301f06092b06010505\
+07300102041204105e7a74e51c861a3f\
+79454658bb090244";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let seq = Sequence::decode(&ocsp_req[..]).unwrap();
+        let der = OcspAsn1Der { seq: seq };
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid(&mut tag, &mut val).await;
+        assert_eq!(
+            tag,
+            vec![0x06u8, 0x05, 0x04, 0x04, 0x02, 0x06, 0x05, 0x04, 0x04, 0x02]
+        );
+        assert_eq!(
+            val,
+            vec![
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x41, 0x30, 0x09, 0x83, 0x33, 0x1f, 0x9d, 0x4f],
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d],
             ]
         );
     }
