@@ -102,7 +102,7 @@ pub(crate) fn count_match_tags(target: &[u8], tbm: &[u8]) -> usize {
 
 #[cfg(test)]
 mod test {
-    use super::OcspAsn1Der;
+    use crate::sync::asn1_common::OcspAsn1Der;
     use asn1_der::{
         typed::{DerDecodable, Sequence},
         DerObject,
@@ -119,11 +119,33 @@ mod test {
 1f06092b060105050730010204120410\
 1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_bin = hex::decode(ocsp_req_hex).unwrap();
-        let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
-        let seq = Sequence::decode(asn1.raw()).unwrap();
-        let first_item = seq.get(0).unwrap();
-        let seq = Sequence::decode(first_item.raw()).unwrap();
-        let _second_item = seq.get(1).unwrap();
+        let derobj = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        let der = OcspAsn1Der::parse(&derobj).unwrap();
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid(&mut tag, &mut val);
+        assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
+        assert_eq!(
+            val,
+            vec![
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
+            ]
+        );
+        //let asn1 = DerObject::decode(&ocsp_req_bin[..]).unwrap();
+        //let seq = Sequence::decode(asn1.raw()).unwrap();
+        //let first_item = seq.get(0).unwrap();
+        //let seq = Sequence::decode(first_item.raw()).unwrap();
+        //let _second_item = seq.get(1).unwrap();
     }
 
     #[test]
