@@ -201,6 +201,7 @@ impl<'d> OcspAsn1Der<'d> {
             _ => return Err(OcspError::Asn1ExtractionUnknownError),
         };
 
+        // NOTICE: wait for async hex
         let sn_hex_list: Vec<String> = async move {
             val.into_iter()
                 .skip(4)
