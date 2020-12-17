@@ -141,7 +141,7 @@ impl<'d> OcspAsn1Der<'d> {
     /// - **value** corresponding value of @tag array  
     ///
     /// extracted CERTID tag and value stores in 'tag' and 'val'
-    fn extract_certid(
+    fn extract_certid_raw(
         &'d self,
         tag: &'d mut Vec<u8>,
         val: &'d mut Vec<Vec<u8>>,
@@ -157,7 +157,7 @@ impl<'d> OcspAsn1Der<'d> {
                         let tseq =
                             Sequence::decode(&raw[..]).map_err(OcspError::Asn1DecodingError)?;
 
-                        match OcspAsn1Der::extract_certid(&OcspAsn1Der { seq: tseq }, tag, val)
+                        match OcspAsn1Der::extract_certid_raw(&OcspAsn1Der { seq: tseq }, tag, val)
                             .await?
                         {
                             0 => break,
@@ -211,7 +211,7 @@ mod test {
 
     /// extracting single certid
     #[tokio::test]
-    async fn ocsp_req_get_certid() {
+    async fn ocsp_req_get_certid_raw() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -224,7 +224,7 @@ mod test {
         let der = OcspAsn1Der { seq: seq };
         let mut tag = Vec::new();
         let mut val = Vec::new();
-        let _ = der.extract_certid(&mut tag, &mut val).await;
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
         //println!(
         //    "-----tag-----\n{:02X?}\n{:02X?}\n------end of line -----",
         //    tag, val
@@ -250,7 +250,7 @@ mod test {
 
     #[tokio::test]
     // sequence from parse method
-    async fn ocsp_sequence_parse() {
+    async fn ocsp_sequence_parse_raw() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -263,7 +263,7 @@ mod test {
         let der = OcspAsn1Der::parse(&derobj).unwrap();
         let mut tag = Vec::new();
         let mut val = Vec::new();
-        let _ = der.extract_certid(&mut tag, &mut val).await;
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
         assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
         assert_eq!(
             val,
@@ -285,7 +285,7 @@ mod test {
 
     #[tokio::test]
     // get two certid from request
-    async fn ocsp_req_multiple_certid() {
+    async fn ocsp_req_multiple_certid_raw() {
         let ocsp_req_hex = "3081b53081b230818a30433041300906\
 052b0e03021a05000414694d18a9be42\
 f7802614d4844f23601478b788200414\
@@ -303,7 +303,7 @@ b788200414397be002a2f571fd80dceb\
         let der = OcspAsn1Der { seq: seq };
         let mut tag = Vec::new();
         let mut val = Vec::new();
-        let _ = der.extract_certid(&mut tag, &mut val).await;
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
         assert_eq!(
             tag,
             vec![0x06u8, 0x05, 0x04, 0x04, 0x02, 0x06, 0x05, 0x04, 0x04, 0x02]
@@ -339,7 +339,7 @@ b788200414397be002a2f571fd80dceb\
 
     #[tokio::test]
     // missing 05 after 06
-    async fn ocsp_req_wrong_certid() {
+    async fn ocsp_req_wrong_certid_raw() {
         let ocsp_req_hex = "306c\
 306a\
 3043\
@@ -359,14 +359,14 @@ a2233021\
         let der = OcspAsn1Der { seq: seq };
         let mut tag = Vec::new();
         let mut val = Vec::new();
-        let _ = der.extract_certid(&mut tag, &mut val).await;
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
         assert_eq!(tag, vec![]);
     }
 
     #[tokio::test]
     // second sequence mismatch
     // removing first 04 from first certid
-    async fn ocsp_req_extract_second_certid() {
+    async fn ocsp_req_extract_second_certid_raw() {
         let ocsp_req_hex = "30819e\
 30819b\
 3074\
@@ -391,7 +391,7 @@ a2233021301f06092b0601050507300102041204105e7a74e51c861a3f79454658bb090244";
         let der = OcspAsn1Der { seq: seq };
         let mut tag = Vec::new();
         let mut val = Vec::new();
-        let _ = der.extract_certid(&mut tag, &mut val).await;
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
         assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
         assert_eq!(
             val,
