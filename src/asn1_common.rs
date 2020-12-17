@@ -6,6 +6,7 @@ use asn1_der::{
     DerObject,
 };
 use futures::future::{BoxFuture, FutureExt};
+use hex;
 
 use super::common::{TryIntoSequence, CERTID_TAG};
 
@@ -188,6 +189,28 @@ impl<'d> OcspAsn1Der<'d> {
             Ok(1)
         }
         .boxed()
+    }
+
+    /// extracting certificate serial number in hex from OCSP request/response
+    async fn extract_cert_sn(self) -> Result<Vec<String>, OcspError> {
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        match OcspAsn1Der::extract_certid_raw(&self, &mut tag, &mut val).await? {
+            0 => return Err(OcspError::Asn1MismatchError),
+            1 => {}
+            _ => return Err(OcspError::Asn1ExtractionUnknownError),
+        };
+
+        let sn_hex_list: Vec<String> = async move {
+            val.into_iter()
+                .skip(4)
+                .step_by(5)
+                .map(|v| hex::encode(v))
+                .collect()
+        }
+        .await;
+
+        Ok(sn_hex_list)
     }
 }
 
@@ -409,5 +432,26 @@ a2233021301f06092b0601050507300102041204105e7a74e51c861a3f79454658bb090244";
                 vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
             ]
         );
+    }
+
+    #[tokio::test]
+    async fn ocsp_req_get_cert_sn() {
+        let ocsp_req_hex = "3081b53081b230818a30433041300906\
+052b0e03021a05000414694d18a9be42\
+f7802614d4844f23601478b788200414\
+397be002a2f571fd80dceb52a17a7f8b\
+632be755020841300983331f9d4f3043\
+3041300906052b0e03021a0500041469\
+4d18a9be42f7802614d4844f23601478\
+b788200414397be002a2f571fd80dceb\
+52a17a7f8b632be75502086378e51d44\
+8ff46da2233021301f06092b06010505\
+07300102041204105e7a74e51c861a3f\
+79454658bb090244";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let seq = Sequence::decode(&ocsp_req[..]).unwrap();
+        let der = OcspAsn1Der { seq: seq };
+        let v = der.extract_cert_sn().await.unwrap();
+        assert_eq!(v, vec!["41300983331f9d4f", "6378e51d448ff46d"])
     }
 }

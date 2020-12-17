@@ -12,4 +12,7 @@ pub enum OcspError {
     /// unexpected result from sequence matching fn
     #[error("Unable to extract data from asn1 due to traversal issue")]
     Asn1ExtractionUnknownError,
+    /// extractor cannot find matching sequence
+    #[error("Unable to extract desired sequence")]
+    Asn1MismatchError,
 }
