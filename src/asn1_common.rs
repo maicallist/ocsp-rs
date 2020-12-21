@@ -1,10 +1,7 @@
 //! common functions for ocsp request and response
 
 use super::err::OcspError;
-use asn1_der::{
-    typed::{DerDecodable, Sequence},
-    DerObject,
-};
+use asn1_der::typed::{DerDecodable, Sequence};
 use futures::future::{BoxFuture, FutureExt};
 use hex;
 
@@ -126,7 +123,10 @@ pub struct OcspAsn1Der<'d> {
 #[allow(dead_code)]
 impl<'d> OcspAsn1Der<'d> {
     /// create Sequence type from raw der
-    pub fn parse(t: &'d DerObject) -> Result<Self, OcspError> {
+    pub fn parse<T: TryIntoSequence<'d>>(t: &'d T) -> Result<Self, OcspError>
+    where
+        T: 'd + TryIntoSequence<'d, Error = OcspError>,
+    {
         t.try_into().map(|s| OcspAsn1Der { seq: s })
     }
 
@@ -232,6 +232,7 @@ async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
 mod test {
     use super::*;
     use tokio;
+    use asn1_der::DerObject;
 
     /// extracting single certid
     #[tokio::test]
@@ -274,7 +275,7 @@ mod test {
 
     #[tokio::test]
     // sequence from parse method
-    async fn ocsp_sequence_parse_raw() {
+    async fn ocsp_sequence_parse_derobj() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -285,6 +286,40 @@ mod test {
         let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
         let derobj = DerObject::decode(&ocsp_req[..]).unwrap();
         let der = OcspAsn1Der::parse(&derobj).unwrap();
+        let mut tag = Vec::new();
+        let mut val = Vec::new();
+        let _ = der.extract_certid_raw(&mut tag, &mut val).await;
+        assert_eq!(tag, vec![0x06u8, 0x05, 0x04, 0x04, 0x02]);
+        assert_eq!(
+            val,
+            vec![
+                vec![0x2b, 0x0e, 0x03, 0x02, 0x1a],
+                vec![],
+                vec![
+                    0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+                    0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20
+                ],
+                vec![
+                    0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1,
+                    0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55
+                ],
+                vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d]
+            ]
+        );
+    }
+
+    #[tokio::test]
+    // sequence from parse method
+    async fn ocsp_sequence_parse_vec() {
+        let ocsp_req_hex = "306e306c304530433041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46da223302130\
+    1f06092b060105050730010204120410\
+    1cfc8fa3f5e15ed760707bc46670559b";
+        let ocsp_req = hex::decode(ocsp_req_hex).unwrap();
+        let der = OcspAsn1Der::parse(&ocsp_req).unwrap();
         let mut tag = Vec::new();
         let mut val = Vec::new();
         let _ = der.extract_certid_raw(&mut tag, &mut val).await;
