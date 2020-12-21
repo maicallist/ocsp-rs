@@ -231,8 +231,8 @@ async fn count_matching_tags(target: &[u8], tbm: &[u8]) -> usize {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tokio;
     use asn1_der::DerObject;
+    use tokio;
 
     /// extracting single certid
     #[tokio::test]
