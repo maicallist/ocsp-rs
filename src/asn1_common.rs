@@ -192,7 +192,7 @@ impl<'d> OcspAsn1Der<'d> {
     }
 
     /// extracting certificate serial number in hex from OCSP request/response
-    async fn extract_cert_sn(self) -> Result<Vec<String>, OcspError> {
+    pub async fn extract_cert_sn(self) -> Result<Vec<String>, OcspError> {
         let mut tag = Vec::new();
         let mut val = Vec::new();
         match OcspAsn1Der::extract_certid_raw(&self, &mut tag, &mut val).await? {
