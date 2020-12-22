@@ -471,6 +471,7 @@ a2233021301f06092b0601050507300102041204105e7a74e51c861a3f79454658bb090244";
     }
 
     #[tokio::test]
+    // extract two sn from request
     async fn ocsp_req_get_cert_sn() {
         let ocsp_req_hex = "3081b53081b230818a30433041300906\
 052b0e03021a05000414694d18a9be42\
