@@ -71,9 +71,12 @@ mod test {
         DerObject,
     };
     use hex;
+    use std::convert::TryFrom;
 
-    #[tokio::test]
-    async fn get_tbs_request() {
+    use super::OcspRequest;
+
+    #[test]
+    fn ocsprequest_try_from() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -81,12 +84,14 @@ mod test {
     5502086378e51d448ff46da223302130\
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
-        let ocspreq = DerObject::decode(&hex::decode(ocsp_req_hex).unwrap()[..]).unwrap();
+        let ocsp_req_v8 = hex::decode(ocsp_req_hex).unwrap();
+        let ocsp_request = OcspRequest::try_from(&ocsp_req_v8);
+        assert!(ocsp_request.is_ok())
     }
 
     // test confirms context specific tag cannot be recognized
     #[test]
-    #[should_panic(expected = "sequence cannot recognize context specific tag")]
+    #[should_panic]
     fn context_specific_sequence() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
