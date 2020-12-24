@@ -108,7 +108,7 @@ mod test {
         let tbs = DerObject::decode(der.value()).unwrap();
         //println!("tag {:02X?}\nvalue {:02X?}", tbs.header(), tbs.value());
 
-        let reqlist = DerObject::decode(tbs.value()).unwrap();
+        let _reqlist = DerObject::decode(tbs.value()).unwrap();
         //println!(
         //    "tag {:02X?}\nvalue {:02X?}",
         //    reqlist.header(),
