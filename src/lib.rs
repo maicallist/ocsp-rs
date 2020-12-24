@@ -28,10 +28,10 @@
     unused_results
 )]
 
-pub mod asn1_common;
+//pub mod asn1_common;
+//pub mod sync;
 pub mod common;
 pub mod err;
-pub mod sync;
 pub mod request;
 
 #[cfg(test)]
