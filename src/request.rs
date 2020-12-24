@@ -3,7 +3,6 @@
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 use std::convert::TryFrom;
-use tokio;
 
 use crate::common::TryIntoSequence;
 use crate::err::OcspError;
