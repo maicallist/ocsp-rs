@@ -32,6 +32,7 @@ pub mod asn1_common;
 pub mod common;
 pub mod err;
 pub mod sync;
+pub mod request;
 
 #[cfg(test)]
 mod tests {}
