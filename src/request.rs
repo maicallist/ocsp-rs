@@ -1,5 +1,13 @@
 //! OCSP request
 
+use asn1_der::{typed::Sequence, DerObject};
+use futures::future::{BoxFuture, FutureExt};
+use std::convert::TryFrom;
+use tokio;
+
+use crate::common::TryIntoSequence;
+use crate::err::OcspError;
+
 /// RFC 6960 CertID
 pub struct CertId {
     hash_algo: Vec<u8>,
@@ -9,15 +17,50 @@ pub struct CertId {
 }
 
 /// RFC 6960 OCSPRequest
-pub struct OcspRequest {
-    raw: Vec<u8>,
-    tbs_request: Vec<u8>,
-    optional_signature: Option<Vec<u8>>,
+pub struct OcspRequest<'d> {
+    /// RFC 6960 TBSRequest
+    tbs_request: Sequence<'d>,
+    /// RFC 6960 optionalSignature, explicit tag [0]
+    optional_signature: Option<DerObject<'d>>,
 }
 
-impl OcspRequest {
-    fn get_tbs_req(raw: &Vec<u8>) -> Vec<u8> {
-        unimplemented!()
+impl<'d> OcspRequest<'d> {
+    fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
+        async move { self.tbs_request }.boxed()
+    }
+
+    fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
+        async move { self.optional_signature }.boxed()
+    }
+}
+
+impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
+    type Error = OcspError;
+    fn try_from(raw: &'d Vec<u8>) -> Result<Self, Self::Error> {
+        let s = raw.try_into()?;
+        match s.len() {
+            1 => {
+                let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                return Ok(OcspRequest {
+                    tbs_request: tbs,
+                    optional_signature: None,
+                });
+            }
+            2 => {
+                let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+                // per RFC 6960
+                // optional signature is explicit 0
+                if sig.tag() != 0xa0 {
+                    return Err(OcspError::Asn1MalformedRequest);
+                }
+                return Ok(OcspRequest {
+                    tbs_request: tbs,
+                    optional_signature: Some(sig),
+                });
+            }
+            _ => return Err(OcspError::Asn1MalformedRequest),
+        }
     }
 }
 
@@ -28,6 +71,18 @@ mod test {
         DerObject,
     };
     use hex;
+
+    #[tokio::test]
+    async fn get_tbs_request() {
+        let ocsp_req_hex = "306e306c304530433041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46da223302130\
+    1f06092b060105050730010204120410\
+    1cfc8fa3f5e15ed760707bc46670559b";
+        let ocspreq = DerObject::decode(&hex::decode(ocsp_req_hex).unwrap()[..]).unwrap();
+    }
 
     // test confirms context specific tag cannot be recognized
     #[test]
