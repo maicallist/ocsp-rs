@@ -24,11 +24,13 @@ pub struct OcspRequest<'d> {
 }
 
 impl<'d> OcspRequest<'d> {
-    fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
+    /// return RFC 6960 TBSRequest
+    pub fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
         async move { self.tbs_request }.boxed()
     }
 
-    fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
+    /// return RFC 6960 optionalSignature
+    pub fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
         async move { self.optional_signature }.boxed()
     }
 }
