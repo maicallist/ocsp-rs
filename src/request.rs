@@ -53,14 +53,14 @@ impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
                 // per RFC 6960
                 // optional signature is explicit 0
                 if sig.tag() != 0xa0 {
-                    return Err(OcspError::Asn1MalformedRequest);
+                    return Err(OcspError::Asn1MalformedTBSRequest);
                 }
                 return Ok(OcspRequest {
                     tbs_request: tbs,
                     optional_signature: Some(sig),
                 });
             }
-            _ => return Err(OcspError::Asn1MalformedRequest),
+            _ => return Err(OcspError::Asn1MalformedTBSRequest),
         }
     }
 }

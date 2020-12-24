@@ -19,5 +19,5 @@ pub enum OcspError {
     /// case 1: no sequence in request
     /// case 2: ocsp request is not {0x30} or {0x30, 0xA0}
     #[error("Ocsp request contains unexpected data")]
-    Asn1MalformedRequest,
+    Asn1MalformedTBSRequest,
 }
