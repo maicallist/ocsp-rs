@@ -24,7 +24,7 @@ impl OcspRequest {
 #[cfg(test)]
 mod test {
     use asn1_der::{
-        typed::{DerDecodable, Sequence, SequenceVec},
+        typed::{DerDecodable, Sequence},
         DerObject,
     };
     use hex;
