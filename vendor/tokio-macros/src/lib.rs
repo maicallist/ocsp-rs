@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/tokio-macros/0.3.1")]
+#![doc(html_root_url = "https://docs.rs/tokio-macros/1.0.0")]
 #![allow(clippy::needless_doctest_main)]
 #![warn(
     missing_debug_implementations,
@@ -24,8 +24,8 @@ mod select;
 
 use proc_macro::TokenStream;
 
-/// Marks async function to be executed by the selected runtime. This macro helps
-/// set up a `Runtime` without requiring the user to use
+/// Marks async function to be executed by the selected runtime. This macro
+/// helps set up a `Runtime` without requiring the user to use
 /// [Runtime](../tokio/runtime/struct.Runtime.html) or
 /// [Builder](../tokio/runtime/struct.Builder.html) directly.
 ///
@@ -34,6 +34,12 @@ use proc_macro::TokenStream;
 /// sufficient, you may be interested in using
 /// [Builder](../tokio/runtime/struct.Builder.html), which provides a more
 /// powerful interface.
+///
+/// Note: This macro can be used on any function and not just the `main`
+/// function. Using it on a non-main function makes the function behave as if it
+/// was synchronous by starting a new runtime each time it is called. If the
+/// function is called often, it is preferable to create the runtime using the
+/// runtime builder so the runtime can be reused across calls.
 ///
 /// # Multi-threaded runtime
 ///
@@ -46,6 +52,9 @@ use proc_macro::TokenStream;
 ///
 /// The `worker_threads` option configures the number of worker threads, and
 /// defaults to the number of cpus on the system. This is the default flavor.
+///
+/// Note: The multi-threaded runtime requires the `rt-multi-thread` feature
+/// flag.
 ///
 /// # Current thread runtime
 ///
@@ -137,10 +146,10 @@ use proc_macro::TokenStream;
 ///
 /// ### NOTE:
 ///
-/// If you rename the tokio crate in your dependencies this macro will not work.
-/// If you must rename the 0.2 version of tokio because you're also using the
-/// 0.1 version of tokio, you _must_ make the tokio 0.2 crate available as
-/// `tokio` in the module where this macro is expanded.
+/// If you rename the Tokio crate in your dependencies this macro will not work.
+/// If you must rename the current version of Tokio because you're also using an
+/// older version of Tokio, you _must_ make the current version of Tokio
+/// available as `tokio` in the module where this macro is expanded.
 #[proc_macro_attribute]
 #[cfg(not(test))] // Work around for rust-lang/rust#62127
 pub fn main(args: TokenStream, item: TokenStream) -> TokenStream {
@@ -182,11 +191,10 @@ pub fn main(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### NOTE:
 ///
-/// If you rename the tokio crate in your dependencies this macro
-/// will not work. If you must rename the 0.2 version of tokio because
-/// you're also using the 0.1 version of tokio, you _must_ make the
-/// tokio 0.2 crate available as `tokio` in the module where this
-/// macro is expanded.
+/// If you rename the Tokio crate in your dependencies this macro will not work.
+/// If you must rename the current version of Tokio because you're also using an
+/// older version of Tokio, you _must_ make the current version of Tokio
+/// available as `tokio` in the module where this macro is expanded.
 #[proc_macro_attribute]
 #[cfg(not(test))] // Work around for rust-lang/rust#62127
 pub fn main_rt(args: TokenStream, item: TokenStream) -> TokenStream {
@@ -208,7 +216,7 @@ pub fn main_rt(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### Using default
 ///
-/// The default test runtime is multi-threaded.
+/// The default test runtime is single-threaded.
 ///
 /// ```no_run
 /// #[tokio::test]
@@ -219,11 +227,10 @@ pub fn main_rt(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### NOTE:
 ///
-/// If you rename the tokio crate in your dependencies this macro
-/// will not work. If you must rename the 0.2 version of tokio because
-/// you're also using the 0.1 version of tokio, you _must_ make the
-/// tokio 0.2 crate available as `tokio` in the module where this
-/// macro is expanded.
+/// If you rename the Tokio crate in your dependencies this macro will not work.
+/// If you must rename the current version of Tokio because you're also using an
+/// older version of Tokio, you _must_ make the current version of Tokio
+/// available as `tokio` in the module where this macro is expanded.
 #[proc_macro_attribute]
 pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
     entry::test(args, item, true)
@@ -242,11 +249,10 @@ pub fn test(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ### NOTE:
 ///
-/// If you rename the tokio crate in your dependencies this macro
-/// will not work. If you must rename the 0.2 version of tokio because
-/// you're also using the 0.1 version of tokio, you _must_ make the
-/// tokio 0.2 crate available as `tokio` in the module where this
-/// macro is expanded.
+/// If you rename the Tokio crate in your dependencies this macro will not work.
+/// If you must rename the current version of Tokio because you're also using an
+/// older version of Tokio, you _must_ make the current version of Tokio
+/// available as `tokio` in the module where this macro is expanded.
 #[proc_macro_attribute]
 pub fn test_rt(args: TokenStream, item: TokenStream) -> TokenStream {
     entry::test(args, item, false)

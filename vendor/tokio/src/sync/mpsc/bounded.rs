@@ -1,6 +1,9 @@
 use crate::sync::batch_semaphore::{self as semaphore, TryAcquireError};
 use crate::sync::mpsc::chan;
-use crate::sync::mpsc::error::{SendError, TryRecvError, TrySendError};
+#[cfg(unix)]
+#[cfg(any(feature = "signal", feature = "process"))]
+use crate::sync::mpsc::error::TryRecvError;
+use crate::sync::mpsc::error::{SendError, TrySendError};
 
 cfg_time! {
     use crate::sync::mpsc::error::SendTimeoutError;
@@ -8,7 +11,6 @@ cfg_time! {
 }
 
 use std::fmt;
-#[cfg(any(feature = "signal", feature = "process", feature = "stream"))]
 use std::task::{Context, Poll};
 
 /// Send values to the associated `Receiver`.
@@ -144,11 +146,6 @@ impl<T> Receiver<T> {
         poll_fn(|cx| self.chan.recv(cx)).await
     }
 
-    #[cfg(any(feature = "signal", feature = "process"))]
-    pub(crate) fn poll_recv(&mut self, cx: &mut Context<'_>) -> Poll<Option<T>> {
-        self.chan.recv(cx)
-    }
-
     /// Blocking receive to call outside of asynchronous contexts.
     ///
     /// # Panics
@@ -194,7 +191,9 @@ impl<T> Receiver<T> {
     ///
     /// Compared with recv, this function has two failure cases instead of
     /// one (one for disconnection, one for an empty buffer).
-    pub fn try_recv(&mut self) -> Result<T, TryRecvError> {
+    #[cfg(unix)]
+    #[cfg(any(feature = "signal", feature = "process"))]
+    pub(crate) fn try_recv(&mut self) -> Result<T, TryRecvError> {
         self.chan.try_recv()
     }
 
@@ -238,6 +237,25 @@ impl<T> Receiver<T> {
     pub fn close(&mut self) {
         self.chan.close();
     }
+
+    /// Polls to receive the next message on this channel.
+    ///
+    /// This method returns:
+    ///
+    ///  * `Poll::Pending` if no messages are available but the channel is not
+    ///    closed.
+    ///  * `Poll::Ready(Some(message))` if a message is available.
+    ///  * `Poll::Ready(None)` if the channel has been closed and all messages
+    ///    sent before it was closed have been received.
+    ///
+    /// When the method returns `Poll::Pending`, the `Waker` in the provided
+    /// `Context` is scheduled to receive a wakeup when a message is sent on any
+    /// receiver, or when the channel is closed.  Note that on multiple calls to
+    /// `poll_recv`, only the `Waker` from the `Context` passed to the most
+    /// recent call is scheduled to receive a wakeup.
+    pub fn poll_recv(&mut self, cx: &mut Context<'_>) -> Poll<Option<T>> {
+        self.chan.recv(cx)
+    }
 }
 
 impl<T> fmt::Debug for Receiver<T> {
@@ -249,16 +267,6 @@ impl<T> fmt::Debug for Receiver<T> {
 }
 
 impl<T> Unpin for Receiver<T> {}
-
-cfg_stream! {
-    impl<T> crate::stream::Stream for Receiver<T> {
-        type Item = T;
-
-        fn poll_next(mut self: std::pin::Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<T>> {
-            self.chan.recv(cx)
-        }
-    }
-}
 
 impl<T> Sender<T> {
     pub(crate) fn new(chan: chan::Tx<T, Semaphore>) -> Sender<T> {

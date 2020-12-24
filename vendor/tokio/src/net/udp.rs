@@ -23,10 +23,11 @@ cfg_net! {
     ///
     /// # Streams
     ///
-    /// If you need to listen over UDP and produce a [`Stream`](`crate::stream::Stream`), you can look
+    /// If you need to listen over UDP and produce a [`Stream`], you can look
     /// at [`UdpFramed`].
     ///
     /// [`UdpFramed`]: https://docs.rs/tokio-util/latest/tokio_util/udp/struct.UdpFramed.html
+    /// [`Stream`]: https://docs.rs/futures/0.3/futures/stream/trait.Stream.html
     ///
     /// # Example: one to many (bind)
     ///
@@ -745,11 +746,11 @@ impl UdpSocket {
         &self,
         cx: &mut Context<'_>,
         buf: &[u8],
-        target: &SocketAddr,
+        target: SocketAddr,
     ) -> Poll<io::Result<usize>> {
         self.io
             .registration()
-            .poll_write_io(cx, || self.io.send_to(buf, *target))
+            .poll_write_io(cx, || self.io.send_to(buf, target))
     }
 
     /// Try to send data on the socket to the given address, but if the send is
@@ -915,8 +916,8 @@ impl UdpSocket {
     ///
     ///         // Try to recv data, this may still fail with `WouldBlock`
     ///         // if the readiness event is a false positive.
-    ///         match socket.try_recv(&mut buf) {
-    ///             Ok(n) => {
+    ///         match socket.try_recv_from(&mut buf) {
+    ///             Ok((n, _addr)) => {
     ///                 println!("GOT {:?}", &buf[..n]);
     ///                 break;
     ///             }
