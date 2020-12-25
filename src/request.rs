@@ -127,6 +127,16 @@ impl<'d> TBSRequest<'d> {
         }
         .boxed()
     }
+
+    /// get list of onereq[OpenSSL]
+    pub fn get_request_list(self) -> BoxFuture<'d, Vec<Sequence<'d>>> {
+        async move { self.request_list }.boxed()
+    }
+
+    /// get extension for ocsp request
+    pub fn get_request_ext(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
+        async move { self.request_ext }.boxed()
+    }
 }
 
 #[cfg(test)]
