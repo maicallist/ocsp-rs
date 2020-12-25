@@ -113,7 +113,8 @@ pub struct TBSRequest<'d> {
 }
 
 impl<'d> TBSRequest<'d> {
-    fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str, OcspError>> {
+    /// parse requestor name from vec<u8> via str::from_utf8()
+    pub fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str, OcspError>> {
         async move {
             match &self.requestor_name {
                 None => Ok(""),
