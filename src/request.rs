@@ -97,6 +97,21 @@ impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
     }
 }
 
+/// RFC 6960 TBSRequest
+pub struct TBSRequest<'d> {
+    // explicit 0
+    // REVIEW: omitted in OpenSSL
+    // version: u8,
+    /// requestorName is OPTIONAL and indicates the name of the OCSP requestor.
+    /// explicit 1
+    requestor_name: Option<Vec<u8>>,
+    /// requestList contains one or more single certificate status requests.
+    request_list: Vec<Sequence<'d>>,
+    /// requestExtensions is OPTIONAL and includes extensions applicable
+    /// to the requests found in reqCert.
+    request_ext: Option<DerObject<'d>>,
+}
+
 #[cfg(test)]
 mod test {
     use asn1_der::{
