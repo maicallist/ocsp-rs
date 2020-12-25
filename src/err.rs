@@ -26,7 +26,11 @@ pub enum OcspError {
     #[error("Unable to deserialize string from ocsp req/resp")]
     Asn1Utf8Error(#[from] std::str::Utf8Error),
 
-    /// OID is not 0x06, 0x05
+    /// OID length is not 2, 0x06, 0x05
     #[error("Unable to deserialize OID")]
     Asn1OidLengthError,
+
+    /// CertID length is not 4
+    #[error("Unable to deserialize CertID")]
+    Asn1CertidLengthError,
 }

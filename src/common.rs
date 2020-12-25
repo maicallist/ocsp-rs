@@ -11,6 +11,9 @@ use crate::err::OcspError;
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
 pub(crate) const ASN1_NULL: u8 = 0x05;
 pub(crate) const ASN1_OID: u8 = 0x06;
+pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
+pub(crate) const ASN1_OCTET: u8 = 0x04;
+pub(crate) const ASN1_INTEGER: u8 = 0x02;
 
 #[allow(dead_code)]
 // remove with asn1_common mod

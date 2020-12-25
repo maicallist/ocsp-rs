@@ -3,7 +3,9 @@
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::common::{TryIntoSequence, ASN1_EXPLICIT_0, ASN1_NULL, ASN1_OID};
+use crate::common::{
+    TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
+};
 use crate::err::OcspError;
 
 /// Oid represents a 0x06 OID type in ASN.1  
@@ -16,7 +18,7 @@ pub struct Oid {
 
 impl Oid {
     /// get oid from raw bytes
-    pub fn parse<'d>(self, oid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse<'d>(oid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
         async move {
             let s = oid.try_into()?;
             if s.len() != 2 {
@@ -38,10 +40,48 @@ impl Oid {
 
 /// RFC 6960 CertID
 pub struct CertId {
-    hash_algo: Vec<u8>,
+    hash_algo: Oid,
     issuer_name_hash: Vec<u8>,
     issuer_key_hash: Vec<u8>,
     serial_num: Vec<u8>,
+}
+
+impl CertId {
+    /// get certid from raw bytes
+    pub fn parse<'d>(self, certid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move {
+            let s = certid.try_into()?;
+            if s.len() != 4 {
+                return Err(OcspError::Asn1CertidLengthError);
+            }
+
+            let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+            let name_hash = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+            let key_hash = s.get(2).map_err(OcspError::Asn1DecodingError)?;
+            let sn = s.get(3).map_err(OcspError::Asn1DecodingError)?;
+
+            if oid.tag() != ASN1_SEQUENCE
+                || name_hash.tag() != ASN1_OCTET
+                || key_hash.tag() != ASN1_OCTET
+                || sn.tag() != ASN1_INTEGER
+            {
+                return Err(OcspError::Asn1MismatchError);
+            }
+
+            let oid = Oid::parse(oid.value().to_vec()).await?;
+            let name_hash = name_hash.value().to_vec();
+            let key_hash = key_hash.value().to_vec();
+            let sn = sn.value().to_vec();
+
+            Ok(CertId {
+                hash_algo: oid,
+                issuer_name_hash: name_hash,
+                issuer_key_hash: key_hash,
+                serial_num: sn,
+            })
+        }
+        .boxed()
+    }
 }
 
 /// RFC 6960 OCSPRequest
