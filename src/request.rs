@@ -24,6 +24,37 @@ pub struct OcspRequest<'d> {
 }
 
 impl<'d> OcspRequest<'d> {
+    /// create OcspRequest from Vec<u8>
+    pub fn parse(raw: &'d Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move {
+            let s = raw.try_into()?;
+            match s.len() {
+                1 => {
+                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                    return Ok(OcspRequest {
+                        tbs_request: tbs,
+                        optional_signature: None,
+                    });
+                }
+                2 => {
+                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                    let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+                    // per RFC 6960
+                    // optional signature is explicit 0
+                    if sig.tag() != 0xa0 {
+                        return Err(OcspError::Asn1MalformedTBSRequest);
+                    }
+                    return Ok(OcspRequest {
+                        tbs_request: tbs,
+                        optional_signature: Some(sig),
+                    });
+                }
+                _ => return Err(OcspError::Asn1MalformedTBSRequest),
+            }
+        }
+        .boxed()
+    }
+
     /// return RFC 6960 TBSRequest
     pub fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
         async move { self.tbs_request }.boxed()
@@ -72,12 +103,11 @@ mod test {
         DerObject,
     };
     use hex;
-    use std::convert::TryFrom;
 
     use super::OcspRequest;
 
-    #[test]
-    fn ocsprequest_try_from() {
+    #[tokio::test]
+    async fn ocsprequest_parse_from_v8() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -86,8 +116,9 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let ocsp_request = OcspRequest::try_from(&ocsp_req_v8);
-        assert!(ocsp_request.is_ok())
+        let ocsp_request = OcspRequest::parse(&ocsp_req_v8).await;
+        assert!(ocsp_request.is_ok());
+        let _ = ocsp_request.unwrap();
     }
 
     // test confirms context specific tag cannot be recognized
