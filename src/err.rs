@@ -20,7 +20,7 @@ pub enum OcspError {
     /// case 2: ocsp request is not {0x30} or {0x30, 0xA0}
     #[error("Ocsp request contains unexpected data")]
     Asn1MalformedTBSRequest,
-    /// unable to parse vec u8 to &str   
+    /// unable to parse vec\<u8\> to &str   
     /// eg. requestorName
     #[error("Unable to deserialize string from ocsp req/resp")]
     Asn1Utf8Error(#[from] std::str::Utf8Error),
