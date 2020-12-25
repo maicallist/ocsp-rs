@@ -10,6 +10,8 @@ use crate::err::OcspError;
 /// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
 
+#[allow(dead_code)]
+// remove with asn1_common mod
 /// CertID asn1 sequence
 /// see [ocsp_rs::asn1_common::OcspAsn1Der::extract_id]
 pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
