@@ -2,7 +2,6 @@
 
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
-use std::convert::TryFrom;
 
 use crate::common::{TryIntoSequence, ASN1_EXPLICIT_0};
 use crate::err::OcspError;
@@ -63,37 +62,6 @@ impl<'d> OcspRequest<'d> {
     /// return RFC 6960 optionalSignature
     pub fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
         async move { self.optional_signature }.boxed()
-    }
-}
-
-#[allow(dead_code)]
-impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
-    type Error = OcspError;
-    fn try_from(raw: &'d Vec<u8>) -> Result<Self, Self::Error> {
-        let s = raw.try_into()?;
-        match s.len() {
-            1 => {
-                let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
-                return Ok(OcspRequest {
-                    tbs_request: tbs,
-                    optional_signature: None,
-                });
-            }
-            2 => {
-                let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
-                let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
-                // per RFC 6960
-                // optional signature is explicit 0
-                if sig.tag() != 0xa0 {
-                    return Err(OcspError::Asn1MalformedTBSRequest);
-                }
-                return Ok(OcspRequest {
-                    tbs_request: tbs,
-                    optional_signature: Some(sig),
-                });
-            }
-            _ => return Err(OcspError::Asn1MalformedTBSRequest),
-        }
     }
 }
 
