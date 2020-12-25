@@ -4,7 +4,7 @@ use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 use std::convert::TryFrom;
 
-use crate::common::TryIntoSequence;
+use crate::common::{TryIntoSequence, ASN1_EXPLICIT_0};
 use crate::err::OcspError;
 
 /// RFC 6960 CertID
@@ -41,7 +41,7 @@ impl<'d> OcspRequest<'d> {
                     let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
                     // per RFC 6960
                     // optional signature is explicit 0
-                    if sig.tag() != 0xa0 {
+                    if sig.tag() != ASN1_EXPLICIT_0 {
                         return Err(OcspError::Asn1MalformedTBSRequest);
                     }
                     return Ok(OcspRequest {
