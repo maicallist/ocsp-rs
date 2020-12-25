@@ -12,7 +12,8 @@ pub enum OcspError {
     /// unexpected result from sequence matching fn
     #[error("Unable to extract data from asn1 due to traversal issue")]
     Asn1ExtractionUnknownError,
-    /// extractor cannot find matching sequence
+    /// extractor cannot find matching sequence  
+    /// eg. OID sequence is not 0x06, 0x05
     #[error("Unable to extract desired sequence")]
     Asn1MismatchError,
     /// ocsp request contains unexpected data
@@ -24,4 +25,8 @@ pub enum OcspError {
     /// eg. requestorName
     #[error("Unable to deserialize string from ocsp req/resp")]
     Asn1Utf8Error(#[from] std::str::Utf8Error),
+
+    /// OID is not 0x06, 0x05
+    #[error("Unable to deserialize OID")]
+    Asn1OidLengthError,
 }

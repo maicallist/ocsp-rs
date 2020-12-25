@@ -3,8 +3,38 @@
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::common::{TryIntoSequence, ASN1_EXPLICIT_0};
+use crate::common::{TryIntoSequence, ASN1_EXPLICIT_0, ASN1_NULL, ASN1_OID};
 use crate::err::OcspError;
+
+/// Oid represents a 0x06 OID type in ASN.1  
+/// in OpenSSL ocsp request, OID is followed by NULL 0x05
+/// REVIEW 0x05
+pub struct Oid {
+    id: Vec<u8>,
+    //null: Vec<u8>,
+}
+
+impl Oid {
+    /// get oid from raw bytes
+    pub fn parse<'d>(self, oid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move {
+            let s = oid.try_into()?;
+            if s.len() != 2 {
+                return Err(OcspError::Asn1OidLengthError);
+            }
+            let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+            let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+            if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
+                return Err(OcspError::Asn1MismatchError);
+            }
+
+            Ok(Oid {
+                id: id.value().to_vec(),
+            })
+        }
+        .boxed()
+    }
+}
 
 /// RFC 6960 CertID
 pub struct CertId {

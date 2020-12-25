@@ -9,6 +9,8 @@ use crate::err::OcspError;
 
 /// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
+pub(crate) const ASN1_NULL: u8 = 0x05;
+pub(crate) const ASN1_OID: u8 = 0x06;
 
 #[allow(dead_code)]
 // remove with asn1_common mod
