@@ -66,6 +66,7 @@ impl<'d> OcspRequest<'d> {
     }
 }
 
+#[allow(dead_code)]
 impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
     type Error = OcspError;
     fn try_from(raw: &'d Vec<u8>) -> Result<Self, Self::Error> {
