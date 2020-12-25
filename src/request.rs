@@ -112,6 +112,21 @@ pub struct TBSRequest<'d> {
     request_ext: Option<DerObject<'d>>,
 }
 
+impl<'d> TBSRequest<'d> {
+    fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str, OcspError>> {
+        async move {
+            match &self.requestor_name {
+                None => Ok(""),
+                Some(v) => {
+                    let name = std::str::from_utf8(v).map_err(OcspError::Asn1Utf8Error)?;
+                    Ok(name)
+                }
+            }
+        }
+        .boxed()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use asn1_der::{
