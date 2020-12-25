@@ -19,7 +19,7 @@ pub struct CertId {
 pub struct OcspRequest<'d> {
     /// RFC 6960 TBSRequest
     tbs_request: Sequence<'d>,
-    /// RFC 6960 optionalSignature, explicit tag [0]
+    /// RFC 6960 optionalSignature, explicit tag 0
     optional_signature: Option<DerObject<'d>>,
 }
 
@@ -97,10 +97,11 @@ impl<'d> TryFrom<&'d Vec<u8>> for OcspRequest<'d> {
     }
 }
 
-/// RFC 6960 TBSRequest
+/// RFC 6960 TBSRequest  
+/// version is omitted as data produced from OpenSSL doesn't contain version  
+/// REVIEW: omit version in tbs request
 pub struct TBSRequest<'d> {
-    // explicit 0
-    // REVIEW: omitted in OpenSSL
+    // explicit tag 0
     // version: u8,
     /// requestorName is OPTIONAL and indicates the name of the OCSP requestor.
     /// explicit 1
