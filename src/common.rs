@@ -47,14 +47,38 @@ impl<'d> TryIntoSequence<'d> for Vec<u8> {
 /// RFC 6960 4.4
 pub enum OcspExt {
     /// 4.4.1
-    Nonce,
+    Nonce {
+        ///id-pkix-ocsp 2
+        oid: Vec<u8>,
+        /// nonce value
+        nonce: Vec<u8>,
+    },
     /// 4.4.2
-    CrlRef,
+    CrlRef {
+        /// id-pkix-ocsp 3
+        oid: Vec<u8>,
+        /// EXPLICIT IA5String OPTIONAL
+        url: Option<Vec<u8>>,
+        /// EXPLICIT INTEGER OPTIONAL
+        num: Option<Vec<u8>>,
+        /// EXPLICIT GeneralizedTime OPTIONAL
+        time: Option<Vec<u8>>,
+    },
 }
 
 impl OcspExt {
-    /// parse ocsp extension
-    pub fn parse<'d>() -> BoxFuture<'d, Result<Self, OcspError>> {
-        async move { unimplemented!() }.boxed()
+    /// parse ocsp extension  
+    /// raw is sequence of list extensions  
+    /// remove explicit and implicit tags
+    pub fn parse<'d>(raw: Vec<u8>) -> BoxFuture<'d, Result<Vec<Self>, OcspError>> {
+        async move {
+            //let r = Vec::new();
+            let list = raw.try_into()?;
+            for i in 0..list.len() {
+                let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
+            }
+            unimplemented!()
+        }
+        .boxed()
     }
 }
