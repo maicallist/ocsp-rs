@@ -28,7 +28,7 @@ impl Oid {
             let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
             let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
             if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
-                return Err(OcspError::Asn1MismatchError);
+                return Err(OcspError::Asn1MismatchError("OID".to_owned()));
             }
 
             Ok(Oid {
@@ -66,7 +66,7 @@ impl CertId {
                 || key_hash.tag() != ASN1_OCTET
                 || sn.tag() != ASN1_INTEGER
             {
-                return Err(OcspError::Asn1MismatchError);
+                return Err(OcspError::Asn1MismatchError("CertId".to_owned()));
             }
 
             let oid = Oid::parse(oid.value().to_vec()).await?;

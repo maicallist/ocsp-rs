@@ -14,8 +14,8 @@ pub enum OcspError {
     Asn1ExtractionUnknownError,
     /// extractor cannot find matching sequence  
     /// eg. OID sequence is not 0x06, 0x05
-    #[error("Unable to extract desired sequence")]
-    Asn1MismatchError,
+    #[error("Unable to extract desired sequence of {0}")]
+    Asn1MismatchError(String),
     /// ocsp request contains unexpected data
     /// case 1: no sequence in request
     /// case 2: ocsp request is not {0x30} or {0x30, 0xA0}
