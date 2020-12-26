@@ -90,6 +90,13 @@ pub struct OneReq {
     one_req_ext: OcspExt,
 }
 
+impl OneReq {
+    /// get single request
+    pub fn parse<'d>() -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move { unimplemented!() }.boxed()
+    }
+}
+
 /// RFC 6960 OCSPRequest
 pub struct OcspRequest<'d> {
     /// RFC 6960 TBSRequest

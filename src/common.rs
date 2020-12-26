@@ -4,6 +4,7 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
+use futures::future::{BoxFuture, FutureExt};
 
 use crate::err::OcspError;
 
@@ -49,4 +50,11 @@ pub enum OcspExt {
     Nonce,
     /// 4.4.2
     CrlRef,
+}
+
+impl OcspExt {
+    /// parse ocsp extension
+    pub fn parse<'d>() -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move { unimplemented!() }.boxed()
+    }
 }
