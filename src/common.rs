@@ -81,4 +81,14 @@ impl OcspExt {
         }
         .boxed()
     }
+
+    fn parse_oneext<'d>(oneext: Sequence<'d>) -> BoxFuture<'d, Result<Self, OcspError>> {
+        async move {
+            let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
+            if oid.tag() != ASN1_OID { return Err(OcspError::Asn1MismatchError("OID".to_owned()))}
+            let val = oid.value();
+            // translate oid
+            unimplemented!()
+        }.boxed()
+    }
 }
