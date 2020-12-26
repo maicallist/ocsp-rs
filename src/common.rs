@@ -42,3 +42,11 @@ impl<'d> TryIntoSequence<'d> for Vec<u8> {
         Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
     }
 }
+
+/// RFC 6960 4.4
+pub enum OcspExt {
+    /// 4.4.1
+    Nonce,
+    /// 4.4.2
+    CrlRef,
+}

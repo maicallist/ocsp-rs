@@ -4,7 +4,8 @@ use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 
 use crate::common::{
-    TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
+    OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
+    ASN1_SEQUENCE,
 };
 use crate::err::OcspError;
 
@@ -82,6 +83,11 @@ impl CertId {
         }
         .boxed()
     }
+}
+/// RFC 6960 Request
+pub struct OneReq {
+    one_req: CertId,
+    one_req_ext: OcspExt,
 }
 
 /// RFC 6960 OCSPRequest
