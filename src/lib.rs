@@ -33,6 +33,7 @@
 pub mod common;
 pub mod err;
 pub mod request;
+pub mod oid;
 
 #[cfg(test)]
 mod tests {}
