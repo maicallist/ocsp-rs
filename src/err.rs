@@ -33,4 +33,8 @@ pub enum OcspError {
     /// CertID length is not 4
     #[error("Unable to deserialize CertID")]
     Asn1CertidLengthError,
+
+    /// Cannot find OID in predefined list
+    #[error("Unable to locate OID info")]
+    Asn1OidUnknown,
 }

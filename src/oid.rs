@@ -21,13 +21,13 @@ pub async fn b2v_oid(oid: Vec<u8>) -> u8 {
 
 /// defined OID
 pub struct ConstOid {
-    id: u8,
+    pub(crate) id: u8,
     num: &'static str,
     name: &'static str,
 }
 
 lazy_static! {
-    static ref OID_LIST: HashMap<Vec<u8>, ConstOid> = vec![
+    pub(crate) static ref OID_LIST: HashMap<Vec<u8>, ConstOid> = vec![
         (
             OCSP_EXT_NONCE_HEX.to_vec(),
             ConstOid {

@@ -6,7 +6,8 @@ use asn1_der::{
 };
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::err::OcspError;
+use crate::oid::OID_LIST;
+use crate::{err::OcspError, oid::ConstOid};
 
 /// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -44,19 +45,26 @@ impl<'d> TryIntoSequence<'d> for Vec<u8> {
     }
 }
 
+impl<'d> TryIntoSequence<'d> for &[u8] {
+    type Error = OcspError;
+    fn try_into(&'d self) -> Result<Sequence, Self::Error> {
+        Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
+    }
+}
+
 /// RFC 6960 4.4
 pub enum OcspExt {
     /// 4.4.1
     Nonce {
         ///id-pkix-ocsp 2
-        oid: Vec<u8>,
+        oid: &'static ConstOid,
         /// nonce value
         nonce: Vec<u8>,
     },
     /// 4.4.2
     CrlRef {
         /// id-pkix-ocsp 3
-        oid: Vec<u8>,
+        oid: &'static ConstOid,
         /// EXPLICIT IA5String OPTIONAL
         url: Option<Vec<u8>>,
         /// EXPLICIT INTEGER OPTIONAL
@@ -72,23 +80,46 @@ impl OcspExt {
     /// remove explicit and implicit tags
     pub fn parse<'d>(raw: Vec<u8>) -> BoxFuture<'d, Result<Vec<Self>, OcspError>> {
         async move {
-            //let r = Vec::new();
+            let mut r: Vec<OcspExt> = Vec::new();
             let list = raw.try_into()?;
             for i in 0..list.len() {
                 let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
+                r.push(OcspExt::parse_oneext(ext).await?);
             }
-            unimplemented!()
+            Ok(r)
         }
         .boxed()
     }
 
+    /// pass in each sequence of extension, return OcspExt
     fn parse_oneext<'d>(oneext: Sequence<'d>) -> BoxFuture<'d, Result<Self, OcspError>> {
         async move {
             let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
-            if oid.tag() != ASN1_OID { return Err(OcspError::Asn1MismatchError("OID".to_owned()))}
+            if oid.tag() != ASN1_OID {
+                return Err(OcspError::Asn1MismatchError("OID".to_owned()));
+            }
             let val = oid.value();
             // translate oid
-            unimplemented!()
-        }.boxed()
+            let ext = match OID_LIST.get(val) {
+                None => return Err(OcspError::Asn1OidUnknown),
+                Some(v) => v,
+            };
+
+            let r = match ext.id {
+                1u8 => OcspExt::Nonce {
+                    oid: ext,
+                    nonce: oneext
+                        .get(1)
+                        .map_err(OcspError::Asn1DecodingError)?
+                        .value()
+                        .to_vec(),
+                },
+                //2u8 => OcspExt::CrlRef { oid: ext },
+                _ => unimplemented!(),
+            };
+
+            Ok(r)
+        }
+        .boxed()
     }
 }
