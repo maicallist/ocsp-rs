@@ -12,13 +12,14 @@ use crate::err::OcspError;
 /// Oid represents a 0x06 OID type in ASN.1  
 /// in OpenSSL ocsp request, OID is followed by NULL 0x05
 /// REVIEW 0x05
+#[derive(Debug)]
 pub struct Oid {
     id: Vec<u8>,
     //null: Vec<u8>,
 }
 
 impl Oid {
-    /// get oid from raw bytes
+    /// get oid from raw sequence
     pub fn parse<'d>(oid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
         async move {
             let s = oid.try_into()?;
@@ -49,7 +50,7 @@ pub struct CertId {
 
 impl CertId {
     /// get certid from raw bytes
-    pub fn parse<'d>(self, certid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse<'d>(certid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
         async move {
             let s = certid.try_into()?;
             if s.len() != 4 {
@@ -198,7 +199,7 @@ mod test {
     };
     use hex;
 
-    use super::OcspRequest;
+    use super::{CertId, OcspRequest, Oid};
 
     #[tokio::test]
     async fn ocsprequest_parse_from_v8() {
@@ -247,5 +248,26 @@ mod test {
         t.extend(v);
         //println!("context specific exp tag 2{:02X?}", t);
         let _ = Sequence::decode(&t[..]).unwrap();
+    }
+
+    /// get certid from raw hex
+    #[tokio::test]
+    async fn parse_certid_v8() {
+        let certid_hex = "3041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46d";
+        let certid_v8 = hex::decode(certid_hex).unwrap();
+        let certid = CertId::parse(certid_v8).await.unwrap();
+    }
+
+    // get oid vec<u8> from raw hex
+    #[tokio::test]
+    async fn parse_oid_v8() {
+        let oid_hex = "300906052b0e03021a0500";
+        let oid_v8 = hex::decode(oid_hex).unwrap();
+        let oid = Oid::parse(oid_v8).await.unwrap();
+        assert_eq!(oid.id, vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]);
     }
 }
