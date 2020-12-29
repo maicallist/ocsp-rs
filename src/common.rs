@@ -12,6 +12,8 @@ use crate::{err_at, oid::OID_LIST};
 
 /// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
+pub(crate) const ASN1_EXPLICIT_1: u8 = 0xa1;
+pub(crate) const ASN1_EXPLICIT_2: u8 = 0xa2;
 pub(crate) const ASN1_NULL: u8 = 0x05;
 pub(crate) const ASN1_OID: u8 = 0x06;
 pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
@@ -109,7 +111,38 @@ impl OcspExt {
                         .value()
                         .to_vec(),
                 },
-                //2u8 => OcspExt::CrlRef { oid: ext },
+                OCSP_EXT_CRLREF_ID => {
+                    let mut url = None;
+                    let mut num = None;
+                    let mut time = None;
+                    for i in 1..oneext.len() {
+                        let tmp = oneext.get(i).map_err(OcspError::Asn1DecodingError)?;
+                        let (tag, val) = match tmp.tag() {
+                            // REVIEW: wired double await
+                            ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => open_explicit_tag(tmp).await.await,
+                            _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
+                        };
+                        match tag {
+                            ASN1_EXPLICIT_0 => {
+                                url = Some(val);
+                            }
+                            ASN1_EXPLICIT_1 => {
+                                num = Some(val);
+                            }
+                            ASN1_EXPLICIT_2 => {
+                                time = Some(val);
+                            }
+                            _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
+                        }
+                    }
+
+                    OcspExt::CrlRef {
+                        oid: ext,
+                        url: url,
+                        num: num,
+                        time: time,
+                    }
+                }
                 _ => unimplemented!(),
             };
 
@@ -117,4 +150,10 @@ impl OcspExt {
         }
         .boxed()
     }
+}
+
+/// remove explicit and implicit tag, return contained data
+/// used by oneext or TBSReq
+pub(crate) async fn open_explicit_tag<'d>(raw: DerObject<'d>) -> BoxFuture<'d, (u8, Vec<u8>)> {
+    async move { (raw.tag(), raw.value().to_vec()) }.boxed()
 }
