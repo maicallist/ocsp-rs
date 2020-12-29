@@ -262,6 +262,17 @@ mod test {
         let certid = CertId::parse(certid_v8).await.unwrap();
     }
 
+    // this proves asn1_der drops data after null tag in a sequence
+    #[tokio::test]
+    async fn parse_oid_null_drops() {
+        let oid_hex = "300906052b0e03021a0500040107";
+        let oid_v8 = hex::decode(oid_hex).unwrap();
+        let _ = Oid::parse(oid_v8).await.unwrap();
+        //let s = oid_v8.try_into().unwrap();
+        //let d = s.get(1).unwrap();
+        //println!("{:?}", d.header());
+    }
+
     // get oid vec<u8> from raw hex
     #[tokio::test]
     async fn parse_oid_v8() {
@@ -269,5 +280,36 @@ mod test {
         let oid_v8 = hex::decode(oid_hex).unwrap();
         let oid = Oid::parse(oid_v8).await.unwrap();
         assert_eq!(oid.id, vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]);
+    }
+
+    // display error with file & line info
+    #[tokio::test]
+    #[should_panic]
+    async fn parse_oid_sequence_into_err() {
+        let oid_hex = "300906052b0e03021a";
+        let oid_v8 = hex::decode(oid_hex).unwrap();
+        let _ = Oid::parse(oid_v8).await.unwrap();
+    }
+
+    // incorrect sequence length
+    #[tokio::test]
+    #[should_panic]
+    async fn parse_oid_length_err() {
+        let oid_hex = "3041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46d";
+        let oid_v8 = hex::decode(oid_hex).unwrap();
+        let _ = Oid::parse(oid_v8).await.unwrap();
+    }
+
+    // mismatch sequence
+    #[tokio::test]
+    #[should_panic]
+    async fn parse_oid_mismatch_err() {
+        let oid_hex = "300a06052b0e03021a0201ff";
+        let oid_v8 = hex::decode(oid_hex).unwrap();
+        let _ = Oid::parse(oid_v8).await.unwrap();
     }
 }
