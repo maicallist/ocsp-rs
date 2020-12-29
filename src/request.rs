@@ -135,7 +135,7 @@ impl<'d> OcspRequest<'d> {
                         optional_signature: Some(sig),
                     });
                 }
-                _ => return Err(OcspError::Asn1MismatchError("TBSRequest", err_at!())),
+                _ => return Err(OcspError::Asn1LengthError("TBSRequest", err_at!())),
             }
         }
         .boxed()
