@@ -77,7 +77,7 @@ pub enum OcspExt {
 impl OcspExt {
     /// parse ocsp extension  
     /// raw is sequence of list extensions  
-    /// remove explicit and implicit tags
+    /// remove explicit and implicit tags first
     pub fn parse<'d>(raw: Vec<u8>) -> BoxFuture<'d, Result<Vec<Self>, OcspError>> {
         async move {
             let mut r: Vec<OcspExt> = Vec::new();
