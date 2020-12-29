@@ -7,7 +7,7 @@ pub enum OcspError {
     #[error(transparent)]
     Asn1DecodingError(#[from] asn1_der::Asn1DerError),
 
-    /// extractor cannot find matching sequence  
+    /// cannot find matching sequence  
     /// eg. OID sequence is not 0x06, 0x05
     #[error("Unable to extract desired sequence of {0} at {1}")]
     Asn1MismatchError(&'static str, &'static str),
@@ -17,7 +17,8 @@ pub enum OcspError {
     #[error("Unable to deserialize string from ocsp req/resp")]
     Asn1Utf8Error(#[from] std::str::Utf8Error),
 
-    /// OID length is not 2, 0x06, 0x05
+    /// sequence length does not match intended data
+    /// eg. OID length is not 2, 0x06, 0x05
     #[error("Unable to deserialize {0} due to incorrect sequence length at {1}")]
     Asn1LengthError(&'static str, &'static str),
 
@@ -28,7 +29,7 @@ pub enum OcspError {
 
 /// display error location
 #[macro_export]
-macro_rules! err_at{
+macro_rules! err_at {
     () => {
         concat!("at ", file!(), " line ", line!(), " column ", column!())
     };
