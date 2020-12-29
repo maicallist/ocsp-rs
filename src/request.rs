@@ -91,13 +91,32 @@ impl CertId {
 /// RFC 6960 Request
 pub struct OneReq {
     one_req: CertId,
-    one_req_ext: OcspExt,
+    one_req_ext: Option<Vec<OcspExt>>,
 }
 
 impl OneReq {
     /// get single request
-    pub fn parse<'d>() -> BoxFuture<'d, Result<Self>> {
-        async move { unimplemented!() }.boxed()
+    pub fn parse<'d>(onereq: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
+        async move {
+            let s = onereq.try_into()?;
+            let certid = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+            let certid = CertId::parse(certid).await?;
+            let mut ext = None;
+            match s.len() {
+                1 => {}
+                2 => {
+                    let raw_ext = s.get_as(1).map_err(OcspError::Asn1DecodingError)?;
+                    ext = Some(OcspExt::parse(raw_ext).await?);
+                }
+                _ => return Err(OcspError::Asn1LengthError("OneReq", err_at!())),
+            }
+
+            Ok(OneReq {
+                one_req: certid,
+                one_req_ext: ext,
+            })
+        }
+        .boxed()
     }
 }
 
