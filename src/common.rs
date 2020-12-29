@@ -6,8 +6,8 @@ use asn1_der::{
 };
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::oid::OID_LIST;
 use crate::{err::OcspError, oid::ConstOid};
+use crate::{err_at, oid::OID_LIST};
 
 /// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -96,12 +96,12 @@ impl OcspExt {
         async move {
             let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
             if oid.tag() != ASN1_OID {
-                return Err(OcspError::Asn1MismatchError("OID".to_owned()));
+                return Err(OcspError::Asn1MismatchError("OID", err_at!()));
             }
             let val = oid.value();
             // translate oid
             let ext = match OID_LIST.get(val) {
-                None => return Err(OcspError::Asn1OidUnknown),
+                None => return Err(OcspError::Asn1OidUnknown(err_at!())),
                 Some(v) => v,
             };
 

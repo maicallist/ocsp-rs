@@ -9,14 +9,8 @@ pub enum OcspError {
 
     /// extractor cannot find matching sequence  
     /// eg. OID sequence is not 0x06, 0x05
-    #[error("Unable to extract desired sequence of {0}")]
-    Asn1MismatchError(String),
-
-    /// ocsp request contains unexpected data
-    /// case 1: no sequence in request
-    /// case 2: ocsp request is not {0x30} or {0x30, 0xA0}
-    #[error("Ocsp request contains unexpected data")]
-    Asn1MalformedTBSRequest,
+    #[error("Unable to extract desired sequence of {0} at {1}")]
+    Asn1MismatchError(&'static str, &'static str),
 
     /// unable to parse vec\<u8\> to &str   
     /// eg. requestorName
@@ -27,18 +21,14 @@ pub enum OcspError {
     #[error("Unable to deserialize {0} due to incorrect sequence length at {1}")]
     Asn1LengthError(&'static str, &'static str),
 
-    /// CertID length is not 4
-    #[error("Unable to deserialize CertID")]
-    Asn1CertidLengthError,
-
     /// Cannot find OID in predefined list
-    #[error("Unable to locate OID info")]
-    Asn1OidUnknown,
+    #[error("Unable to locate OID info {0}")]
+    Asn1OidUnknown(&'static str),
 }
 
 /// display error location
 #[macro_export]
-macro_rules! error_origin {
+macro_rules! err_at{
     () => {
         concat!("at ", file!(), " line ", line!(), " column ", column!())
     };

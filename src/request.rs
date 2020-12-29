@@ -9,7 +9,7 @@ use crate::{
         OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
         ASN1_SEQUENCE,
     },
-    error_origin,
+    err_at,
 };
 
 /// Oid represents a 0x06 OID type in ASN.1  
@@ -27,12 +27,12 @@ impl Oid {
         async move {
             let s = oid.try_into()?;
             if s.len() != 2 {
-                return Err(OcspError::Asn1LengthError("OID", error_origin!()));
+                return Err(OcspError::Asn1LengthError("OID", err_at!()));
             }
             let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
             let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
             if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
-                return Err(OcspError::Asn1MismatchError("OID".to_owned()));
+                return Err(OcspError::Asn1MismatchError("OID", err_at!()));
             }
 
             Ok(Oid {
@@ -57,7 +57,7 @@ impl CertId {
         async move {
             let s = certid.try_into()?;
             if s.len() != 4 {
-                return Err(OcspError::Asn1CertidLengthError);
+                return Err(OcspError::Asn1LengthError("CertID", err_at!()));
             }
 
             let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
@@ -70,7 +70,7 @@ impl CertId {
                 || key_hash.tag() != ASN1_OCTET
                 || sn.tag() != ASN1_INTEGER
             {
-                return Err(OcspError::Asn1MismatchError("CertId".to_owned()));
+                return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
             }
 
             let oid = Oid::parse(oid.raw().to_vec()).await?;
@@ -128,14 +128,14 @@ impl<'d> OcspRequest<'d> {
                     // per RFC 6960
                     // optional signature is explicit 0
                     if sig.tag() != ASN1_EXPLICIT_0 {
-                        return Err(OcspError::Asn1MalformedTBSRequest);
+                        return Err(OcspError::Asn1MismatchError("TBSRequest", err_at!()));
                     }
                     return Ok(OcspRequest {
                         tbs_request: tbs,
                         optional_signature: Some(sig),
                     });
                 }
-                _ => return Err(OcspError::Asn1MalformedTBSRequest),
+                _ => return Err(OcspError::Asn1MismatchError("TBSRequest", err_at!())),
             }
         }
         .boxed()
