@@ -3,7 +3,7 @@
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::err::OcspError;
+use crate::err::{OcspError, Result};
 use crate::{
     common::{
         OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
@@ -23,7 +23,7 @@ pub struct Oid {
 
 impl Oid {
     /// get oid from raw sequence
-    pub fn parse<'d>(oid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse<'d>(oid: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
             let s = oid.try_into()?;
             if s.len() != 2 {
@@ -53,7 +53,7 @@ pub struct CertId {
 
 impl CertId {
     /// get certid from raw bytes
-    pub fn parse<'d>(certid: Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse<'d>(certid: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
             let s = certid.try_into()?;
             if s.len() != 4 {
@@ -96,7 +96,7 @@ pub struct OneReq {
 
 impl OneReq {
     /// get single request
-    pub fn parse<'d>() -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse<'d>() -> BoxFuture<'d, Result<Self>> {
         async move { unimplemented!() }.boxed()
     }
 }
@@ -111,7 +111,7 @@ pub struct OcspRequest<'d> {
 
 impl<'d> OcspRequest<'d> {
     /// create OcspRequest from Vec<u8>
-    pub fn parse(raw: &'d Vec<u8>) -> BoxFuture<'d, Result<Self, OcspError>> {
+    pub fn parse(raw: &'d Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
             let s = raw.try_into()?;
             match s.len() {
@@ -170,7 +170,7 @@ pub struct TBSRequest<'d> {
 
 impl<'d> TBSRequest<'d> {
     /// parse requestor name from vec\<u8\> via str::from_utf8()
-    pub fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str, OcspError>> {
+    pub fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str>> {
         async move {
             match &self.requestor_name {
                 None => Ok(""),

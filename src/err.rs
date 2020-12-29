@@ -1,5 +1,9 @@
 //! error definitions
 use thiserror::Error;
+
+/// all lib functions return OcspError
+pub type Result<T> = std::result::Result<T, OcspError>;
+
 /// crate error enum
 #[derive(Error, Debug)]
 pub enum OcspError {
