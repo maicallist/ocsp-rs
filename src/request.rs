@@ -70,7 +70,7 @@ impl CertId {
                 return Err(OcspError::Asn1MismatchError("CertId".to_owned()));
             }
 
-            let oid = Oid::parse(oid.value().to_vec()).await?;
+            let oid = Oid::parse(oid.raw().to_vec()).await?;
             let name_hash = name_hash.value().to_vec();
             let key_hash = key_hash.value().to_vec();
             let sn = sn.value().to_vec();
