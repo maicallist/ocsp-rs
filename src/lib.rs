@@ -32,8 +32,8 @@
 //pub mod sync;
 pub mod common;
 pub mod err;
-pub mod request;
 pub mod oid;
+pub mod request;
 
 #[cfg(test)]
 mod tests {}
