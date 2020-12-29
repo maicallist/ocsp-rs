@@ -17,12 +17,6 @@ pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
 pub(crate) const ASN1_OCTET: u8 = 0x04;
 pub(crate) const ASN1_INTEGER: u8 = 0x02;
 
-#[allow(dead_code)]
-// remove with asn1_common mod
-/// CertID asn1 sequence
-/// see [ocsp_rs::asn1_common::OcspAsn1Der::extract_id]
-pub(crate) const CERTID_TAG: [u8; 5] = [6u8, 5u8, 4u8, 4u8, 2u8];
-
 /// allowing data to be converted to asn1_der::typed::Sequence
 pub trait TryIntoSequence<'d> {
     /// converting asn1_der::err
