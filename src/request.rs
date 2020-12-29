@@ -3,11 +3,14 @@
 use asn1_der::{typed::Sequence, DerObject};
 use futures::future::{BoxFuture, FutureExt};
 
-use crate::common::{
-    OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
-    ASN1_SEQUENCE,
-};
 use crate::err::OcspError;
+use crate::{
+    common::{
+        OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
+        ASN1_SEQUENCE,
+    },
+    error_origin,
+};
 
 /// Oid represents a 0x06 OID type in ASN.1  
 /// in OpenSSL ocsp request, OID is followed by NULL 0x05
@@ -24,7 +27,7 @@ impl Oid {
         async move {
             let s = oid.try_into()?;
             if s.len() != 2 {
-                return Err(OcspError::Asn1OidLengthError);
+                return Err(OcspError::Asn1LengthError("OID", error_origin!()));
             }
             let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
             let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
