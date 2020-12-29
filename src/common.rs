@@ -6,6 +6,7 @@ use asn1_der::{
 };
 use futures::future::{BoxFuture, FutureExt};
 
+use crate::oid::*;
 use crate::{err::OcspError, oid::ConstOid};
 use crate::{err_at, oid::OID_LIST};
 
@@ -100,7 +101,7 @@ impl OcspExt {
             };
 
             let r = match ext.id {
-                1u8 => OcspExt::Nonce {
+                OCSP_EXT_NONCE_ID => OcspExt::Nonce {
                     oid: ext,
                     nonce: oneext
                         .get(1)
