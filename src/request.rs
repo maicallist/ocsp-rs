@@ -184,7 +184,7 @@ pub struct TBSRequest {
     request_list: Vec<OneReq>,
     /// requestExtensions is OPTIONAL and includes extensions applicable
     /// to the requests found in reqCert.
-    request_ext: Option<OcspExt>,
+    request_ext: Option<Vec<OcspExt>>,
 }
 
 impl TBSRequest {
@@ -229,7 +229,11 @@ impl TBSRequest {
                     _ => return Err(OcspError::Asn1MismatchError("TBS Request", err_at!())),
                 }
             }
-            unimplemented!()
+            Ok(TBSRequest {
+                requestor_name: name,
+                request_list: req,
+                request_ext: ext,
+            })
         }
         .boxed()
     }
