@@ -118,18 +118,24 @@ impl OcspExt {
                     for i in 1..oneext.len() {
                         let tmp = oneext.get(i).map_err(OcspError::Asn1DecodingError)?;
                         let val = match tmp.tag() {
-                            ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => tmp.value().to_vec(),
+                            ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => tmp.value(),
                             _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
                         };
                         match tmp.tag() {
                             ASN1_EXPLICIT_0 => {
-                                url = Some(val);
+                                let val =
+                                    DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
+                                url = Some(val.value().to_vec());
                             }
                             ASN1_EXPLICIT_1 => {
-                                num = Some(val);
+                                let val =
+                                    DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
+                                num = Some(val.value().to_vec());
                             }
                             ASN1_EXPLICIT_2 => {
-                                time = Some(val);
+                                let val =
+                                    DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
+                                time = Some(val.value().to_vec());
                             }
                             _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
                         }
