@@ -272,8 +272,13 @@ mod test {
         DerObject,
     };
     use hex;
+    use env_logger;
 
     use super::{CertId, OcspRequest, Oid, OneReq, TBSRequest};
+
+    fn init() {
+        let _ = env_logger::builder().is_test(true).filter_level(log::LevelFilter::Debug).try_init();
+    }
 
     #[tokio::test]
     async fn ocsprequest_parse_from_v8() {
@@ -326,6 +331,7 @@ mod test {
 
     #[tokio::test]
     async fn parse_tbs_nonce_ext() {
+        init();
         let tbs_hex = "306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
