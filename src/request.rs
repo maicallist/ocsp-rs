@@ -6,8 +6,8 @@ use futures::future::{BoxFuture, FutureExt};
 use crate::err::{OcspError, Result};
 use crate::{
     common::{
-        OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID,
-        ASN1_SEQUENCE,
+        OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2,
+        ASN1_IA5STRING, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
     },
     err_at,
 };
@@ -174,42 +174,60 @@ impl<'d> OcspRequest<'d> {
 /// RFC 6960 TBSRequest  
 /// version is omitted as data produced from OpenSSL doesn't contain version  
 /// REVIEW: omit version in tbs request
-pub struct TBSRequest<'d> {
+pub struct TBSRequest {
     // explicit tag 0
     // version: u8,
     /// requestorName is OPTIONAL and indicates the name of the OCSP requestor.
     /// explicit 1
     requestor_name: Option<Vec<u8>>,
     /// requestList contains one or more single certificate status requests.
-    request_list: Vec<Sequence<'d>>,
+    request_list: Vec<OneReq>,
     /// requestExtensions is OPTIONAL and includes extensions applicable
     /// to the requests found in reqCert.
-    request_ext: Option<DerObject<'d>>,
+    request_ext: Option<OcspExt>,
 }
 
-impl<'d> TBSRequest<'d> {
-    /// parse requestor name from vec\<u8\> via str::from_utf8()
-    pub fn get_requestor_name(&'d self) -> BoxFuture<'d, Result<&'d str>> {
+impl TBSRequest {
+    fn parse<'d>(tbs: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
-            match &self.requestor_name {
-                None => Ok(""),
-                Some(v) => {
-                    let name = std::str::from_utf8(v).map_err(OcspError::Asn1Utf8Error)?;
-                    Ok(name)
+            let mut name = None;
+            //let mut ext = None;
+            let mut req: Vec<OneReq> = Vec::new();
+            let s = tbs.try_into()?;
+            for i in 0..s.len() {
+                let tbs_item = s.get(i).map_err(OcspError::Asn1DecodingError)?;
+                match tbs_item.tag() {
+                    ASN1_EXPLICIT_0 => {
+                        unimplemented!()
+                    }
+                    ASN1_EXPLICIT_1 => {
+                        let val = tbs_item.value();
+                        let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
+                        if val.tag() != ASN1_IA5STRING {
+                            return Err(OcspError::Asn1MismatchError(
+                                "TBS requestor name",
+                                err_at!(),
+                            ));
+                        }
+                        name = Some(val.value().to_vec());
+                    }
+                    ASN1_EXPLICIT_2 => {
+                        unimplemented!()
+                    }
+                    ASN1_SEQUENCE => {
+                        let req_list = tbs_item.try_into()?;
+                        for j in 0..req_list.len() {
+                            let onereq = req_list.get(j).map_err(OcspError::Asn1DecodingError)?;
+                            let onereq = OneReq::parse(onereq.raw().to_vec()).await?;
+                            req.push(onereq);
+                        }
+                    }
+                    _ => return Err(OcspError::Asn1MismatchError("TBS Request", err_at!())),
                 }
             }
+            unimplemented!()
         }
         .boxed()
-    }
-
-    /// get list of onereq[OpenSSL]
-    pub fn get_request_list(self) -> BoxFuture<'d, Vec<Sequence<'d>>> {
-        async move { self.request_list }.boxed()
-    }
-
-    /// get extension for ocsp request
-    pub fn get_request_ext(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
-        async move { self.request_ext }.boxed()
     }
 }
 

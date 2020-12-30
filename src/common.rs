@@ -19,6 +19,7 @@ pub(crate) const ASN1_OID: u8 = 0x06;
 pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
 pub(crate) const ASN1_OCTET: u8 = 0x04;
 pub(crate) const ASN1_INTEGER: u8 = 0x02;
+pub(crate) const ASN1_IA5STRING: u8 = 0x16;
 
 /// allowing data to be converted to asn1_der::typed::Sequence
 pub trait TryIntoSequence<'d> {
