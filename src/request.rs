@@ -215,7 +215,8 @@ impl TBSRequest {
                         unimplemented!()
                     }
                     ASN1_SEQUENCE => {
-                        let req_list = tbs_item.try_into()?;
+                        let req_list = tbs_item.value();
+                        let req_list = req_list.try_into()?;
                         for j in 0..req_list.len() {
                             let onereq = req_list.get(j).map_err(OcspError::Asn1DecodingError)?;
                             let onereq = OneReq::parse(onereq.raw().to_vec()).await?;
