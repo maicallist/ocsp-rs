@@ -247,7 +247,7 @@ mod test {
     };
     use hex;
 
-    use super::{CertId, OcspRequest, Oid, OneReq};
+    use super::{CertId, OcspRequest, Oid, OneReq, TBSRequest};
 
     #[tokio::test]
     async fn ocsprequest_parse_from_v8() {
@@ -296,6 +296,19 @@ mod test {
         t.extend(v);
         //println!("context specific exp tag 2{:02X?}", t);
         let _ = Sequence::decode(&t[..]).unwrap();
+    }
+
+    #[tokio::test]
+    async fn parse_tbs_nonce_ext() {
+        let tbs_hex = "306c304530433041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46da223302130\
+    1f06092b060105050730010204120410\
+    1cfc8fa3f5e15ed760707bc46670559b";
+        let tbs_v8 = hex::decode(tbs_hex).unwrap();
+        let tbs = TBSRequest::parse(tbs_v8).await.unwrap();
     }
 
     // get one request with no extension on either request
