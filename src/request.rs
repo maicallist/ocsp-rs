@@ -270,13 +270,18 @@ mod test {
         typed::{DerDecodable, Sequence},
         DerObject,
     };
-    use hex;
     use env_logger;
+    use hex;
 
     use super::{CertId, OcspRequest, Oid, OneReq, TBSRequest};
 
+    // init log
+    #[allow(dead_code)]
     fn init() {
-        let _ = env_logger::builder().is_test(true).filter_level(log::LevelFilter::Debug).try_init();
+        let _ = env_logger::builder()
+            .is_test(true)
+            .filter_level(log::LevelFilter::Debug)
+            .try_init();
     }
 
     #[tokio::test]
@@ -328,9 +333,9 @@ mod test {
         let _ = Sequence::decode(&t[..]).unwrap();
     }
 
+    // get one tbs request with nonce ext
     #[tokio::test]
     async fn parse_tbs_nonce_ext() {
-        init();
         let tbs_hex = "306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -339,7 +344,7 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let tbs_v8 = hex::decode(tbs_hex).unwrap();
-        let tbs = TBSRequest::parse(tbs_v8).await.unwrap();
+        let _ = TBSRequest::parse(tbs_v8).await.unwrap();
     }
 
     // get one request with no extension on either request
@@ -351,9 +356,7 @@ mod test {
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let onereq_v8 = hex::decode(onereq_hex).unwrap();
-        let s = Sequence::decode(&onereq_v8[..]).unwrap();
-        println!("ok");
-        let onereq = OneReq::parse(onereq_v8).await.unwrap();
+        let _ = OneReq::parse(onereq_v8).await.unwrap();
     }
 
     /// get certid from raw hex
@@ -365,7 +368,7 @@ mod test {
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let certid_v8 = hex::decode(certid_hex).unwrap();
-        let certid = CertId::parse(certid_v8).await.unwrap();
+        let _ = CertId::parse(certid_v8).await.unwrap();
     }
 
     // this proves asn1_der drops data after null tag in a sequence
