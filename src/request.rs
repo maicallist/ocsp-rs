@@ -188,7 +188,8 @@ pub struct TBSRequest {
 }
 
 impl TBSRequest {
-    fn parse<'d>(tbs: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
+    /// parse a tbs request
+    pub fn parse<'d>(tbs: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
             let mut name = None;
             let mut ext = None;
