@@ -117,12 +117,11 @@ impl OcspExt {
                     let mut time = None;
                     for i in 1..oneext.len() {
                         let tmp = oneext.get(i).map_err(OcspError::Asn1DecodingError)?;
-                        let (tag, val) = match tmp.tag() {
-                            // REVIEW: wired double await
-                            ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => open_explicit_tag(tmp).await.await,
+                        let val = match tmp.tag() {
+                            ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => tmp.value().to_vec(),
                             _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
                         };
-                        match tag {
+                        match tmp.tag() {
                             ASN1_EXPLICIT_0 => {
                                 url = Some(val);
                             }
@@ -150,10 +149,4 @@ impl OcspExt {
         }
         .boxed()
     }
-}
-
-/// remove explicit and implicit tag, return contained data
-/// used by oneext or TBSReq
-pub(crate) async fn open_explicit_tag<'d>(raw: DerObject<'d>) -> BoxFuture<'d, (u8, Vec<u8>)> {
-    async move { (raw.tag(), raw.value().to_vec()) }.boxed()
 }
