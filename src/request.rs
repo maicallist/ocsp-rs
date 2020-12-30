@@ -191,7 +191,7 @@ impl TBSRequest {
     fn parse<'d>(tbs: Vec<u8>) -> BoxFuture<'d, Result<Self>> {
         async move {
             let mut name = None;
-            //let mut ext = None;
+            let mut ext = None;
             let mut req: Vec<OneReq> = Vec::new();
             let s = tbs.try_into()?;
             for i in 0..s.len() {
@@ -212,7 +212,9 @@ impl TBSRequest {
                         name = Some(val.value().to_vec());
                     }
                     ASN1_EXPLICIT_2 => {
-                        unimplemented!()
+                        let ext_list = tbs_item.value().to_vec();
+                        let ext_list = OcspExt::parse(ext_list).await?;
+                        ext = Some(ext_list);
                     }
                     ASN1_SEQUENCE => {
                         let req_list = tbs_item.value();
