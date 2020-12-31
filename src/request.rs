@@ -12,7 +12,7 @@ use crate::{
     err_at,
 };
 
-use log::{debug, trace};
+use log::debug;
 
 /// Oid represents a 0x06 OID type in ASN.1  
 /// in OpenSSL ocsp request, OID is followed by NULL 0x05
@@ -28,19 +28,16 @@ impl Oid {
     pub async fn parse(oid: Vec<u8>) -> Result<Self> {
         debug!("Parsing OID {:02X?}", oid);
         let s = oid.try_into()?;
-        trace!("Converting to sequence: ok");
+
         if s.len() != 2 {
-            trace!("Length check: fail");
             return Err(OcspError::Asn1LengthError("OID", err_at!()));
         }
-        trace!("Length check: ok");
+
         let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
         if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
-            trace!("Tag check: fail");
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
-        trace!("Tag check: ok");
 
         Ok(Oid {
             id: id.value().to_vec(),
@@ -61,12 +58,10 @@ impl CertId {
     pub async fn parse(certid: Vec<u8>) -> Result<Self> {
         debug!("Parsing CERTID {:02X?}", certid);
         let s = certid.try_into()?;
-        trace!("Converting to sequence: ok");
+
         if s.len() != 4 {
-            trace!("Length check: fail");
             return Err(OcspError::Asn1LengthError("CertID", err_at!()));
         }
-        trace!("Length check: ok");
 
         let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let name_hash = s.get(1).map_err(OcspError::Asn1DecodingError)?;
@@ -78,10 +73,8 @@ impl CertId {
             || key_hash.tag() != ASN1_OCTET
             || sn.tag() != ASN1_INTEGER
         {
-            trace!("Tag check: fail");
             return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
         }
-        trace!("Tag check: ok");
 
         let oid = Oid::parse(oid.raw().to_vec()).await?;
         let name_hash = name_hash.value().to_vec();
@@ -107,7 +100,7 @@ impl OneReq {
     pub async fn parse(onereq: Vec<u8>) -> Result<Self> {
         debug!("Parsing ONEREQ {:02X?}", onereq);
         let s = onereq.try_into()?;
-        trace!("Converting to sequence: ok");
+
         let certid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let certid = CertId::parse(certid.raw().to_vec()).await?;
         let mut ext = None;
@@ -118,11 +111,9 @@ impl OneReq {
                 ext = Some(OcspExt::parse(raw_ext).await?);
             }
             _ => {
-                trace!("Length check: fail");
                 return Err(OcspError::Asn1LengthError("OneReq", err_at!()));
             }
         }
-        trace!("Length check: ok");
 
         Ok(OneReq {
             one_req: certid,
@@ -206,7 +197,7 @@ impl TBSRequest {
         let mut ext = None;
         let mut req: Vec<OneReq> = Vec::new();
         let s = tbs.try_into()?;
-        trace!("Converting to sequence: ok");
+
         for i in 0..s.len() {
             let tbs_item = s.get(i).map_err(OcspError::Asn1DecodingError)?;
             match tbs_item.tag() {
@@ -238,11 +229,9 @@ impl TBSRequest {
                     }
                 }
                 _ => {
-                    trace!("Tag check: fail");
                     return Err(OcspError::Asn1MismatchError("TBS Request", err_at!()));
                 }
             }
-            trace!("Tag check: ok");
         }
         Ok(TBSRequest {
             requestor_name: name,
