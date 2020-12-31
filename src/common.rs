@@ -75,7 +75,7 @@ impl OcspExt {
     /// parse ocsp extension  
     /// raw is sequence of list extensions  
     /// remove explicit and implicit tags first
-    pub async fn parse<'d>(raw: Vec<u8>) -> Result<Vec<Self>, OcspError> {
+    pub async fn parse<'d>(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
         let mut r: Vec<OcspExt> = Vec::new();
         let list = raw.try_into()?;
         for i in 0..list.len() {

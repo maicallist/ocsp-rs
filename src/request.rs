@@ -107,7 +107,7 @@ impl OneReq {
         match s.len() {
             1 => {}
             2 => {
-                let raw_ext = s.get_as(1).map_err(OcspError::Asn1DecodingError)?;
+                let raw_ext = s.get(1).map_err(OcspError::Asn1DecodingError)?.raw();
                 ext = Some(OcspExt::parse(raw_ext).await?);
             }
             _ => {
@@ -165,7 +165,7 @@ impl TBSRequest {
                     name = Some(val.value().to_vec());
                 }
                 ASN1_EXPLICIT_2 => {
-                    let ext_list = tbs_item.value().to_vec();
+                    let ext_list = tbs_item.value();
                     let ext_list = OcspExt::parse(ext_list).await?;
                     ext = Some(ext_list);
                 }
