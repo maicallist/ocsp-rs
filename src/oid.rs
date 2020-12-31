@@ -22,6 +22,7 @@ pub async fn b2v_oid(oid: Vec<u8>) -> u8 {
 }
 
 /// defined OID
+#[derive(Debug)]
 pub struct ConstOid {
     pub(crate) id: u8,
     num: &'static str,

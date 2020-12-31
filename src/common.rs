@@ -49,6 +49,7 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
 }
 
 /// RFC 6960 4.4
+#[derive(Debug)]
 pub enum OcspExt {
     /// 4.4.1
     Nonce {

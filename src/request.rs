@@ -46,6 +46,7 @@ impl Oid {
 }
 
 /// RFC 6960 CertID
+#[derive(Debug)]
 pub struct CertId {
     /// hash algo oid in byte
     pub hash_algo: Oid,
@@ -94,6 +95,7 @@ impl CertId {
     }
 }
 /// RFC 6960 Request
+#[derive(Debug)]
 pub struct OneReq {
     /// certid of a single request
     pub one_req: CertId,
@@ -132,6 +134,7 @@ impl OneReq {
 /// RFC 6960 TBSRequest  
 /// version is omitted as data produced from OpenSSL doesn't contain version  
 /// REVIEW: omit version in tbs request
+#[derive(Debug)]
 pub struct TBSRequest {
     // explicit tag 0
     // version: u8,
@@ -199,6 +202,7 @@ impl TBSRequest {
 
 /// optional signature in ocsp request
 /// REVIEW: *untested*
+#[derive(Debug)]
 pub struct Signature {
     /// algo oid for signature
     pub signing_algo: Oid,
@@ -248,6 +252,7 @@ impl Signature {
 }
 
 /// RFC 6960 OCSPRequest
+#[derive(Debug)]
 pub struct OcspRequest {
     /// RFC 6960 TBSRequest
     pub tbs_request: TBSRequest,
