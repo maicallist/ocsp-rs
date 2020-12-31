@@ -9,7 +9,6 @@ use crate::oid::*;
 use crate::{err::OcspError, oid::ConstOid};
 use crate::{err_at, oid::OID_LIST};
 
-/// asn1 context-specific explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
 pub(crate) const ASN1_EXPLICIT_1: u8 = 0xa1;
 pub(crate) const ASN1_EXPLICIT_2: u8 = 0xa2;
