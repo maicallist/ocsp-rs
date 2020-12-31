@@ -15,10 +15,10 @@ pub(crate) const OCSP_EXT_CRLREF_HEX: [u8; 9] =
 pub(crate) const OCSP_EXT_CRLREF_NUM: &str = "1.3.6.1.5.5.7.48.1.3";
 pub(crate) const OCSP_EXT_CRLREF_NAME: &str = "id-pkix-ocsp 3";
 
-/// converting oid to human-readable num
+/// find OID info
 /// see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
-pub async fn b2v_oid(oid: Vec<u8>) -> u8 {
-    unimplemented!()
+pub async fn find_oid(oid: Vec<u8>) -> Option<&'static ConstOid> {
+    OID_LIST.get(&oid)
 }
 
 /// OID info
@@ -30,6 +30,8 @@ pub struct ConstOid {
     num: &'static str,
     /// OID in text format, eg. pkix-ocsp 1
     name: &'static str,
+    /// OID in binary format
+    bin: Vec<u8>,
 }
 
 lazy_static! {
@@ -40,7 +42,8 @@ lazy_static! {
             ConstOid {
                 id: OCSP_EXT_NONCE_ID,
                 num: OCSP_EXT_NONCE_NUM,
-                name: OCSP_EXT_NONCE_NAME
+                name: OCSP_EXT_NONCE_NAME,
+                bin: OCSP_EXT_NONCE_HEX.to_vec(),
             }
         ),
         (
@@ -49,6 +52,7 @@ lazy_static! {
                 id: OCSP_EXT_CRLREF_ID,
                 num: OCSP_EXT_CRLREF_NUM,
                 name: OCSP_EXT_CRLREF_NAME,
+                bin: OCSP_EXT_CRLREF_HEX.to_vec(),
             }
         ),
     ]
