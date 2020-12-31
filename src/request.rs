@@ -1,7 +1,6 @@
 //! OCSP request
 
-use asn1_der::{typed::Sequence, DerObject};
-use futures::future::{BoxFuture, FutureExt};
+use asn1_der::DerObject;
 
 use crate::err::{OcspError, Result};
 use crate::{
