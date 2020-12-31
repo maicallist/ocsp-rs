@@ -55,7 +55,7 @@ pub struct CertId {
 
 impl CertId {
     /// get certid from raw bytes
-    pub async fn parse(certid: Vec<u8>) -> Result<Self> {
+    pub async fn parse(certid: &[u8]) -> Result<Self> {
         debug!("Parsing CERTID {:02X?}", certid);
         let s = certid.try_into()?;
 
@@ -102,7 +102,7 @@ impl OneReq {
         let s = onereq.try_into()?;
 
         let certid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        let certid = CertId::parse(certid.raw().to_vec()).await?;
+        let certid = CertId::parse(certid.raw()).await?;
         let mut ext = None;
         match s.len() {
             1 => {}
@@ -382,7 +382,7 @@ mod test {
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let certid_v8 = hex::decode(certid_hex).unwrap();
-        let _ = CertId::parse(certid_v8).await.unwrap();
+        let _ = CertId::parse(&certid_v8[..]).await.unwrap();
     }
 
     // this proves asn1_der drops data after null tag in a sequence
