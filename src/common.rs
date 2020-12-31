@@ -4,7 +4,6 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
-use futures::future::{BoxFuture, FutureExt};
 
 use crate::oid::*;
 use crate::{err::OcspError, oid::ConstOid};
