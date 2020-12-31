@@ -264,7 +264,12 @@ impl OcspRequest {
                         let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                         sig = Some(Signature::parse(val.value()).await?);
                     }
-                    _ => return Err(OcspError::Asn1MismatchError("SIGNATURE EXP 0", err_at!())),
+                    _ => {
+                        return Err(OcspError::Asn1MismatchError(
+                            "SIGNATURE EXP 0 tag",
+                            err_at!(),
+                        ))
+                    }
                 }
             }
             _ => {}

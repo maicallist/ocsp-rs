@@ -133,7 +133,12 @@ impl OcspExt {
                                 DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                             time = Some(val.value().to_vec());
                         }
-                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
+                        _ => {
+                            return Err(OcspError::Asn1MismatchError(
+                                "Ext CrlRef EXP tag",
+                                err_at!(),
+                            ))
+                        }
                     }
                 }
 
