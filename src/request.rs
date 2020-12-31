@@ -14,7 +14,7 @@ use crate::{
 use log::debug;
 
 /// Oid represents a 0x06 OID type in ASN.1  
-/// in OpenSSL ocsp request, OID is followed by NULL 0x05
+/// In OpenSSL ocsp request, OID is followed by NULL 0x05  
 /// REVIEW 0x05
 #[derive(Debug)]
 pub struct Oid {
@@ -48,7 +48,7 @@ impl Oid {
 /// RFC 6960 CertID
 #[derive(Debug)]
 pub struct CertId {
-    /// hash algo oid in byte
+    /// hash algo oid
     pub hash_algo: Oid,
     /// issuer name hash in byte
     pub issuer_name_hash: Vec<u8>,
@@ -99,7 +99,7 @@ impl CertId {
 pub struct OneReq {
     /// certid of a single request
     pub one_req: CertId,
-    /// extension of a single request
+    /// extension of a single request  
     /// REVIEW: untested
     pub one_req_ext: Option<Vec<OcspExt>>,
 }
@@ -200,7 +200,7 @@ impl TBSRequest {
     }
 }
 
-/// optional signature in ocsp request
+/// optional signature in ocsp request  
 /// REVIEW: *untested*
 #[derive(Debug)]
 pub struct Signature {
@@ -208,7 +208,7 @@ pub struct Signature {
     pub signing_algo: Oid,
     /// tho RFC 6960 indicates signature is BIT STRING,  
     /// which has arbitrary length comparing to OCTET,  
-    /// but all signature length are multiple of 8,  
+    /// but all signatures' length are multiple of 8,  
     /// so using Vec\<u8\> here.
     pub signature: Vec<u8>,
     /// [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL

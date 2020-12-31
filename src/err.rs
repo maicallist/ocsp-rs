@@ -21,7 +21,7 @@ pub enum OcspError {
     #[error("Unable to deserialize string from ocsp req/resp")]
     Asn1Utf8Error(#[from] std::str::Utf8Error),
 
-    /// sequence length does not match intended data
+    /// sequence length does not match intended data  
     /// eg. OID length is not 2, 0x06, 0x05
     #[error("Unable to deserialize {0} due to incorrect sequence length at {1}")]
     Asn1LengthError(&'static str, &'static str),
