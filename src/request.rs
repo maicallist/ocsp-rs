@@ -140,7 +140,7 @@ pub struct TBSRequest {
 
 impl TBSRequest {
     /// parse a tbs request
-    pub async fn parse(tbs: Vec<u8>) -> Result<Self> {
+    pub async fn parse(tbs: &[u8]) -> Result<Self> {
         debug!("Parsing TBSREQUEST {:02X?}", tbs);
         let mut name = None;
         let mut ext = None;
@@ -270,7 +270,7 @@ impl OcspRequest {
             _ => {}
         }
         let req_v8 = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        req = TBSRequest::parse(req_v8.raw().to_vec()).await?;
+        req = TBSRequest::parse(req_v8.raw()).await?;
 
         Ok(OcspRequest {
             tbs_request: req,
@@ -358,7 +358,7 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let tbs_v8 = hex::decode(tbs_hex).unwrap();
-        let _ = TBSRequest::parse(tbs_v8).await.unwrap();
+        let _ = TBSRequest::parse(&tbs_v8[..]).await.unwrap();
     }
 
     // get one request with no extension on either request
