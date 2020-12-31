@@ -25,7 +25,7 @@ pub struct Oid {
 
 impl Oid {
     /// get oid from raw sequence
-    pub async fn parse(oid: Vec<u8>) -> Result<Self> {
+    pub async fn parse(oid: &[u8]) -> Result<Self> {
         debug!("Parsing OID {:02X?}", oid);
         let s = oid.try_into()?;
 
@@ -76,7 +76,7 @@ impl CertId {
             return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
         }
 
-        let oid = Oid::parse(oid.raw().to_vec()).await?;
+        let oid = Oid::parse(oid.raw()).await?;
         let name_hash = name_hash.value().to_vec();
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
@@ -215,7 +215,7 @@ impl Signature {
         match s.len() {
             2 => {
                 let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-                oid = Oid::parse(id.raw().to_vec()).await?;
+                oid = Oid::parse(id.raw()).await?;
 
                 signature = s
                     .get(1)
@@ -390,7 +390,7 @@ mod test {
     async fn parse_oid_null_drops() {
         let oid_hex = "300906052b0e03021a0500040107";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(oid_v8).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
         //let s = oid_v8.try_into().unwrap();
         //let d = s.get(1).unwrap();
         //println!("{:?}", d.header());
@@ -401,7 +401,7 @@ mod test {
     async fn parse_oid_v8() {
         let oid_hex = "300906052b0e03021a0500";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let oid = Oid::parse(oid_v8).await.unwrap();
+        let oid = Oid::parse(&oid_v8).await.unwrap();
         assert_eq!(oid.id, vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]);
     }
 
@@ -411,7 +411,7 @@ mod test {
     async fn parse_oid_sequence_into_err() {
         let oid_hex = "300906052b0e03021a";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(oid_v8).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
     }
 
     // incorrect sequence length
@@ -424,7 +424,7 @@ mod test {
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(oid_v8).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
     }
 
     // mismatch sequence
@@ -433,6 +433,6 @@ mod test {
     async fn parse_oid_mismatch_err() {
         let oid_hex = "300a06052b0e03021a0201ff";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(oid_v8).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
     }
 }
