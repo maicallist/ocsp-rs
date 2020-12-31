@@ -122,57 +122,6 @@ impl OneReq {
     }
 }
 
-/// RFC 6960 OCSPRequest
-pub struct OcspRequest<'d> {
-    /// RFC 6960 TBSRequest
-    tbs_request: Sequence<'d>,
-    /// RFC 6960 optionalSignature, explicit tag 0
-    optional_signature: Option<DerObject<'d>>,
-}
-
-impl<'d> OcspRequest<'d> {
-    /// create OcspRequest from Vec<u8>
-    pub fn parse(raw: &'d Vec<u8>) -> BoxFuture<'d, Result<Self>> {
-        async move {
-            let s = raw.try_into()?;
-            match s.len() {
-                1 => {
-                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
-                    return Ok(OcspRequest {
-                        tbs_request: tbs,
-                        optional_signature: None,
-                    });
-                }
-                2 => {
-                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
-                    let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
-                    // per RFC 6960
-                    // optional signature is explicit 0
-                    if sig.tag() != ASN1_EXPLICIT_0 {
-                        return Err(OcspError::Asn1MismatchError("TBSRequest", err_at!()));
-                    }
-                    return Ok(OcspRequest {
-                        tbs_request: tbs,
-                        optional_signature: Some(sig),
-                    });
-                }
-                _ => return Err(OcspError::Asn1LengthError("TBSRequest", err_at!())),
-            }
-        }
-        .boxed()
-    }
-
-    /// return RFC 6960 TBSRequest
-    pub fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
-        async move { self.tbs_request }.boxed()
-    }
-
-    /// return RFC 6960 optionalSignature
-    pub fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
-        async move { self.optional_signature }.boxed()
-    }
-}
-
 /// RFC 6960 TBSRequest  
 /// version is omitted as data produced from OpenSSL doesn't contain version  
 /// REVIEW: omit version in tbs request
@@ -238,6 +187,69 @@ impl TBSRequest {
             request_list: req,
             request_ext: ext,
         })
+    }
+}
+
+/// optional signature in ocsp request
+pub struct Signature {
+    signing_algo: Oid,
+    /// tho RFC 6960 indicates signature is BIT STRING,  
+    /// which has arbitrary length comparing to OCTET,  
+    /// but all signature length are multiple of 8,  
+    /// so using Vec\<u8\> here.
+    signature: Vec<u8>,
+    /// [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL
+    certs: Option<Vec<Vec<u8>>>,
+}
+
+/// RFC 6960 OCSPRequest
+pub struct OcspRequest<'d> {
+    /// RFC 6960 TBSRequest
+    tbs_request: Sequence<'d>,
+    /// RFC 6960 optionalSignature, explicit tag 0
+    optional_signature: Option<DerObject<'d>>,
+}
+
+impl<'d> OcspRequest<'d> {
+    /// create OcspRequest from Vec<u8>
+    pub fn parse(raw: &'d Vec<u8>) -> BoxFuture<'d, Result<Self>> {
+        async move {
+            let s = raw.try_into()?;
+            match s.len() {
+                1 => {
+                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                    return Ok(OcspRequest {
+                        tbs_request: tbs,
+                        optional_signature: None,
+                    });
+                }
+                2 => {
+                    let tbs: Sequence = s.get_as(0).map_err(OcspError::Asn1DecodingError)?;
+                    let sig = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+                    // per RFC 6960
+                    // optional signature is explicit 0
+                    if sig.tag() != ASN1_EXPLICIT_0 {
+                        return Err(OcspError::Asn1MismatchError("TBSRequest", err_at!()));
+                    }
+                    return Ok(OcspRequest {
+                        tbs_request: tbs,
+                        optional_signature: Some(sig),
+                    });
+                }
+                _ => return Err(OcspError::Asn1LengthError("TBSRequest", err_at!())),
+            }
+        }
+        .boxed()
+    }
+
+    /// return RFC 6960 TBSRequest
+    pub fn get_tbs_req(self) -> BoxFuture<'d, Sequence<'d>> {
+        async move { self.tbs_request }.boxed()
+    }
+
+    /// return RFC 6960 optionalSignature
+    pub fn get_signature(self) -> BoxFuture<'d, Option<DerObject<'d>>> {
+        async move { self.optional_signature }.boxed()
     }
 }
 
