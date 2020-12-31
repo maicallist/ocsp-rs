@@ -248,7 +248,7 @@ pub struct OcspRequest {
 
 impl OcspRequest {
     /// parse an ocsp request from raw bytes
-    pub async fn parse(ocsp_req: Vec<u8>) -> Result<Self> {
+    pub async fn parse(ocsp_req: &[u8]) -> Result<Self> {
         debug!("Parsing OCSP REQUEST: {:02X?}", ocsp_req);
         let s = ocsp_req.try_into()?;
 
@@ -309,7 +309,7 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let ocsp_request = OcspRequest::parse(ocsp_req_v8).await;
+        let ocsp_request = OcspRequest::parse(&ocsp_req_v8[..]).await;
         assert!(ocsp_request.is_ok());
     }
 
