@@ -202,6 +202,42 @@ pub struct Signature {
     certs: Option<Vec<Vec<u8>>>,
 }
 
+impl Signature {
+    /// parsing ocsp signature from raw bytes
+    pub async fn parse(sig: Vec<u8>) -> Result<Self> {
+        debug!("Parsing SIGNATURE: {:02X?}", sig);
+        let s = sig.try_into()?;
+
+        let oid;
+        let signature;
+
+        //let cert = None;
+        match s.len() {
+            2 => {
+                let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+                oid = Oid::parse(id.raw().to_vec()).await?;
+
+                signature = s
+                    .get(1)
+                    .map_err(OcspError::Asn1DecodingError)?
+                    .raw()
+                    .to_vec();
+            }
+            3 => {
+                unimplemented!()
+            }
+            _ => return Err(OcspError::Asn1LengthError("SIGNATURE", err_at!())),
+        }
+
+        Ok(Signature {
+            signing_algo: oid,
+            signature: signature,
+            // unimplemented 3
+            certs: None,
+        })
+    }
+}
+
 /// RFC 6960 OCSPRequest
 pub struct OcspRequest<'d> {
     /// RFC 6960 TBSRequest
