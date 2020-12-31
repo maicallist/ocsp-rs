@@ -97,7 +97,7 @@ pub struct OneReq {
 
 impl OneReq {
     /// get single request
-    pub async fn parse(onereq: Vec<u8>) -> Result<Self> {
+    pub async fn parse(onereq: &[u8]) -> Result<Self> {
         debug!("Parsing ONEREQ {:02X?}", onereq);
         let s = onereq.try_into()?;
 
@@ -173,7 +173,7 @@ impl TBSRequest {
                     let req_list = tbs_item.try_into()?;
                     for j in 0..req_list.len() {
                         let onereq = req_list.get(j).map_err(OcspError::Asn1DecodingError)?;
-                        let onereq = OneReq::parse(onereq.raw().to_vec()).await?;
+                        let onereq = OneReq::parse(onereq.raw()).await?;
                         req.push(onereq);
                     }
                 }
@@ -370,7 +370,7 @@ mod test {
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let onereq_v8 = hex::decode(onereq_hex).unwrap();
-        let _ = OneReq::parse(onereq_v8).await.unwrap();
+        let _ = OneReq::parse(&onereq_v8[..]).await.unwrap();
     }
 
     /// get certid from raw hex
