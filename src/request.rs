@@ -18,7 +18,8 @@ use log::debug;
 /// REVIEW 0x05
 #[derive(Debug)]
 pub struct Oid {
-    id: Vec<u8>,
+    /// an oid in bytes
+    pub id: Vec<u8>,
     //null: Vec<u8>,
 }
 
@@ -46,10 +47,14 @@ impl Oid {
 
 /// RFC 6960 CertID
 pub struct CertId {
-    hash_algo: Oid,
-    issuer_name_hash: Vec<u8>,
-    issuer_key_hash: Vec<u8>,
-    serial_num: Vec<u8>,
+    /// hash algo oid in byte
+    pub hash_algo: Oid,
+    /// issuer name hash in byte
+    pub issuer_name_hash: Vec<u8>,
+    /// issuer key hash in byte
+    pub issuer_key_hash: Vec<u8>,
+    /// certificate serial number in byte
+    pub serial_num: Vec<u8>,
 }
 
 impl CertId {
@@ -90,8 +95,10 @@ impl CertId {
 }
 /// RFC 6960 Request
 pub struct OneReq {
-    one_req: CertId,
-    one_req_ext: Option<Vec<OcspExt>>,
+    /// certid of a single request
+    pub one_req: CertId,
+    /// extension of a single request
+    pub one_req_ext: Option<Vec<OcspExt>>,
 }
 
 impl OneReq {
@@ -129,12 +136,12 @@ pub struct TBSRequest {
     // version: u8,
     /// requestorName is OPTIONAL and indicates the name of the OCSP requestor.
     /// explicit 1
-    requestor_name: Option<Vec<u8>>,
+    pub requestor_name: Option<Vec<u8>>,
     /// requestList contains one or more single certificate status requests.
-    request_list: Vec<OneReq>,
+    pub request_list: Vec<OneReq>,
     /// requestExtensions is OPTIONAL and includes extensions applicable
     /// to the requests found in reqCert.
-    request_ext: Option<Vec<OcspExt>>,
+    pub request_ext: Option<Vec<OcspExt>>,
 }
 
 impl TBSRequest {
@@ -191,14 +198,15 @@ impl TBSRequest {
 
 /// optional signature in ocsp request
 pub struct Signature {
-    signing_algo: Oid,
+    /// algo oid for signature
+    pub signing_algo: Oid,
     /// tho RFC 6960 indicates signature is BIT STRING,  
     /// which has arbitrary length comparing to OCTET,  
     /// but all signature length are multiple of 8,  
     /// so using Vec\<u8\> here.
-    signature: Vec<u8>,
+    pub signature: Vec<u8>,
     /// [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL
-    certs: Option<Vec<Vec<u8>>>,
+    pub certs: Option<Vec<Vec<u8>>>,
 }
 
 impl Signature {
@@ -240,9 +248,9 @@ impl Signature {
 /// RFC 6960 OCSPRequest
 pub struct OcspRequest {
     /// RFC 6960 TBSRequest
-    tbs_request: TBSRequest,
+    pub tbs_request: TBSRequest,
     /// RFC 6960 optionalSignature, explicit tag 0
-    optional_signature: Option<Signature>,
+    pub optional_signature: Option<Signature>,
 }
 
 impl OcspRequest {
