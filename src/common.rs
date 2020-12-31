@@ -59,6 +59,7 @@ pub enum OcspExt {
         nonce: Vec<u8>,
     },
     /// 4.4.2
+    /// REVIEW: untested
     CrlRef {
         /// id-pkix-ocsp 3
         oid: &'static ConstOid,

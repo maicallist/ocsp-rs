@@ -98,6 +98,7 @@ pub struct OneReq {
     /// certid of a single request
     pub one_req: CertId,
     /// extension of a single request
+    /// REVIEW: untested
     pub one_req_ext: Option<Vec<OcspExt>>,
 }
 
@@ -197,6 +198,7 @@ impl TBSRequest {
 }
 
 /// optional signature in ocsp request
+/// REVIEW: *untested*
 pub struct Signature {
     /// algo oid for signature
     pub signing_algo: Oid,
