@@ -204,7 +204,7 @@ pub struct Signature {
 
 impl Signature {
     /// parsing ocsp signature from raw bytes
-    pub async fn parse(sig: Vec<u8>) -> Result<Self> {
+    pub async fn parse(sig: &[u8]) -> Result<Self> {
         debug!("Parsing SIGNATURE: {:02X?}", sig);
         let s = sig.try_into()?;
 
@@ -262,7 +262,7 @@ impl OcspRequest {
                     ASN1_EXPLICIT_0 => {
                         let val = sig_v8.value();
                         let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
-                        sig = Some(Signature::parse(val.value().to_vec()).await?);
+                        sig = Some(Signature::parse(val.value()).await?);
                     }
                     _ => return Err(OcspError::Asn1MismatchError("SIGNATURE EXP 0", err_at!())),
                 }
