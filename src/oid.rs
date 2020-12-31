@@ -27,11 +27,11 @@ pub struct ConstOid {
     /// internal id for OID
     pub(crate) id: u8,
     /// OID in number format, eg. 1.3.6.1.3.5
-    num: &'static str,
+    pub num: &'static str,
     /// OID in text format, eg. pkix-ocsp 1
-    name: &'static str,
+    pub name: &'static str,
     /// OID in binary format
-    bin: Vec<u8>,
+    pub bin: Vec<u8>,
 }
 
 lazy_static! {
