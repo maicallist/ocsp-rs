@@ -13,7 +13,7 @@ pub enum OcspError {
 
     /// cannot find matching sequence  
     /// eg. OID sequence is not 0x06, 0x05
-    #[error("Unable to extract desired sequence of {0} at {1}")]
+    #[error("Unable to extract desired sequence of {0} {1}")]
     Asn1MismatchError(&'static str, &'static str),
 
     /// unable to parse vec\<u8\> to &str   
@@ -23,7 +23,7 @@ pub enum OcspError {
 
     /// sequence length does not match intended data  
     /// eg. OID length is not 2, 0x06, 0x05
-    #[error("Unable to deserialize {0} due to incorrect sequence length at {1}")]
+    #[error("Unable to deserialize {0} due to incorrect sequence length {1}")]
     Asn1LengthError(&'static str, &'static str),
 
     /// Cannot find OID in predefined list
