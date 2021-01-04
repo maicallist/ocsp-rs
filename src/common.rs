@@ -5,9 +5,8 @@ use asn1_der::{
     DerObject,
 };
 
-use crate::oid::*;
+use crate::err_at;
 use crate::{err::OcspError, oid::ConstOid};
-use crate::{err_at, oid::OID_LIST};
 
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
