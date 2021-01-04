@@ -29,6 +29,10 @@ pub enum OcspError {
     /// Cannot find OID in predefined list
     #[error("Unable to locate OID info {0}")]
     Asn1OidUnknown(&'static str),
+
+    /// Cannot recognize ocsp extension
+    #[error("Unable to recognize extension {0}")]
+    OcspExtUnknown(&'static str),
 }
 
 /// display error location

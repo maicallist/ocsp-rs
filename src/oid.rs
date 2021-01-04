@@ -30,52 +30,62 @@ pub struct ConstOid {
     pub bin: Vec<u8>,
 }
 
+pub(crate) const OCSP_EXT_NONCE_ID: usize = 0;
 pub(crate) const OCSP_EXT_NONCE_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02];
 pub(crate) const OCSP_EXT_NONCE_NUM: &str = "1.3.6.1.5.5.7.48.1.2";
 pub(crate) const OCSP_EXT_NONCE_NAME: &str = "id-pkix-ocsp 2";
 
+pub(crate) const OCSP_EXT_CRLREF_ID: usize = 1;
 pub(crate) const OCSP_EXT_CRLREF_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x03];
 pub(crate) const OCSP_EXT_CRLREF_NUM: &str = "1.3.6.1.5.5.7.48.1.3";
 pub(crate) const OCSP_EXT_CRLREF_NAME: &str = "id-pkix-ocsp 3";
 
+pub(crate) const OCSP_EXT_RESP_TYPE_ID: usize = 2;
 pub(crate) const OCSP_EXT_RESP_TYPE_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x04];
 pub(crate) const OCSP_EXT_RESP_TYPE_NUM: &str = "1.3.6.1.5.5.7.48.1.4";
 pub(crate) const OCSP_EXT_RESP_TYPE_NAME: &str = "id-pkix-ocsp 4";
 
+pub(crate) const OCSP_EXT_ARCHIVE_CUTOFF_ID: usize = 3;
 pub(crate) const OCSP_EXT_ARCHIVE_CUTOFF_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x06];
 pub(crate) const OCSP_EXT_ARCHIVE_CUTOFF_NUM: &str = "1.3.6.1.5.5.7.48.1.6";
 pub(crate) const OCSP_EXT_ARCHIVE_CUTOFF_NAME: &str = "id-pkix-ocsp 6";
 
 // crl entry 1
+pub(crate) const OCSP_EXT_CRL_REASON_ID: usize = 4;
 pub(crate) const OCSP_EXT_CRL_REASON_HEX: [u8; 4] = [0x02, 0x05, 0x1d, 0x15];
 pub(crate) const OCSP_EXT_CRL_REASON_NUM: &str = "2.5.29.21";
 pub(crate) const OCSP_EXT_CRL_REASON_NAME: &str = "id-ce 21";
 
 // crl entry 2
+pub(crate) const OCSP_EXT_INVALID_DATE_ID: usize = 5;
 pub(crate) const OCSP_EXT_INVALID_DATE_HEX: [u8; 4] = [0x02, 0x05, 0x1d, 0x18];
 pub(crate) const OCSP_EXT_INVALID_DATE_NUM: &str = "2.5.29.24";
 pub(crate) const OCSP_EXT_INVALID_DATE_NAME: &str = "id-ce 24";
 
+pub(crate) const OCSP_EXT_SERVICE_LOCATOR_ID: usize = 6;
 pub(crate) const OCSP_EXT_SERVICE_LOCATOR_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x07];
 pub(crate) const OCSP_EXT_SERVICE_LOCATOR_NUM: &str = "1.3.6.1.5.5.7.48.1.7";
 pub(crate) const OCSP_EXT_SERVICE_LOCATOR_NAME: &str = "id-pkix-ocsp 7";
 
+pub(crate) const OCSP_EXT_PREF_SIG_ALGS_ID: usize = 7;
 pub(crate) const OCSP_EXT_PREF_SIG_ALGS_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x08];
 pub(crate) const OCSP_EXT_PREF_SIG_ALGS_NUM: &str = "1.3.6.1.5.5.7.48.1.8";
 pub(crate) const OCSP_EXT_PREF_SIG_ALGS_NAME: &str = "id-pkix-ocsp 8";
 
+pub(crate) const OCSP_EXT_EXTENDED_REVOKE_ID: usize = 8;
 pub(crate) const OCSP_EXT_EXTENDED_REVOKE_HEX: [u8; 9] =
     [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x09];
 pub(crate) const OCSP_EXT_EXTENDED_REVOKE_NUM: &str = "1.3.6.1.5.5.7.48.1.9";
 pub(crate) const OCSP_EXT_EXTENDED_REVOKE_NAME: &str = "id-pkix-ocsp 9";
 
 lazy_static! {
+    /// search oid index by oid binary
     pub static ref OID_MAP: HashMap<Vec<u8>, usize> = vec![
         (OCSP_EXT_NONCE_HEX.to_vec(), 0),
         (OCSP_EXT_CRLREF_HEX.to_vec(), 1),

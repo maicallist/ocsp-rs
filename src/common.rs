@@ -6,7 +6,7 @@ use asn1_der::{
 };
 
 use crate::err_at;
-use crate::{err::OcspError, oid::ConstOid};
+use crate::{err::OcspError, oid::*};
 
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -62,7 +62,7 @@ pub enum OcspExt {
     /// 4.4.1
     Nonce {
         ///id-pkix-ocsp 2
-        oid: &'static ConstOid,
+        oid: ConstOid,
         /// nonce value
         nonce: Vec<u8>,
     },
@@ -70,7 +70,7 @@ pub enum OcspExt {
     /// REVIEW: untested
     CrlRef {
         /// id-pkix-ocsp 3
-        oid: &'static ConstOid,
+        oid: ConstOid,
         /// EXPLICIT 0 IA5String OPTIONAL
         url: Option<Vec<u8>>,
         /// EXPLICIT 1 INTEGER OPTIONAL
@@ -102,7 +102,7 @@ impl OcspExt {
         }
         let val = oid.value();
         // translate oid
-        let ext = match OID_LIST.get(val) {
+        let ext = match b2i_oid(val) {
             None => return Err(OcspError::Asn1OidUnknown(err_at!())),
             Some(v) => v,
         };
@@ -158,7 +158,16 @@ impl OcspExt {
                     time: time,
                 }
             }
-            _ => unimplemented!(),
+            OCSP_EXT_RESP_TYPE_ID
+            | OCSP_EXT_ARCHIVE_CUTOFF_ID
+            | OCSP_EXT_CRL_REASON_ID
+            | OCSP_EXT_INVALID_DATE_ID
+            | OCSP_EXT_SERVICE_LOCATOR_ID
+            | OCSP_EXT_PREF_SIG_ALGS_ID
+            | OCSP_EXT_EXTENDED_REVOKE_ID => {
+                unimplemented!()
+            }
+            _ => return Err(OcspError::OcspExtUnknown(err_at!())),
         };
 
         Ok(r)
