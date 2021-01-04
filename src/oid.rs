@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 /// search oid in binary
 /// see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
-pub fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
+pub async fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
     match OID_MAP.get(oid) {
         None => None,
         Some(&index) => Some(ConstOid {

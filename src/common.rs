@@ -102,7 +102,7 @@ impl OcspExt {
         }
         let val = oid.value();
         // translate oid
-        let ext = match b2i_oid(val) {
+        let ext = match b2i_oid(val).await {
             None => return Err(OcspError::Asn1OidUnknown(err_at!())),
             Some(v) => v,
         };
