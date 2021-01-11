@@ -4,6 +4,7 @@ use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
+use tracing::{debug, trace};
 
 use crate::err_at;
 use crate::{err::OcspError, oid::*};
@@ -85,17 +86,23 @@ impl OcspExt {
     /// raw is sequence of list extensions  
     /// remove explicit and implicit tags first
     pub async fn parse<'d>(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
+        trace!("Parsing EXTENSION list {:02X?}", raw);
+
         let mut r: Vec<OcspExt> = Vec::new();
+
+        debug!("Converting EXT data into asn1 sequence");
         let list = raw.try_into()?;
         for i in 0..list.len() {
-            let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
-            r.push(OcspExt::parse_oneext(ext).await?);
+            //let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
+            let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
+            r.push(OcspExt::parse_oneext(ext.raw()).await?);
         }
         Ok(r)
     }
 
     /// pass in each sequence of extension, return OcspExt
-    async fn parse_oneext<'d>(oneext: Sequence<'d>) -> Result<Self, OcspError> {
+    async fn parse_oneext<'d>(oneext: &[u8]) -> Result<Self, OcspError> {
+        let oneext = oneext.try_into()?;
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
         if oid.tag() != ASN1_OID {
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
