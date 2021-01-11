@@ -245,7 +245,11 @@ impl TBSRequest {
 }
 
 /// optional signature in ocsp request  
+/// The requestor MAY choose to sign the OCSP request.  
+/// In that case, the signature is computed over the tbsRequest structure.
 /// REVIEW: *untested*
+/// REVIEW:
+/// If the request is signed, the requestor SHALL specify its name in the requestorName field.
 #[derive(Debug)]
 pub struct Signature {
     /// algo oid for signature
