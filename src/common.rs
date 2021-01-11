@@ -97,33 +97,44 @@ impl OcspExt {
             let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
             r.push(OcspExt::parse_oneext(ext.raw()).await?);
         }
+
+        debug!("good extensions");
         Ok(r)
     }
 
     /// pass in each sequence of extension, return OcspExt
     async fn parse_oneext<'d>(oneext: &[u8]) -> Result<Self, OcspError> {
+        trace!("Parsing SINGLE EXTENSION {:02X?}", oneext);
+        debug!("Converting EXT data into asn1 sequence");
         let oneext = oneext.try_into()?;
+
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
+        debug!("Checking OID tag");
         if oid.tag() != ASN1_OID {
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
         let val = oid.value();
         // translate oid
+        debug!("Resolving OID");
         let ext = match b2i_oid(val).await {
             None => return Err(OcspError::Asn1OidUnknown(err_at!())),
             Some(v) => v,
         };
 
         let r = match ext.id {
-            OCSP_EXT_NONCE_ID => OcspExt::Nonce {
-                oid: ext,
-                nonce: oneext
-                    .get(1)
-                    .map_err(OcspError::Asn1DecodingError)?
-                    .value()
-                    .to_vec(),
-            },
+            OCSP_EXT_NONCE_ID => {
+                debug!("Found NONCE extension");
+                OcspExt::Nonce {
+                    oid: ext,
+                    nonce: oneext
+                        .get(1)
+                        .map_err(OcspError::Asn1DecodingError)?
+                        .value()
+                        .to_vec(),
+                }
+            }
             OCSP_EXT_CRLREF_ID => {
+                debug!("Found CRLREF extension");
                 let mut url = None;
                 let mut num = None;
                 let mut time = None;
@@ -177,6 +188,7 @@ impl OcspExt {
             _ => return Err(OcspError::OcspExtUnknown(err_at!())),
         };
 
+        debug!("good single extension");
         Ok(r)
     }
 }

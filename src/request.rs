@@ -11,7 +11,7 @@ use crate::{
     err_at,
 };
 
-use tracing::{debug, error, trace};
+use tracing::{debug, error, trace, warn};
 
 /// Oid represents a 0x06 OID type in ASN.1  
 /// In OpenSSL ocsp request, OID is followed by NULL 0x05  
@@ -27,7 +27,7 @@ impl Oid {
     /// get oid from raw sequence
     pub async fn parse(oid: &[u8]) -> Result<Self> {
         trace!("Parsing OID {:02X?}", oid);
-        debug!("Converting data into asn1 sequence");
+        debug!("Converting OID data into asn1 sequence");
         let s = oid.try_into()?;
 
         debug!("Checking OID sequence length");
@@ -51,6 +51,7 @@ impl Oid {
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
 
+        debug!("good OID");
         Ok(Oid {
             id: id.value().to_vec(),
         })
@@ -73,10 +74,16 @@ pub struct CertId {
 impl CertId {
     /// get certid from raw bytes
     pub async fn parse(certid: &[u8]) -> Result<Self> {
-        debug!("Parsing CERTID {:02X?}", certid);
+        trace!("Parsing CERTID {:02X?}", certid);
+        debug!("Converting CERTID data into asn1 sequence");
         let s = certid.try_into()?;
 
+        debug!("Checking CERTID sequence length");
         if s.len() != 4 {
+            error!(
+                "Provided CERTID contains {} items in sequence, expecting 4",
+                s.len()
+            );
             return Err(OcspError::Asn1LengthError("CertID", err_at!()));
         }
 
@@ -85,11 +92,19 @@ impl CertId {
         let key_hash = s.get(2).map_err(OcspError::Asn1DecodingError)?;
         let sn = s.get(3).map_err(OcspError::Asn1DecodingError)?;
 
+        debug!("Checking CERTID tags");
         if oid.tag() != ASN1_SEQUENCE
             || name_hash.tag() != ASN1_OCTET
             || key_hash.tag() != ASN1_OCTET
             || sn.tag() != ASN1_INTEGER
         {
+            error!(
+                "Provided CERTID sequence tags are {}, {}, {} and {}, expecting 0x30, 0x04, 0x04, 0x02", 
+                oid.tag(),
+                name_hash.tag(),
+                key_hash.tag(),
+                sn.tag()
+            );
             return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
         }
 
@@ -98,6 +113,7 @@ impl CertId {
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
 
+        debug!("good CERTID");
         Ok(CertId {
             hash_algo: oid,
             issuer_name_hash: name_hash,
@@ -119,23 +135,32 @@ pub struct OneReq {
 impl OneReq {
     /// get single request
     pub async fn parse(onereq: &[u8]) -> Result<Self> {
-        debug!("Parsing ONEREQ {:02X?}", onereq);
+        trace!("Parsing ONEREQ {:02X?}", onereq);
+        debug!("Converting Request data into asn1 sequence");
         let s = onereq.try_into()?;
 
         let certid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let certid = CertId::parse(certid.raw()).await?;
         let mut ext = None;
+        debug!("Checking Request sequence length");
         match s.len() {
-            1 => {}
+            1 => {
+                debug!("No extension for the request");
+            }
             2 => {
                 let raw_ext = s.get(1).map_err(OcspError::Asn1DecodingError)?.raw();
                 ext = Some(OcspExt::parse(raw_ext).await?);
             }
             _ => {
+                error!(
+                    "Provided request contains {} items, expecting no more than 2",
+                    s.len()
+                );
                 return Err(OcspError::Asn1LengthError("OneReq", err_at!()));
             }
         }
 
+        debug!("good SINGLE REQUEST");
         Ok(OneReq {
             one_req: certid,
             one_req_ext: ext,
@@ -163,19 +188,23 @@ pub struct TBSRequest {
 impl TBSRequest {
     /// parse a tbs request
     pub async fn parse(tbs: &[u8]) -> Result<Self> {
-        debug!("Parsing TBSREQUEST {:02X?}", tbs);
+        trace!("Parsing TBSREQUEST {:02X?}", tbs);
         let mut name = None;
         let mut ext = None;
         let mut req: Vec<OneReq> = Vec::new();
+
+        debug!("Converting TBS REQUEST data into asn1 sequence");
         let s = tbs.try_into()?;
 
         for i in 0..s.len() {
             let tbs_item = s.get(i).map_err(OcspError::Asn1DecodingError)?;
             match tbs_item.tag() {
                 ASN1_EXPLICIT_0 => {
+                    warn!("Version in TBS REQUEST is defined in RFC but yet implemented");
                     unimplemented!()
                 }
                 ASN1_EXPLICIT_1 => {
+                    debug!("Found requestor name");
                     let val = tbs_item.value();
                     let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                     if val.tag() != ASN1_IA5STRING {
@@ -187,6 +216,7 @@ impl TBSRequest {
                     name = Some(val.value().to_vec());
                 }
                 ASN1_EXPLICIT_2 => {
+                    debug!("Found extension");
                     let ext_list = tbs_item.value();
                     let ext_list = OcspExt::parse(ext_list).await?;
                     ext = Some(ext_list);
@@ -204,6 +234,8 @@ impl TBSRequest {
                 }
             }
         }
+
+        debug!("good TBS REQUEST");
         Ok(TBSRequest {
             requestor_name: name,
             request_list: req,
@@ -230,18 +262,20 @@ pub struct Signature {
 impl Signature {
     /// parsing ocsp signature from raw bytes
     pub async fn parse(sig: &[u8]) -> Result<Self> {
-        debug!("Parsing SIGNATURE: {:02X?}", sig);
+        trace!("Parsing SIGNATURE: {:02X?}", sig);
+        debug!("Converting SIGNATURE data into asn1 sequence");
         let s = sig.try_into()?;
 
         let oid;
         let signature;
 
-        //let cert = None;
+        debug!("Checking SIGNATURE sequence length");
         match s.len() {
             2 => {
                 let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
                 oid = Oid::parse(id.raw()).await?;
 
+                debug!("Getting raw signature data");
                 signature = s
                     .get(1)
                     .map_err(OcspError::Asn1DecodingError)?
@@ -249,11 +283,13 @@ impl Signature {
                     .to_vec();
             }
             3 => {
+                warn!("CERT is defined in RFC but yet implemented");
                 unimplemented!()
             }
             _ => return Err(OcspError::Asn1LengthError("SIGNATURE", err_at!())),
         }
 
+        debug!("good SIGNATURE");
         Ok(Signature {
             signing_algo: oid,
             signature: signature,
@@ -275,13 +311,17 @@ pub struct OcspRequest {
 impl OcspRequest {
     /// parse an ocsp request from raw bytes
     pub async fn parse(ocsp_req: &[u8]) -> Result<Self> {
-        debug!("Parsing OCSP REQUEST: {:02X?}", ocsp_req);
+        trace!("Parsing OCSP REQUEST: {:02X?}", ocsp_req);
+        debug!("Converting OCSP REQUEST data into asn1 sequence");
         let s = ocsp_req.try_into()?;
 
         let req;
         let mut sig = None;
+        debug!("Checking OCSP REQUEST sequence length");
         match s.len() {
-            1 => {}
+            1 => {
+                debug!("No Signature");
+            }
             2 => {
                 let sig_v8 = s.get(1).map_err(OcspError::Asn1DecodingError)?;
                 match sig_v8.tag() {
@@ -303,6 +343,7 @@ impl OcspRequest {
         let req_v8 = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         req = TBSRequest::parse(req_v8.raw()).await?;
 
+        debug!("good OCSP REQUEST");
         Ok(OcspRequest {
             tbs_request: req,
             optional_signature: sig,
