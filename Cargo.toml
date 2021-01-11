@@ -8,11 +8,17 @@ edition = "2018"
 [dependencies]
 hex = "0.4"
 asn1_der = "0.7"
-log = "0.4"
 thiserror = "1.0"
 futures = "0.3"
 tokio = { version = "1.0", features = ["rt-multi-thread", "macros"] }
 lazy_static = "1.4"
+tracing = "0.1"
+tracing-futures = "0.2"
 
 [dev-dependencies]
-env_logger = "0.8"
+tracing-subscriber = { version = "0.2", features = [
+    "fmt",
+    "env-filter",
+    "chrono"
+] }
+tracing-log = "0.1"

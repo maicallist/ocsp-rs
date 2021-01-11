@@ -11,7 +11,7 @@ use crate::{
     err_at,
 };
 
-use log::debug;
+use tracing::{debug, error, trace};
 
 /// Oid represents a 0x06 OID type in ASN.1  
 /// In OpenSSL ocsp request, OID is followed by NULL 0x05  
@@ -26,16 +26,28 @@ pub struct Oid {
 impl Oid {
     /// get oid from raw sequence
     pub async fn parse(oid: &[u8]) -> Result<Self> {
-        debug!("Parsing OID {:02X?}", oid);
+        trace!("Parsing OID {:02X?}", oid);
+        debug!("Converting data into asn1 sequence");
         let s = oid.try_into()?;
 
+        debug!("Checking OID sequence length");
         if s.len() != 2 {
+            error!(
+                "Provided OID contains {} items in sequence, expecting 2",
+                s.len()
+            );
             return Err(OcspError::Asn1LengthError("OID", err_at!()));
         }
 
         let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+        debug!("Checking OID tags");
         if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
+            error!(
+                "Provided OID sequence tags are {} and {}, expecting 0x06 and 0x05",
+                id.tag(),
+                nil.tag()
+            );
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
 
@@ -304,18 +316,20 @@ mod test {
         typed::{DerDecodable, Sequence},
         DerObject,
     };
-    use env_logger;
     use hex;
+    use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
     use super::{CertId, OcspRequest, Oid, OneReq, TBSRequest};
 
     // init log
     #[allow(dead_code)]
     fn init() {
-        let _ = env_logger::builder()
-            .is_test(true)
-            .filter_level(log::LevelFilter::Debug)
-            .try_init();
+        let log_level = "debug";
+        let env_layer = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new(log_level));
+        let fmt_layer = tracing_subscriber::fmt::layer().with_target(true).pretty();
+        let reg = Registry::default().with(env_layer).with(fmt_layer);
+        tracing_log::LogTracer::init().unwrap();
+        tracing::subscriber::set_global_default(reg).unwrap();
     }
 
     #[tokio::test]
@@ -353,8 +367,8 @@ mod test {
         let _reqlist = DerObject::decode(tbs.value()).unwrap();
         //println!(
         //    "tag {:02X?}\nvalue {:02X?}",
-        //    reqlist.header(),
-        //    reqlist.value()
+        //    _reqlist.header(),
+        //    _reqlist.value()
         //);
 
         let ocspseq = Sequence::decode(der.value()).unwrap();
