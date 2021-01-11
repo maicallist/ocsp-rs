@@ -18,7 +18,7 @@
     unused_parens,
     while_true,
     // following are default allowed lint
-//    //missing_debug_implementations, //disabled cuz asn1_der does not impl Debug
+    missing_debug_implementations, //disabled cuz asn1_der does not impl Debug
     missing_docs,
     trivial_casts,
     trivial_numeric_casts,
