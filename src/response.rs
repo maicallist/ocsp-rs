@@ -1,1 +1,26 @@
 //! OCSP response
+
+const OCSP_RESP_STATUS_SUCCESSFUL: u8 = 0x00;
+const OCSP_RESP_STATUS_MALFORMED_REQ: u8 = 0x01;
+const OCSP_RESP_STATUS_INTERNAL_ERROR: u8 = 0x02;
+const OCSP_RESP_STATUS_TRY_LATER: u8 = 0x03;
+const OCSP_RESP_STATUS_SIG_REQUIRED: u8 = 0x05;
+const OCSP_RESP_STATUS_UNAUTHORIZED: u8 = 0x06;
+
+/// OCSP response status defined in RFC 6960
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+pub enum OcspRespStatus {
+    /// See RFC 6960
+    OCSP_RESP_STATUS_SUCCESSFUL,
+    /// See RFC 6960
+    OCSP_RESP_STATUS_MALFORMED_REQ,
+    /// See RFC 6960
+    OCSP_RESP_STATUS_INTERNAL_ERROR,
+    /// See RFC 6960
+    OCSP_RESP_STATUS_TRY_LATER,
+    /// See RFC 6960
+    OCSP_RESP_STATUS_SIG_REQUIRED,
+    /// See RFC 6960
+    OCSP_RESP_STATUS_UNAUTHORIZED,
+}
