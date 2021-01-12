@@ -1,10 +1,12 @@
 //! common components in asn1
 
-use crate::err::OcspError;
 use asn1_der::{
     typed::{DerDecodable, Sequence},
     DerObject,
 };
+use chrono::{Datelike, Timelike};
+
+use crate::err::OcspError;
 
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -51,5 +53,58 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
     type Error = OcspError;
     fn try_into(&'d self) -> Result<Sequence, Self::Error> {
         Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
+    }
+}
+
+/// represent a ASN1
+#[derive(Debug)]
+pub struct GeneralizedTime {
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    min: u32,
+    sec: u32,
+    millis: u32,
+}
+
+impl GeneralizedTime {
+    /// return UTC time from raw
+    pub async fn new(
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        min: u32,
+        sec: u32,
+        millis: u32,
+    ) -> Self {
+        GeneralizedTime {
+            year: year,
+            month: month,
+            day: day,
+            hour: hour,
+            min: min,
+            sec: sec,
+            millis: millis,
+        }
+    }
+
+    /// return **now** in UTC
+    async fn now() -> Self {
+        let now = chrono::offset::Utc::now();
+        // nano to millis
+        let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
+
+        GeneralizedTime::new(
+            now.year(),
+            now.month(),
+            now.day(),
+            now.hour(),
+            now.minute(),
+            now.second(),
+            mi,
+        )
+        .await
     }
 }
