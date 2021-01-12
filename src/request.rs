@@ -5,11 +5,22 @@ use asn1_der::DerObject;
 use crate::err::{OcspError, Result};
 use crate::{
     common::{
-        OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2,
-        ASN1_IA5STRING, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
+        asn1::{
+            TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2, ASN1_IA5STRING,
+            ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
+        },
+        ocsp::OcspExt,
     },
     err_at,
 };
+
+//{
+//    ocsp_common::{
+//        OcspExt, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2,
+//        ASN1_IA5STRING, ASN1_INTEGER, ASN1_NULL, ASN1_OCTET, ASN1_OID, ASN1_SEQUENCE,
+//    },
+//    err_at,
+//};
 
 use tracing::{debug, error, trace, warn};
 

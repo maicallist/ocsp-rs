@@ -1,6 +1,6 @@
 //! OCSP response
 
-use crate::common::OcspExt;
+use crate::common::ocsp::OcspExt;
 use crate::request::{CertId, Oid};
 
 const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
