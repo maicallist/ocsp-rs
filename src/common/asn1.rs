@@ -1,4 +1,5 @@
 //! common components in asn1
+//! For ASN.1 universal tags list, see [here](https://www.obj-sys.com/asn1tutorial/node124.html)
 
 use asn1_der::{
     typed::{DerDecodable, Sequence},
@@ -26,6 +27,12 @@ pub(crate) const ASN1_OCTET: u8 = 0x04;
 pub(crate) const ASN1_INTEGER: u8 = 0x02;
 /// asn1 ia5string
 pub(crate) const ASN1_IA5STRING: u8 = 0x16;
+/// asn1 generalized time
+pub(crate) const ASN1_GENERALIZED_TIME: u8 = 0x18;
+/// asn1 enumerated
+pub(crate) const ASN1_ENUMERATED: u8 = 0x0a;
+/// asn1 bit string
+pub(crate) const ASN1_BIT_STRING:u8 = 0x03;
 
 /// allowing data to be converted to [Sequence](https://docs.rs/asn1_der/0.7.2/asn1_der/typed/struct.Sequence.html)
 pub trait TryIntoSequence<'d> {
@@ -56,7 +63,7 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
     }
 }
 
-/// represent a ASN1
+/// represents a ASN1 GeneralizedTime
 #[derive(Debug)]
 pub struct GeneralizedTime {
     year: i32,
@@ -91,7 +98,7 @@ impl GeneralizedTime {
     }
 
     /// return **now** in UTC
-    async fn now() -> Self {
+    pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
         // nano to millis
         let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
@@ -106,5 +113,11 @@ impl GeneralizedTime {
             mi,
         )
         .await
+    }
+
+    /// serialize to DER encoding  
+    /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
+    pub async fn to_der() -> Vec<u8> {
+        unimplemented!()
     }
 }
