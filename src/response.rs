@@ -31,7 +31,6 @@
 ///                 |               04 14 694d18a9be42f7802614d4844f23601478b78820
 ///                 |               04 14 397be002a2f571fd80dceb52a17a7f8b632be755
 ///                 |               02 08 6378e51d448ff46d
-/// REVIEW: on RFC, revoke is implicit tag 1
 ///                 |           a1 16                                           %% status revoke            
 ///                 |               18 0f 32303230313133303031343832355a        %% revoke time
 ///                 |               a0 03 0a 01 00                              %% reason ENUMERATED
