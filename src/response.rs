@@ -1,6 +1,7 @@
 //! OCSP response
 
-use crate::common::ocsp::OcspExt;
+use crate::common::{asn1::GeneralizedTime, ocsp::OcspExt};
+use crate::err::Result;
 use crate::request::{CertId, Oid};
 
 const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
@@ -23,9 +24,29 @@ pub enum CertStatus {
 #[derive(Debug)]
 pub struct RevokedInfo {
     /// revocation time
-    pub revocation_time: Vec<u8>,
+    pub revocation_time: GeneralizedTime,
     /// revocation reason, exp 0
-    pub revocation_reason: Vec<u8>,
+    pub revocation_reason: Option<Vec<u8>>,
+}
+
+impl RevokedInfo {
+    /// return new instance
+    pub async fn new(time: GeneralizedTime, reason: Option<String>) -> Self {
+        let mut r = None;
+        if let Some(s) = reason {
+            r = Some(s.as_bytes().to_vec());
+        }
+
+        RevokedInfo {
+            revocation_time: time,
+            revocation_reason: r,
+        }
+    }
+
+    /// serialize to DER encoding
+    pub async fn to_der(&self) -> Vec<u8> {
+        unimplemented!()
+    }
 }
 
 /// RFC 6960 single response
