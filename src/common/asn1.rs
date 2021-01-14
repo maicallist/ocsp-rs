@@ -115,8 +115,18 @@ impl GeneralizedTime {
 
     /// serialize to DER encoding  
     /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
-    pub async fn to_der() -> Result<Vec<u8>, OcspError> {
-        unimplemented!()
+    pub async fn to_der_utc(&self) -> Result<Vec<u8>, OcspError> {
+        let v = format!(
+            "{}{:02}{:02}{:02}{:02}{:02}Z",
+            self.year, self.month, self.day, self.hour, self.min, self.sec
+        )
+        .as_bytes()
+        .to_vec();
+        let l = asn1_encode_length(v.len()).await?;
+        let mut t = vec![ASN1_GENERALIZED_TIME];
+        t.extend(l);
+        t.extend(v);
+        Ok(t)
     }
 }
 
@@ -124,7 +134,44 @@ impl GeneralizedTime {
 mod test {
     use hex::FromHex;
 
-    use super::asn1_encode_length;
+    use super::{asn1_encode_length, GeneralizedTime, ASN1_GENERALIZED_TIME};
+
+    /// test generalized time to der
+    #[tokio::test]
+    async fn generalized_time_to_der_utc() {
+        let gt = GeneralizedTime {
+            year: 2021,
+            month: 1,
+            day: 13,
+            hour: 3,
+            min: 9,
+            sec: 25,
+        };
+
+        let der = gt.to_der_utc().await.unwrap();
+        assert_eq!(
+            vec![
+                ASN1_GENERALIZED_TIME,
+                0x0f,
+                0x32,
+                0x30,
+                0x32,
+                0x31,
+                0x30,
+                0x31,
+                0x31,
+                0x33,
+                0x30,
+                0x33,
+                0x30,
+                0x39,
+                0x32,
+                0x35,
+                0x5a
+            ],
+            der
+        );
+    }
 
     /// test asn1 encoding with length requires more than one byte
     #[tokio::test]
