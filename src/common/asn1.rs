@@ -72,7 +72,7 @@ pub struct GeneralizedTime {
     hour: u32,
     min: u32,
     sec: u32,
-    millis: u32,
+    //millis: u32,
 }
 
 impl GeneralizedTime {
@@ -80,7 +80,7 @@ impl GeneralizedTime {
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
         // nano to millis
-        let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
+        //let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
 
         GeneralizedTime {
             year: now.year(),
@@ -89,7 +89,7 @@ impl GeneralizedTime {
             hour: now.hour(),
             min: now.minute(),
             sec: now.second(),
-            millis: mi,
+            //millis: mi,
         }
     }
 
