@@ -32,7 +32,7 @@ pub(crate) const ASN1_GENERALIZED_TIME: u8 = 0x18;
 /// asn1 enumerated
 pub(crate) const ASN1_ENUMERATED: u8 = 0x0a;
 /// asn1 bit string
-pub(crate) const ASN1_BIT_STRING:u8 = 0x03;
+pub(crate) const ASN1_BIT_STRING: u8 = 0x03;
 
 /// allowing data to be converted to [Sequence](https://docs.rs/asn1_der/0.7.2/asn1_der/typed/struct.Sequence.html)
 pub trait TryIntoSequence<'d> {
@@ -76,43 +76,21 @@ pub struct GeneralizedTime {
 }
 
 impl GeneralizedTime {
-    /// return UTC time from raw
-    pub async fn new(
-        year: i32,
-        month: u32,
-        day: u32,
-        hour: u32,
-        min: u32,
-        sec: u32,
-        millis: u32,
-    ) -> Self {
-        GeneralizedTime {
-            year: year,
-            month: month,
-            day: day,
-            hour: hour,
-            min: min,
-            sec: sec,
-            millis: millis,
-        }
-    }
-
     /// return **now** in UTC
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
         // nano to millis
         let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
 
-        GeneralizedTime::new(
-            now.year(),
-            now.month(),
-            now.day(),
-            now.hour(),
-            now.minute(),
-            now.second(),
-            mi,
-        )
-        .await
+        GeneralizedTime {
+            year: now.year(),
+            month: now.month(),
+            day: now.day(),
+            hour: now.hour(),
+            min: now.minute(),
+            sec: now.second(),
+            millis: mi,
+        }
     }
 
     /// serialize to DER encoding  
