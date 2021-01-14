@@ -115,7 +115,7 @@ impl GeneralizedTime {
 
     /// serialize to DER encoding  
     /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
-    pub async fn to_der() -> Vec<u8> {
+    pub async fn to_der() -> Result<Vec<u8>, OcspError> {
         unimplemented!()
     }
 }
@@ -126,18 +126,21 @@ mod test {
 
     use super::asn1_encode_length;
 
+    /// test asn1 encoding with length requires more than one byte
     #[tokio::test]
     async fn asn1_length_4934() {
         let v = asn1_encode_length(4934).await.unwrap();
         assert_eq!(vec![0x82, 0x13, 0x46], v);
     }
 
+    /// test asn1 encoding with one byte length
     #[tokio::test]
     async fn asn1_length_127() {
         let v = asn1_encode_length(52).await.unwrap();
         assert_eq!(vec![0x34], v)
     }
 
+    /// generalized time conversion
     #[tokio::test]
     async fn num2hex() {
         let num: u32 = 2021;
@@ -146,6 +149,7 @@ mod test {
         assert_eq!(vec![0x32, 0x30, 0x32, 0x31], hex);
     }
 
+    // generalized time conversion
     #[tokio::test]
     async fn hex2time() {
         let hex = "32303231303131333033303932355a";
