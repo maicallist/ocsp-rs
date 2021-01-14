@@ -30,6 +30,10 @@ pub enum OcspError {
     #[error("Unable to locate OID info {0}")]
     Asn1OidUnknown(&'static str),
 
+    /// ASN.1 TLV reaches max length allowed
+    #[error("ASN.1 allows max 127 bytes to represents a length in TLV, but got {0} {1}")]
+    Asn1LengthOverflow(usize, &'static str),
+
     /// Cannot recognize ocsp extension
     #[error("Unable to recognize extension {0}")]
     OcspExtUnknown(&'static str),

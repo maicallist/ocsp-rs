@@ -7,7 +7,7 @@ use asn1_der::{
 };
 use chrono::{Datelike, Timelike};
 
-use crate::err::OcspError;
+use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -63,6 +63,26 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
     }
 }
 
+/// determine asn1 length
+pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError> {
+    match len {
+        0..=127 => Ok(vec![len as u8]),
+        _ => {
+            let mut v = len.to_be_bytes().to_vec();
+            // removing leading zero in usize
+            v.retain(|e| *e != 0);
+
+            // safety check
+            if v.len() > 126 {
+                return Err(OcspError::Asn1LengthOverflow(v.len(), err_at!()));
+            }
+            let l = 0x80 + v.len() as u8;
+            let l = vec![l];
+            Ok(l.into_iter().chain(v.into_iter()).collect())
+        }
+    }
+}
+
 /// represents a ASN1 GeneralizedTime
 #[derive(Debug)]
 pub struct GeneralizedTime {
@@ -103,6 +123,20 @@ impl GeneralizedTime {
 #[cfg(test)]
 mod test {
     use hex::FromHex;
+
+    use super::asn1_encode_length;
+
+    #[tokio::test]
+    async fn asn1_length_4934() {
+        let v = asn1_encode_length(4934).await.unwrap();
+        assert_eq!(vec![0x82, 0x13, 0x46], v);
+    }
+
+    #[tokio::test]
+    async fn asn1_length_127() {
+        let v = asn1_encode_length(52).await.unwrap();
+        assert_eq!(vec![0x34], v)
+    }
 
     #[tokio::test]
     async fn num2hex() {
