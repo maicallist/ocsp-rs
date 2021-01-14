@@ -1,7 +1,6 @@
 //! OCSP response  
 //! for binary details, see [crate::contrib::resp]
 use crate::common::{asn1::GeneralizedTime, ocsp::OcspExt};
-use crate::err::Result;
 use crate::request::{CertId, Oid};
 
 const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
