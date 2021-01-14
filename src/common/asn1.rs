@@ -102,7 +102,15 @@ impl GeneralizedTime {
 
 #[cfg(test)]
 mod test {
-    use hex::{self, FromHex};
+    use hex::FromHex;
+
+    #[tokio::test]
+    async fn num2hex() {
+        let num: u32 = 2021;
+        let hex = num.to_string();
+        let hex = hex.as_bytes();
+        assert_eq!(vec![0x32, 0x30, 0x32, 0x31], hex);
+    }
 
     #[tokio::test]
     async fn hex2time() {
