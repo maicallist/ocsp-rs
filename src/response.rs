@@ -1,5 +1,5 @@
 //! OCSP response  
-//! for binary details, see [crate::contrib::resp]
+//! for binary details, see [crate::doc::resp]
 use crate::common::{asn1::GeneralizedTime, ocsp::OcspExt};
 use crate::request::{CertId, Oid};
 
