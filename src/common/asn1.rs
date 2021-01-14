@@ -99,3 +99,16 @@ impl GeneralizedTime {
         unimplemented!()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use hex::{self, FromHex};
+
+    #[tokio::test]
+    async fn hex2time() {
+        let hex = "32303231303131333033303932355a";
+        let hex = Vec::from_hex(hex).unwrap();
+        let time = std::str::from_utf8(&hex).unwrap();
+        assert_eq!("20210113030925Z", time);
+    }
+}
