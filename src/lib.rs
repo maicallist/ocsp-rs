@@ -34,6 +34,7 @@ pub mod err;
 pub mod oid;
 pub mod request;
 pub mod response;
+pub mod contrib;
 
 #[cfg(test)]
 mod tests {}
