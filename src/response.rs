@@ -77,13 +77,13 @@ impl RevokedInfo {
 #[derive(Debug)]
 pub enum CertStatusCode {
     /// cert is valid
-    OcspRespCertStatusGood = 0x80,
+    Good = 0x80,
     /// cert is revoked
-    OcspRespCertStatusRevoked = 0xa1,
+    Revoked = 0xa1,
     /// The "unknown" state indicates that the responder doesn't know about  
     /// the certificate being requested, usually because the request  
     /// indicates an unrecognized issuer that is not served by this responder.
-    OcspRespCertStatusUnknown = 0x82,
+    Unknown = 0x82,
 }
 
 /// RFC 6960 cert status
@@ -97,14 +97,12 @@ impl CertStatus {
     /// create new status
     pub async fn new(status: CertStatusCode, rev_info: Option<RevokedInfo>) -> Self {
         match status {
-            CertStatusCode::OcspRespCertStatusGood | CertStatusCode::OcspRespCertStatusUnknown => {
-                CertStatus {
-                    code: status,
-                    revoke_info: None,
-                }
-            }
+            CertStatusCode::Good | CertStatusCode::Unknown => CertStatus {
+                code: status,
+                revoke_info: None,
+            },
 
-            CertStatusCode::OcspRespCertStatusRevoked => CertStatus {
+            CertStatusCode::Revoked => CertStatus {
                 code: status,
                 revoke_info: rev_info,
             },
@@ -116,15 +114,9 @@ impl CertStatus {
         debug!("Start encoding cert status");
         trace!("Cert status: {:?}", self);
         match self.code {
-            CertStatusCode::OcspRespCertStatusGood => Ok(vec![
-                CertStatusCode::OcspRespCertStatusGood as u8,
-                ASN1_NULL,
-            ]),
-            CertStatusCode::OcspRespCertStatusUnknown => Ok(vec![
-                CertStatusCode::OcspRespCertStatusUnknown as u8,
-                ASN1_NULL,
-            ]),
-            CertStatusCode::OcspRespCertStatusRevoked => {
+            CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, ASN1_NULL]),
+            CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, ASN1_NULL]),
+            CertStatusCode::Revoked => {
                 debug!("Encoding revoke status");
                 let v;
                 match &self.revoke_info {
