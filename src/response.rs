@@ -2,14 +2,17 @@
 //! for binary details, see [crate::doc::resp]
 use tracing::{debug, trace};
 
-use crate::common::{
-    asn1::{
-        asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
-        ASN1_EXPLICIT_1,
+use crate::err::{OcspError, Result};
+use crate::{
+    common::{
+        asn1::{
+            asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
+            ASN1_EXPLICIT_1, ASN1_NULL,
+        },
+        ocsp::OcspExt,
     },
-    ocsp::OcspExt,
+    err_at,
 };
-use crate::err::Result;
 
 /// possible revoke reason, See RFC 5280
 #[repr(u8)]
@@ -47,7 +50,7 @@ pub struct RevokedInfo {
 }
 
 impl RevokedInfo {
-    /// serialize to DER encoding, explicit tag 1 included
+    /// serialize to DER encoding
     pub async fn to_der(&self) -> Result<Vec<u8>> {
         debug!("Start encoding RevokeInfo");
         trace!("RevokeInfo to der: {:?}", self);
@@ -74,20 +77,67 @@ impl RevokedInfo {
 #[derive(Debug)]
 pub enum CertStatusCode {
     /// cert is valid
-    OcspRespCertStatusGood = 0u8,
+    OcspRespCertStatusGood = 0x80,
     /// cert is revoked
-    OcspRespCertStatusRevoked = 1u8,
+    OcspRespCertStatusRevoked = 0xa1,
     /// The "unknown" state indicates that the responder doesn't know about  
     /// the certificate being requested, usually because the request  
     /// indicates an unrecognized issuer that is not served by this responder.
-    OcspRespCertStatusUnknown = 2u8,
+    OcspRespCertStatusUnknown = 0x82,
 }
 
 /// RFC 6960 cert status
 #[derive(Debug)]
 pub struct CertStatus {
     code: CertStatusCode,
-    reason: Option<RevokedInfo>,
+    revoke_info: Option<RevokedInfo>,
+}
+
+impl CertStatus {
+    /// create new status
+    pub async fn new(status: CertStatusCode, rev_info: Option<RevokedInfo>) -> Self {
+        match status {
+            CertStatusCode::OcspRespCertStatusGood | CertStatusCode::OcspRespCertStatusUnknown => {
+                CertStatus {
+                    code: status,
+                    revoke_info: None,
+                }
+            }
+
+            CertStatusCode::OcspRespCertStatusRevoked => CertStatus {
+                code: status,
+                revoke_info: rev_info,
+            },
+        }
+    }
+
+    /// encode to ASN.1 DER
+    pub async fn to_der(&self) -> Result<Vec<u8>> {
+        debug!("Start encoding cert status");
+        trace!("Cert status: {:?}", self);
+        match self.code {
+            CertStatusCode::OcspRespCertStatusGood => Ok(vec![
+                CertStatusCode::OcspRespCertStatusGood as u8,
+                ASN1_NULL,
+            ]),
+            CertStatusCode::OcspRespCertStatusUnknown => Ok(vec![
+                CertStatusCode::OcspRespCertStatusUnknown as u8,
+                ASN1_NULL,
+            ]),
+            CertStatusCode::OcspRespCertStatusRevoked => {
+                debug!("Encoding revoke status");
+                let v;
+                match &self.revoke_info {
+                    Some(r) => {
+                        // revoke_info to_der contains status code
+                        v = r.to_der().await?
+                    }
+                    None => return Err(OcspError::GenRevokeInfoNotFound(err_at!())),
+                }
+                Ok(v)
+            }
+        }
+    }
 }
 
 /// RFC 6960 single response
@@ -202,8 +252,6 @@ pub struct OcspResponse {
 
 #[cfg(test)]
 mod test {
-    use crate::common::asn1::ASN1_GENERALIZED_TIME;
-
     use super::*;
 
     // test revoke info to der without reason

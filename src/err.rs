@@ -45,6 +45,10 @@ pub enum OcspError {
     /// Cannot parse provided time
     #[error("Invalid time hour {0} minute {1} second {2} {3}")]
     GenInvalidTime(u32, u32, u32, &'static str),
+
+    /// Missing revoke info for revoked certificate
+    #[error("Revoke info not found {0}")]
+    GenRevokeInfoNotFound(&'static str),
 }
 
 /// display error location
