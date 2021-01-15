@@ -79,7 +79,7 @@ pub struct RevokedInfo {
     /// revocation time
     pub revocation_time: GeneralizedTime,
     /// revocation reason, exp 0, ENUMERATED
-    pub revocation_reason: Option<Vec<u8>>,
+    pub revocation_reason: Option<u8>,
 }
 
 impl RevokedInfo {
