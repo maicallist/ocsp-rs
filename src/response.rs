@@ -83,19 +83,6 @@ pub struct RevokedInfo {
 }
 
 impl RevokedInfo {
-    /// return new instance
-    pub async fn new(time: GeneralizedTime, reason: Option<String>) -> Self {
-        let mut r = None;
-        if let Some(s) = reason {
-            r = Some(s.as_bytes().to_vec());
-        }
-
-        RevokedInfo {
-            revocation_time: time,
-            revocation_reason: r,
-        }
-    }
-
     /// serialize to DER encoding
     pub async fn to_der(&self) -> Vec<u8> {
         unimplemented!()
