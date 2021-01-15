@@ -61,7 +61,7 @@ pub struct RevokedInfo {
 }
 
 impl RevokedInfo {
-    /// serialize to DER encoding
+    /// serialize to DER encoding, explicit tag 1 included
     pub async fn to_der(&self) -> Result<Vec<u8>> {
         debug!("Start encoding RevokeInfo");
         trace!("RevokeInfo to der: {:?}", self);
@@ -195,20 +195,43 @@ pub struct OcspResponse {
 
 #[cfg(test)]
 mod test {
+    use crate::common::asn1::ASN1_GENERALIZED_TIME;
+
     use super::*;
 
+    // test revoke info to der without reason
+    #[tokio::test]
+    async fn revoke_info_to_der_no_reason() {
+        let ri = RevokedInfo {
+            revocation_time: GeneralizedTime::new(2021, 1, 12, 8, 32, 56).await.unwrap(),
+            revocation_reason: None,
+        };
+
+        let v = ri.to_der().await.unwrap();
+        assert_eq!(
+            vec![
+                0xa1, 0x11, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x31, 0x32, 0x30, 0x38,
+                0x33, 0x32, 0x35, 0x36, 0x5a
+            ],
+            v
+        );
+    }
+
+    // test revoke info to der with reason
     #[tokio::test]
     async fn revoke_info_to_der() {
-        //let ri = RevokedInfo {
-        //    revocation_time: GeneralizedTime {
-        //        year: 2020,
-        //        month: 11,
-        //        day: 30,
-        //        hour: 1,
-        //        min: 48,
-        //        sec: 25,
-        //    },
-        //    revocation_reason: Some(CrlReason::OcspRevokeUnspecified)
-        //}
+        let ri = RevokedInfo {
+            revocation_time: GeneralizedTime::new(2020, 11, 30, 1, 48, 25).await.unwrap(),
+            revocation_reason: Some(CrlReason::OcspRevokeUnspecified),
+        };
+
+        let v = ri.to_der().await.unwrap();
+        assert_eq!(
+            vec![
+                0xa1, 0x16, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x30, 0x31, 0x31, 0x33, 0x30, 0x30, 0x31,
+                0x34, 0x38, 0x32, 0x35, 0x5a, 0xa0, 0x03, 0x0a, 0x01, 0x00
+            ],
+            v
+        );
     }
 }
