@@ -5,9 +5,14 @@ use crate::common::{
     ocsp::OcspExt,
 };
 
-const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
-const OCSP_RESP_CERT_STATUS_REVOKED: u8 = 0x01;
-const OCSP_RESP_CERT_STATUS_UNKNOWN: u8 = 0x02;
+/// good status in single response
+pub const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
+/// revoke status in single response
+pub const OCSP_RESP_CERT_STATUS_REVOKED: u8 = 0x01;
+/// The "unknown" state indicates that the responder doesn't know about  
+/// the certificate being requested, usually because the request  
+/// indicates an unrecognized issuer that is not served by this responder.
+pub const OCSP_RESP_CERT_STATUS_UNKNOWN: u8 = 0x02;
 
 /// possible status for a cert
 #[allow(non_camel_case_types)]
@@ -21,12 +26,59 @@ pub enum CertStatus {
     OCSP_RESP_CERT_STATUS_UNKNOWN,
 }
 
+/// possible cert revocation reason
+pub const OCSP_REVOKE_UNSPECIFIED: u8 = 0;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_KEY_COMPROMISE: u8 = 1;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_CA_COMPROMISE: u8 = 2;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_AFF_CHANGED: u8 = 3;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_SUPERSEDED: u8 = 4;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_CESS_OPERATION: u8 = 5;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_CERT_HOLD: u8 = 6;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_REMOVE_FROM_CRL: u8 = 8;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_PRIV_WITHDRAWN: u8 = 9;
+/// possible cert revocation reason
+pub const OCSP_REVOKE_AA_COMPROMISE: u8 = 10;
+
+/// possible revoke reason, See RFC 5280
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum CrlReason {
+    /// possible cert revocation reason
+    OCSP_REVOKE_UNSPECIFIED,
+    /// possible cert revocation reason
+    OCSP_REVOKE_KEY_COMPROMISE,
+    /// possible cert revocation reason
+    OCSP_REVOKE_CA_COMPROMISE,
+    /// possible cert revocation reason
+    OCSP_REVOKE_AFF_CHANGED,
+    /// possible cert revocation reason
+    OCSP_REVOKE_SUPERSEDED,
+    /// possible cert revocation reason
+    OCSP_REVOKE_CESS_OPERATION,
+    /// possible cert revocation reason
+    OCSP_REVOKE_CERT_HOLD,
+    /// possible cert revocation reason
+    OCSP_REVOKE_REMOVE_FROM_CRL,
+    /// possible cert revocation reason
+    OCSP_REVOKE_PRIV_WITHDRAWN,
+    /// possible cert revocation reason
+    OCSP_REVOKE_AA_COMPROMISE,
+}
+
 /// see RFC 6960
 #[derive(Debug)]
 pub struct RevokedInfo {
     /// revocation time
     pub revocation_time: GeneralizedTime,
-    /// revocation reason, exp 0
+    /// revocation reason, exp 0, ENUMERATED
     pub revocation_reason: Option<Vec<u8>>,
 }
 
@@ -65,8 +117,10 @@ pub struct OneResp {
     pub one_resp_ext: Option<Vec<OcspExt>>,
 }
 
-const OCSP_RESPONDER_BY_NAME: u8 = 0x0;
-const OCSP_RESPONDER_BY_KEY_HASH: u8 = 0x01;
+/// Responder ID type
+pub const OCSP_RESPONDER_BY_NAME: u8 = 0x0;
+/// Responder ID type
+pub const OCSP_RESPONDER_BY_KEY_HASH: u8 = 0x01;
 /// responder type
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
@@ -130,12 +184,18 @@ pub struct ResponseBytes {
     pub response_data: Vec<u8>,
 }
 
-const OCSP_RESP_STATUS_SUCCESSFUL: u8 = 0x00;
-const OCSP_RESP_STATUS_MALFORMED_REQ: u8 = 0x01;
-const OCSP_RESP_STATUS_INTERNAL_ERROR: u8 = 0x02;
-const OCSP_RESP_STATUS_TRY_LATER: u8 = 0x03;
-const OCSP_RESP_STATUS_SIG_REQUIRED: u8 = 0x05;
-const OCSP_RESP_STATUS_UNAUTHORIZED: u8 = 0x06;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_SUCCESSFUL: u8 = 0x00;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_MALFORMED_REQ: u8 = 0x01;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_INTERNAL_ERROR: u8 = 0x02;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_TRY_LATER: u8 = 0x03;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_SIG_REQUIRED: u8 = 0x05;
+/// possible ocsp response status
+pub const OCSP_RESP_STATUS_UNAUTHORIZED: u8 = 0x06;
 
 /// possible status for ocsp request
 #[allow(non_camel_case_types)]
