@@ -30,11 +30,11 @@
 
 //pub mod asn1_common;
 pub mod common;
+pub mod doc;
 pub mod err;
 pub mod oid;
 pub mod request;
 pub mod response;
-pub mod doc;
 
 #[cfg(test)]
 mod tests {}

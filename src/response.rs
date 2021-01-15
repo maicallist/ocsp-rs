@@ -1,7 +1,9 @@
 //! OCSP response  
 //! for binary details, see [crate::doc::resp]
-use crate::common::{asn1::GeneralizedTime, ocsp::OcspExt};
-use crate::request::{CertId, Oid};
+use crate::common::{
+    asn1::{CertId, GeneralizedTime, Oid},
+    ocsp::OcspExt,
+};
 
 const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
 const OCSP_RESP_CERT_STATUS_REVOKED: u8 = 0x01;

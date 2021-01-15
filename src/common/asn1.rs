@@ -6,6 +6,7 @@ use asn1_der::{
     DerObject,
 };
 use chrono::{Datelike, Timelike};
+use tracing::{debug, error, trace};
 
 use crate::{err::OcspError, err_at};
 
@@ -131,6 +132,114 @@ impl GeneralizedTime {
     }
 }
 
+/// Oid represents a 0x06 OID type in ASN.1  
+/// In OpenSSL ocsp request, OID is followed by NULL 0x05  
+/// REVIEW 0x05
+#[derive(Debug)]
+pub struct Oid {
+    /// an oid in bytes
+    pub id: Vec<u8>,
+    //null: Vec<u8>,
+}
+
+impl Oid {
+    /// get oid from raw sequence
+    pub async fn parse(oid: &[u8]) -> Result<Self, OcspError> {
+        trace!("Parsing OID {:02X?}", oid);
+        debug!("Converting OID data into asn1 sequence");
+        let s = oid.try_into()?;
+
+        debug!("Checking OID sequence length");
+        if s.len() != 2 {
+            error!(
+                "Provided OID contains {} items in sequence, expecting 2",
+                s.len()
+            );
+            return Err(OcspError::Asn1LengthError("OID", err_at!()));
+        }
+
+        let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+        let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+        debug!("Checking OID tags");
+        if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
+            error!(
+                "Provided OID sequence tags are {} and {}, expecting 0x06 and 0x05",
+                id.tag(),
+                nil.tag()
+            );
+            return Err(OcspError::Asn1MismatchError("OID", err_at!()));
+        }
+
+        debug!("good OID");
+        Ok(Oid {
+            id: id.value().to_vec(),
+        })
+    }
+}
+/// RFC 6960 CertID
+#[derive(Debug)]
+pub struct CertId {
+    /// hash algo oid
+    pub hash_algo: Oid,
+    /// issuer name hash in byte
+    pub issuer_name_hash: Vec<u8>,
+    /// issuer key hash in byte
+    pub issuer_key_hash: Vec<u8>,
+    /// certificate serial number in byte
+    pub serial_num: Vec<u8>,
+}
+
+impl CertId {
+    /// get certid from raw bytes
+    pub async fn parse(certid: &[u8]) -> Result<Self, OcspError> {
+        trace!("Parsing CERTID {:02X?}", certid);
+        debug!("Converting CERTID data into asn1 sequence");
+        let s = certid.try_into()?;
+
+        debug!("Checking CERTID sequence length");
+        if s.len() != 4 {
+            error!(
+                "Provided CERTID contains {} items in sequence, expecting 4",
+                s.len()
+            );
+            return Err(OcspError::Asn1LengthError("CertID", err_at!()));
+        }
+
+        let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+        let name_hash = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+        let key_hash = s.get(2).map_err(OcspError::Asn1DecodingError)?;
+        let sn = s.get(3).map_err(OcspError::Asn1DecodingError)?;
+
+        debug!("Checking CERTID tags");
+        if oid.tag() != ASN1_SEQUENCE
+            || name_hash.tag() != ASN1_OCTET
+            || key_hash.tag() != ASN1_OCTET
+            || sn.tag() != ASN1_INTEGER
+        {
+            error!(
+                "Provided CERTID sequence tags are {}, {}, {} and {}, expecting 0x30, 0x04, 0x04, 0x02", 
+                oid.tag(),
+                name_hash.tag(),
+                key_hash.tag(),
+                sn.tag()
+            );
+            return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
+        }
+
+        let oid = Oid::parse(oid.raw()).await?;
+        let name_hash = name_hash.value().to_vec();
+        let key_hash = key_hash.value().to_vec();
+        let sn = sn.value().to_vec();
+
+        debug!("good CERTID");
+        Ok(CertId {
+            hash_algo: oid,
+            issuer_name_hash: name_hash,
+            issuer_key_hash: key_hash,
+            serial_num: sn,
+        })
+    }
+}
 #[cfg(test)]
 mod test {
     use hex::FromHex;
