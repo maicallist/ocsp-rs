@@ -192,3 +192,10 @@ pub struct OcspResponse {
     /// the responseBytes field is not set
     pub resp_bytes: Option<ResponseBytes>,
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    
+    
+}
