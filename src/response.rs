@@ -7,7 +7,7 @@ use crate::{
     common::{
         asn1::{
             asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
-            ASN1_EXPLICIT_1, ASN1_NULL,
+            ASN1_EXPLICIT_1,
         },
         ocsp::OcspExt,
     },
@@ -114,8 +114,8 @@ impl CertStatus {
         debug!("Start encoding cert status");
         trace!("Cert status: {:?}", self);
         match self.code {
-            CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, ASN1_NULL]),
-            CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, ASN1_NULL]),
+            CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, 0x00]),
+            CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, 0x00]),
             CertStatusCode::Revoked => {
                 debug!("Encoding revoke status");
                 let v;
@@ -245,6 +245,13 @@ pub struct OcspResponse {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[tokio::test]
+    async fn cert_good() {
+        let good = CertStatus::new(CertStatusCode::Good, None).await;
+        let v = good.to_der().await.unwrap();
+        assert_eq!(vec![0x80, 0x00], v);
+    }
 
     // test revoke info to der without reason
     #[tokio::test]
