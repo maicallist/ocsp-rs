@@ -11,25 +11,18 @@ use crate::common::{
 };
 use crate::err::Result;
 
-/// good status in single response
-pub const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
-/// revoke status in single response
-pub const OCSP_RESP_CERT_STATUS_REVOKED: u8 = 0x01;
-/// The "unknown" state indicates that the responder doesn't know about  
-/// the certificate being requested, usually because the request  
-/// indicates an unrecognized issuer that is not served by this responder.
-pub const OCSP_RESP_CERT_STATUS_UNKNOWN: u8 = 0x02;
-
 /// possible status for a cert
-#[allow(non_camel_case_types)]
+#[repr(u8)]
 #[derive(Debug)]
 pub enum CertStatus {
     /// cert is valid
-    OCSP_RESP_CERT_STATUS_GOOD,
+    OcspRespCertStatusGood = 0u8,
     /// cert is revoked
-    OCSP_RESP_CERT_STATUS_REVOKED,
-    /// no cert info
-    OCSP_RESP_CERT_STATUS_UNKNOWN,
+    OcspRespCertStatusRevoked = 1u8,
+    /// The "unknown" state indicates that the responder doesn't know about  
+    /// the certificate being requested, usually because the request  
+    /// indicates an unrecognized issuer that is not served by this responder.
+    OcspRespCertStatusUnknown = 2u8,
 }
 
 /// possible revoke reason, See RFC 5280
@@ -171,35 +164,22 @@ pub struct ResponseBytes {
     pub response_data: Vec<u8>,
 }
 
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_SUCCESSFUL: u8 = 0x00;
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_MALFORMED_REQ: u8 = 0x01;
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_INTERNAL_ERROR: u8 = 0x02;
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_TRY_LATER: u8 = 0x03;
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_SIG_REQUIRED: u8 = 0x05;
-/// possible ocsp response status
-pub const OCSP_RESP_STATUS_UNAUTHORIZED: u8 = 0x06;
-
 /// possible status for ocsp request
-#[allow(non_camel_case_types)]
+#[repr(u8)]
 #[derive(Debug)]
 pub enum OcspRespStatus {
     /// See RFC 6960
-    OCSP_RESP_STATUS_SUCCESSFUL,
+    OcspRespStatusSuccessful = 0u8,
     /// See RFC 6960
-    OCSP_RESP_STATUS_MALFORMED_REQ,
+    OcspRespStatusMalformedReq = 1u8,
     /// See RFC 6960
-    OCSP_RESP_STATUS_INTERNAL_ERROR,
+    OcspRespStatusInternalError = 2u8,
     /// See RFC 6960
-    OCSP_RESP_STATUS_TRY_LATER,
+    OcspRespStatusTryLater = 3u8,
     /// See RFC 6960
-    OCSP_RESP_STATUS_SIG_REQUIRED,
+    OcspRespStatusSigRequired = 5u8,
     /// See RFC 6960
-    OCSP_RESP_STATUS_UNAUTHORIZED,
+    OcspRespStatusUnauthorized = 6u8,
 }
 
 /// ocsp response
