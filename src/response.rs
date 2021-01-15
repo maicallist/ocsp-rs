@@ -196,6 +196,19 @@ pub struct OcspResponse {
 #[cfg(test)]
 mod test {
     use super::*;
-    
-    
+
+    #[tokio::test]
+    async fn revoke_info_to_der() {
+        //let ri = RevokedInfo {
+        //    revocation_time: GeneralizedTime {
+        //        year: 2020,
+        //        month: 11,
+        //        day: 30,
+        //        hour: 1,
+        //        min: 48,
+        //        sec: 25,
+        //    },
+        //    revocation_reason: Some(CrlReason::OcspRevokeUnspecified)
+        //}
+    }
 }

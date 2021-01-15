@@ -98,6 +98,33 @@ pub struct GeneralizedTime {
 }
 
 impl GeneralizedTime {
+    /// return generalized time at specified time
+    pub async fn new(
+        year: i32,
+        month: u32,
+        day: u32,
+        hour: u32,
+        min: u32,
+        sec: u32,
+    ) -> Result<Self, OcspError> {
+        // lazy check if date time is valid
+        // turn it into chrono
+        let dt = chrono::NaiveDate::from_ymd_opt(year, month, day)
+            .ok_or(OcspError::GenInvalidDate(year, month, day, err_at!()))?;
+        let _ = dt
+            .and_hms_opt(hour, min, sec)
+            .ok_or(OcspError::GenInvalidTime(hour, min, sec, err_at!()))?;
+
+        Ok(GeneralizedTime {
+            year: year,
+            month: month,
+            day: day,
+            hour: hour,
+            min: min,
+            sec: sec,
+        })
+    }
+
     /// return **now** in UTC
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
