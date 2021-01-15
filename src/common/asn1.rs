@@ -145,6 +145,7 @@ pub struct Oid {
 impl Oid {
     /// get oid from raw sequence
     pub async fn parse(oid: &[u8]) -> Result<Self, OcspError> {
+        debug!("Start decoding OID");
         trace!("Parsing OID {:02X?}", oid);
         debug!("Converting OID data into asn1 sequence");
         let s = oid.try_into()?;
@@ -170,7 +171,7 @@ impl Oid {
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
 
-        debug!("good OID");
+        debug!("Good OID decoded");
         Ok(Oid {
             id: id.value().to_vec(),
         })
@@ -192,6 +193,7 @@ pub struct CertId {
 impl CertId {
     /// get certid from raw bytes
     pub async fn parse(certid: &[u8]) -> Result<Self, OcspError> {
+        debug!("Start decoding CertID");
         trace!("Parsing CERTID {:02X?}", certid);
         debug!("Converting CERTID data into asn1 sequence");
         let s = certid.try_into()?;
@@ -231,7 +233,7 @@ impl CertId {
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
 
-        debug!("good CERTID");
+        debug!("Good CERTID decoded");
         Ok(CertId {
             hash_algo: oid,
             issuer_name_hash: name_hash,

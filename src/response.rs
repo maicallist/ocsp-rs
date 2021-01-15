@@ -63,6 +63,7 @@ pub struct RevokedInfo {
 impl RevokedInfo {
     /// serialize to DER encoding
     pub async fn to_der(&self) -> Result<Vec<u8>> {
+        debug!("Start encoding RevokeInfo");
         trace!("RevokeInfo to der: {:?}", self);
         let mut time = self.revocation_time.to_der_utc().await?;
         let mut reason = vec![];
@@ -77,7 +78,7 @@ impl RevokedInfo {
         tag.extend(len);
         tag.extend(time);
 
-        debug!("RevokeInfo serialized");
+        debug!("Good REVOKEINFO encoded");
         Ok(tag)
     }
 }

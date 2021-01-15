@@ -38,6 +38,7 @@ impl OcspExt {
     /// raw is sequence of list extensions  
     /// remove explicit and implicit tags first
     pub async fn parse<'d>(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
+        debug!("Start decoding Extensions");
         trace!("Parsing EXTENSION list {:02X?}", raw);
 
         let mut r: Vec<OcspExt> = Vec::new();
@@ -50,12 +51,13 @@ impl OcspExt {
             r.push(OcspExt::parse_oneext(ext.raw()).await?);
         }
 
-        debug!("good extensions");
+        debug!("Good extensions decoded");
         Ok(r)
     }
 
     /// pass in each sequence of extension, return OcspExt
     async fn parse_oneext<'d>(oneext: &[u8]) -> Result<Self, OcspError> {
+        debug!("Start decoding one extension");
         trace!("Parsing SINGLE EXTENSION {:02X?}", oneext);
         debug!("Converting EXT data into asn1 sequence");
         let oneext = oneext.try_into()?;
@@ -140,7 +142,7 @@ impl OcspExt {
             _ => return Err(OcspError::OcspExtUnknown(err_at!())),
         };
 
-        debug!("good single extension");
+        debug!("Good single extension decoded");
         Ok(r)
     }
 }
