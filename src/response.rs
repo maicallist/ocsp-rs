@@ -11,20 +11,6 @@ use crate::common::{
 };
 use crate::err::Result;
 
-/// possible status for a cert
-#[repr(u8)]
-#[derive(Debug)]
-pub enum CertStatus {
-    /// cert is valid
-    OcspRespCertStatusGood = 0u8,
-    /// cert is revoked
-    OcspRespCertStatusRevoked = 1u8,
-    /// The "unknown" state indicates that the responder doesn't know about  
-    /// the certificate being requested, usually because the request  
-    /// indicates an unrecognized issuer that is not served by this responder.
-    OcspRespCertStatusUnknown = 2u8,
-}
-
 /// possible revoke reason, See RFC 5280
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
@@ -81,6 +67,27 @@ impl RevokedInfo {
         debug!("Good REVOKEINFO encoded");
         Ok(tag)
     }
+}
+
+/// possible status for a cert
+#[repr(u8)]
+#[derive(Debug)]
+pub enum CertStatusCode {
+    /// cert is valid
+    OcspRespCertStatusGood = 0u8,
+    /// cert is revoked
+    OcspRespCertStatusRevoked = 1u8,
+    /// The "unknown" state indicates that the responder doesn't know about  
+    /// the certificate being requested, usually because the request  
+    /// indicates an unrecognized issuer that is not served by this responder.
+    OcspRespCertStatusUnknown = 2u8,
+}
+
+/// RFC 6960 cert status
+#[derive(Debug)]
+pub struct CertStatus {
+    code: CertStatusCode,
+    reason: Option<RevokedInfo>,
 }
 
 /// RFC 6960 single response
