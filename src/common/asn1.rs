@@ -98,7 +98,7 @@ pub struct GeneralizedTime {
 }
 
 impl GeneralizedTime {
-    /// return generalized time at specified time
+    /// create generalized time at specified time
     pub async fn new(
         year: i32,
         month: u32,
@@ -125,7 +125,7 @@ impl GeneralizedTime {
         })
     }
 
-    /// return **now** in UTC
+    /// create time **now** in UTC
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
         // nano to millis
