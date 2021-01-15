@@ -1,9 +1,15 @@
 //! OCSP response  
 //! for binary details, see [crate::doc::resp]
+use tracing::{debug, trace};
+
 use crate::common::{
-    asn1::{CertId, GeneralizedTime, Oid},
+    asn1::{
+        asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
+        ASN1_EXPLICIT_1,
+    },
     ocsp::OcspExt,
 };
+use crate::err::Result;
 
 /// good status in single response
 pub const OCSP_RESP_CERT_STATUS_GOOD: u8 = 0x00;
@@ -26,51 +32,30 @@ pub enum CertStatus {
     OCSP_RESP_CERT_STATUS_UNKNOWN,
 }
 
-/// possible cert revocation reason
-pub const OCSP_REVOKE_UNSPECIFIED: u8 = 0;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_KEY_COMPROMISE: u8 = 1;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_CA_COMPROMISE: u8 = 2;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_AFF_CHANGED: u8 = 3;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_SUPERSEDED: u8 = 4;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_CESS_OPERATION: u8 = 5;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_CERT_HOLD: u8 = 6;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_REMOVE_FROM_CRL: u8 = 8;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_PRIV_WITHDRAWN: u8 = 9;
-/// possible cert revocation reason
-pub const OCSP_REVOKE_AA_COMPROMISE: u8 = 10;
-
 /// possible revoke reason, See RFC 5280
-#[derive(Debug)]
-#[allow(non_camel_case_types)]
+#[repr(u8)]
+#[derive(Debug, Copy, Clone)]
 pub enum CrlReason {
     /// possible cert revocation reason
-    OCSP_REVOKE_UNSPECIFIED,
+    OcspRevokeUnspecified = 0u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_KEY_COMPROMISE,
+    OcspRevokeKeyCompromise = 1u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_CA_COMPROMISE,
+    OcspRevokeCaCompromise = 2u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_AFF_CHANGED,
+    OcspRevokeAffChanged = 3u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_SUPERSEDED,
+    OcspRevokeSuperseded = 4u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_CESS_OPERATION,
+    OcspRevokeCessOperation = 5u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_CERT_HOLD,
+    OcspRevokeCertHold = 6u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_REMOVE_FROM_CRL,
+    OcspRevokeRemoveFromCrl = 8u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_PRIV_WITHDRAWN,
+    OcspRevokePrivWithdrawn = 9u8,
     /// possible cert revocation reason
-    OCSP_REVOKE_AA_COMPROMISE,
+    OcspRevokeAaCompromise = 10u8,
 }
 
 /// see RFC 6960
@@ -79,13 +64,28 @@ pub struct RevokedInfo {
     /// revocation time
     pub revocation_time: GeneralizedTime,
     /// revocation reason, exp 0, ENUMERATED
-    pub revocation_reason: Option<u8>,
+    pub revocation_reason: Option<CrlReason>,
 }
 
 impl RevokedInfo {
     /// serialize to DER encoding
-    pub async fn to_der(&self) -> Vec<u8> {
-        unimplemented!()
+    pub async fn to_der(&self) -> Result<Vec<u8>> {
+        trace!("RevokeInfo to der: {:?}", self);
+        let mut time = self.revocation_time.to_der_utc().await?;
+        let mut reason = vec![];
+        if let Some(re) = self.revocation_reason {
+            debug!("revoke with reason {}", re as u8);
+            reason = vec![ASN1_EXPLICIT_0, 0x03, ASN1_ENUMERATED, 0x01, re as u8];
+        }
+        time.extend(reason);
+        debug!("RevokeInfo value length {}", time.len());
+        let len = asn1_encode_length(time.len()).await?;
+        let mut tag = vec![ASN1_EXPLICIT_1];
+        tag.extend(len);
+        tag.extend(time);
+
+        debug!("RevokeInfo serialized");
+        Ok(tag)
     }
 }
 
