@@ -1,50 +1,42 @@
-
 //! OCSP response format
-//! A basic response structure in asn1 TLV form as follow:
-//! <table>
-//!     <tr>
-//!         <th> ASN1 HEX </th>    
-//!     </tr>
-//!     <tr>
-//!         <td>
-//!             <pre>
-//! 30 821295           %% RFC OCSP Response
-//!     0a 01 00        %% RFC response status ENUMERATED
-//!     a0 82128e 30 82128a  %% RFC response bytes
-//!         06 09 2b0601050507300101        %% response type
-//!         04 82127b                       %% response
-//!
-//!             30 821277                   %% basic response
-//!                 30 81f2                 %% tbs response data
-//!                 |   a2 16 04 14 366f35fbef16c6ba8a3183426d97ba894d556e91    %% Responder By Key EXP 2
-//!                 |   18 0f 32303231303131323033323634335a                    %% produced at
-//!                 |   30 81c6                                                 %% responses
-//!                 |       30 56                                               %% response 1
-//!                 |       |   30 41                                           %% certid
-//!                 |       |       30 09                                       %% oid
+//! # A basic response structure in asn1 TLV form as follow:
+//! <pre>
+//! 30 821295           # RFC OCSP Response
+//!     0a 01 00        # RFC response status ENUMERATED
+//!     a0 82128e 30 82128a  # RFC response bytes
+//!         06 09 2b0601050507300101        # response type
+//!         04 82127b                       # response
+//!             30 821277                   # basic response
+//!                 30 81f2                 # tbs response data
+//!                 |   a2 16 04 14 366f35fbef16c6ba8a3183426d97ba894d556e91    # Responder By Key EXP 2
+//!                 |   18 0f 32303231303131323033323634335a                    # produced at
+//!                 |   30 81c6                                                 # responses
+//!                 |       30 56                                               # response 1
+//!                 |       |   30 41                                           # certid
+//!                 |       |       30 09                                       # oid
 //!                 |       |           06 05 2b0e03021a
 //!                 |       |           05 00
 //!                 |       |       04 14 694d18a9be42f7802614d4844f23601478b78820
 //!                 |       |       04 14 397be002a2f571fd80dceb52a17a7f8b632be755
 //!                 |       |       02 08 41300983331f9d4f
-//!                 |       |   80 00                                           %% cert status good
-//!                 |       |   18 0f 32303231303131323033323634335a            %% this update
-//!                 |       30 6c                                               %% response 2
-//!                 |           30 41                                           %% certid
+//!                 |       |   80 00                                           # cert status good
+//!                 |       |   18 0f 32303231303131323033323634335a            # this update
+//!                 |       30 6c                                               # response 2
+//!                 |           30 41                                           # certid
 //!                 |               30 09
 //!                 |                   06 05 2b0e03021a
 //!                 |                   05 00
 //!                 |               04 14 694d18a9be42f7802614d4844f23601478b78820
 //!                 |               04 14 397be002a2f571fd80dceb52a17a7f8b632be755
 //!                 |               02 08 6378e51d448ff46d
-//!                 |           a1 16                                           %% status revoke            
-//!                 |               18 0f 32303230313133303031343832355a        %% revoke time
-//!                 |               a0 03 0a 01 00                              %% reason ENUMERATED
-//!                 |           18 0f 32303231303131323033323634335a            %% this update
-//!                 30 0d                                                       %% sign algo                  
+//!                 |           a1 16                                           # status revoke            
+//!                 |               18 0f 32303230313133303031343832355a        # revoke time
+//!                 |               a0 03 0a 01 00                              # reason ENUMERATED
+//!                 |           18 0f 32303231303131323033323634335a            # this update
+//!                 30 0d                                                       # sign algo                  
 //!                     06 09 2a864886f70d010105
 //!                     05 00
-//!                 03 820101 001e022d5ba25aa6ee97c5d910c61ebe                  %% signature   
+//!                 03 820101 001e022d5ba25aa6ee97c5d910c61ebe                  # signature   
 //!                             b73db75a767deb43af88c2a56377d9e5aeaa5484
 //!                             30087b5429d9b90b30569f9444676ad3
 //!                             a9885fb6d29cd46489ea1a82c369790d
@@ -60,24 +52,24 @@
 //!                             1a8f69adce38f45f8dd3874885898d7c
 //!                             ebd6057fd8e5f327694198edd90fe6e8
 //!                             21613be71e3ba24f4db85f10a7
-//!                 a0 82106a 30 821066         %% certs
-//!                     30 8205a2               %% cert 1
-//!                         30 82038a           %% tbs certificate
-//!                             a0 03 02 01 02  %% version EXP 0
+//!                 a0 82106a 30 821066         # certs
+//!                     30 8205a2               # cert 1
+//!                         30 82038a           # tbs certificate
+//!                             a0 03 02 01 02  # version EXP 0
 //!                             02 08 590cb28d6ededd2c        
-//!                         30 0d               %% signature algo id
+//!                         30 0d               # signature algo id
 //!                             06 09 2a864886f70d01010b    
 //!                             05 00
-//!                         30 3d               %% issuer
+//!                         30 3d               # issuer
 //!                             31 0b 30 09 06 035504061302434e    
 //!                             31 0d 30 0b 06 0355040a0c04434e5043
 //!                             31 1f 30 1d 06 035504030c16e8aebee5a487e8af81e4b9a6e4b8ade5bf835f525341
-//!                         30 1e               %% validity
+//!                         30 1e               # validity
 //!                             17 0d 3139303432323039323730325a
 //!                             17 0d 3339303431373039323730325a
-//!                         30 3b               %% subject
+//!                         30 3b               # subject
 //!                             31 0b 30 09 06 035504061302434e310d300b060355040a0c04434e5043311d301b06035504030c14e8aebee5a487e8aea4e8af814f4353505f525341
-//!                         30 82               %% subject public key info
+//!                         30 82               # subject public key info
 //!                             0122300d06092a864886f70d01010105000382010f003082010a0282010100ce405ecf00076a7b
 //!                             2582bd9d5d21e1e4c6cacdc402604213
 //!                             a1cd04c7f3e3a40fe949a1d4b9c69328
@@ -95,7 +87,7 @@
 //!                             5d3a2b4aafa1f4b0bdee0a8a6d36af13
 //!                             b019223952cb6a09f66ff2c129302449
 //!                             67dffbcf43cdccb10203010001
-//!                         a3 82 01a6 30 8201a %% extension 6 ext below
+//!                         a3 82 01a6 30 8201a # extension 6 ext below
 //!                             301f0603551d2304183016
 //!                             8014397be002a2f571fd80dceb52a17a
 //!                             7f8b632be755301d0603551d0e041604
@@ -123,10 +115,10 @@
 //!                             302506082b0601050507300186196874
 //!                             74703a2f2f31312e31302e3134372e31
 //!                             393a3230343433
-//!                         30 0d                   %% algo id
+//!                         30 0d                   # algo id
 //!                             06 09 2a864886f70d01010b
 //!                             05 00
-//!                         03 820201 00205e726dbb      %% signature
+//!                         03 820201 00205e726dbb      # signature
 //!                                     8ffb9b91a6e04e587549e9c61a499972
 //!                                     c84536fe11dde7ff40a5aab9403614ac
 //!                                     cf473c3efc6023f9e5095a06af6ea542
@@ -160,7 +152,4 @@
 //!                                     9288c886ee88fc304606fbd724c6e10c
 //!                                     f0dd80eeae5f4bb758d381
 //! two more certs below
-//!             </pre>
-//!         </td>
-//!     </tr>
-//! </table>
+//! </pre>
