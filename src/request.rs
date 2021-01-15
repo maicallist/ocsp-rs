@@ -270,7 +270,7 @@ pub struct Signature {
     /// but all signatures' length are multiple of 8,  
     /// so using Vec\<u8\> here.
     pub signature: Vec<u8>,
-    /// [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL
+    /// \[0\] EXPLICIT SEQUENCE OF Certificate OPTIONAL
     pub certs: Option<Vec<Vec<u8>>>,
 }
 
