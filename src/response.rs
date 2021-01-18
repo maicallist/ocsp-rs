@@ -1,6 +1,6 @@
 //! OCSP response  
 //! for binary details, see [crate::doc::resp]
-use tracing::{debug, trace};
+use tracing::{debug, trace, warn};
 
 use crate::err::{OcspError, Result};
 use crate::{
@@ -50,6 +50,14 @@ pub struct RevokedInfo {
 }
 
 impl RevokedInfo {
+    /// return new RevokeInfo
+    pub async fn new(gt: GeneralizedTime, reason: Option<CrlReason>) -> Self {
+        RevokedInfo {
+            revocation_time: gt,
+            revocation_reason: reason,
+        }
+    }
+
     /// serialize to DER encoding
     pub async fn to_der(&self) -> Result<Vec<u8>> {
         debug!("Start encoding RevokeInfo");
@@ -97,10 +105,13 @@ impl CertStatus {
     /// create new status
     pub async fn new(status: CertStatusCode, rev_info: Option<RevokedInfo>) -> Self {
         match status {
-            CertStatusCode::Good | CertStatusCode::Unknown => CertStatus {
-                code: status,
-                revoke_info: None,
-            },
+            CertStatusCode::Good | CertStatusCode::Unknown => {
+                warn!("Cert status good or unknown with revoke info, ignored.");
+                CertStatus {
+                    code: status,
+                    revoke_info: None,
+                }
+            }
 
             CertStatusCode::Revoked => CertStatus {
                 code: status,
@@ -246,6 +257,57 @@ pub struct OcspResponse {
 mod test {
     use super::*;
 
+    // test good & unknown status don't deal with revoke info
+    #[tokio::test]
+    async fn cert_good_with_rev_info() {
+        let rev_info = RevokedInfo::new(
+            GeneralizedTime::new(2021, 1, 1, 1, 1, 1).await.unwrap(),
+            Some(CrlReason::OcspRevokeUnspecified),
+        )
+        .await;
+
+        let good_rev = CertStatus::new(CertStatusCode::Good, Some(rev_info)).await;
+        assert!(good_rev.revoke_info.is_none());
+
+        let rev_info = RevokedInfo::new(
+            GeneralizedTime::new(2021, 1, 1, 1, 1, 1).await.unwrap(),
+            Some(CrlReason::OcspRevokeUnspecified),
+        )
+        .await;
+
+        let unknown_rev = CertStatus::new(CertStatusCode::Unknown, Some(rev_info)).await;
+        assert!(unknown_rev.revoke_info.is_none());
+    }
+
+    // test unknown cert status
+    #[tokio::test]
+    async fn cert_unknown() {
+        let unknown = CertStatus::new(CertStatusCode::Unknown, None).await;
+        let v = unknown.to_der().await.unwrap();
+        assert_eq!(vec![0x82, 0x00], v);
+    }
+
+    // test revoke cert status
+    #[tokio::test]
+    async fn cert_revoke() {
+        let rev_info = RevokedInfo::new(
+            GeneralizedTime::new(2021, 1, 1, 1, 1, 1).await.unwrap(),
+            Some(CrlReason::OcspRevokeUnspecified),
+        )
+        .await;
+        let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
+        let v = revoke.to_der().await.unwrap();
+
+        assert_eq!(
+            vec![
+                0xa1, 0x16, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31,
+                0x30, 0x31, 0x30, 0x31, 0x5a, 0xa0, 0x03, 0x0a, 0x01, 0x00
+            ],
+            v
+        );
+    }
+
+    // return good cert status
     #[tokio::test]
     async fn cert_good() {
         let good = CertStatus::new(CertStatusCode::Good, None).await;
