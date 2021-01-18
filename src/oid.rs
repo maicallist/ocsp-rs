@@ -3,17 +3,24 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-/// search oid in binary
-/// see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
-pub async fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
+// search oid in binary
+// see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
+//pub async fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
+//    match OID_MAP.get(oid) {
+//        None => None,
+//        Some(&index) => Some(ConstOid {
+//            id: index,
+//            num: OCSP_EXT_NUM_LIST[index],
+//            name: OCSP_EXT_NAME_LIST[index],
+//            bin: OCSP_EXT_HEX_LIST[index].clone(),
+//        }),
+//    }
+//}
+
+pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
     match OID_MAP.get(oid) {
         None => None,
-        Some(&index) => Some(ConstOid {
-            id: index,
-            num: OCSP_EXT_NUM_LIST[index],
-            name: OCSP_EXT_NAME_LIST[index],
-            bin: OCSP_EXT_HEX_LIST[index].clone(),
-        }),
+        Some(u) => Some(u.to_owned()),
     }
 }
 
@@ -84,6 +91,11 @@ pub(crate) const OCSP_EXT_EXTENDED_REVOKE_HEX: [u8; 9] =
 pub(crate) const OCSP_EXT_EXTENDED_REVOKE_NUM: &str = "1.3.6.1.5.5.7.48.1.9";
 pub(crate) const OCSP_EXT_EXTENDED_REVOKE_NAME: &str = "id-pkix-ocsp 9";
 
+pub(crate) const ALGO_SHA1_ID: usize = 9;
+pub(crate) const ALGO_SHA1_HEX: [u8; 5] = [0x2b, 0x0e, 0x03, 0x02, 0x1a];
+pub(crate) const ALGO_SHA1_NUM: &str = "1.3.14.3.2.26";
+pub(crate) const ALGO_SHA1_NAME: &str = "{iso(1) identified-organization(3) oiw(14) secsig(3) algorithms(2) hashAlgorithmIdentifier(26)}";
+
 lazy_static! {
     /// search oid index by oid binary
     pub static ref OID_MAP: HashMap<Vec<u8>, usize> = vec![
@@ -96,12 +108,13 @@ lazy_static! {
         (OCSP_EXT_SERVICE_LOCATOR_HEX.to_vec(), 6),
         (OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(), 7),
         (OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(), 8),
+        (ALGO_SHA1_HEX.to_vec(), 9),
     ]
     .into_iter()
     .collect();
 
     /// list of ocsp extension oid names
-    pub static ref OCSP_EXT_NAME_LIST: [&'static str; 9] = [
+    pub static ref OCSP_EXT_NAME_LIST: [&'static str; 10] = [
         OCSP_EXT_NONCE_NAME,
         OCSP_EXT_CRLREF_NAME,
         OCSP_EXT_RESP_TYPE_NAME,
@@ -111,10 +124,11 @@ lazy_static! {
         OCSP_EXT_SERVICE_LOCATOR_NAME,
         OCSP_EXT_PREF_SIG_ALGS_NAME,
         OCSP_EXT_EXTENDED_REVOKE_NAME,
+        ALGO_SHA1_NAME,
     ];
 
     /// list of ocsp extension oid in num dot format
-    pub static ref OCSP_EXT_NUM_LIST: [&'static str; 9] = [
+    pub static ref OCSP_EXT_NUM_LIST: [&'static str; 10] = [
         OCSP_EXT_NONCE_NUM,
         OCSP_EXT_CRLREF_NUM,
         OCSP_EXT_RESP_TYPE_NUM,
@@ -124,10 +138,11 @@ lazy_static! {
         OCSP_EXT_SERVICE_LOCATOR_NUM,
         OCSP_EXT_PREF_SIG_ALGS_NUM,
         OCSP_EXT_EXTENDED_REVOKE_NUM,
+        ALGO_SHA1_NUM,
     ];
 
     /// list of ocsp extension oid in bytes
-    pub static ref OCSP_EXT_HEX_LIST: [Vec<u8>; 9] = [
+    pub static ref OCSP_EXT_HEX_LIST: [Vec<u8>; 10] = [
         OCSP_EXT_NONCE_HEX.to_vec(),
         OCSP_EXT_CRLREF_HEX.to_vec(),
         OCSP_EXT_RESP_TYPE_HEX.to_vec(),
@@ -137,6 +152,7 @@ lazy_static! {
         OCSP_EXT_SERVICE_LOCATOR_HEX.to_vec(),
         OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(),
         OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(),
+        ALGO_SHA1_HEX.to_vec()
     ];
 
 }

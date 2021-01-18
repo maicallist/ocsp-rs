@@ -15,7 +15,7 @@ pub enum OcspExt {
     /// 4.4.1
     Nonce {
         ///id-pkix-ocsp 2
-        oid: ConstOid,
+        oid_id: usize,
         /// nonce value
         nonce: Vec<u8>,
     },
@@ -23,7 +23,7 @@ pub enum OcspExt {
     /// REVIEW: untested
     CrlRef {
         /// id-pkix-ocsp 3
-        oid: ConstOid,
+        oid_id: usize,
         /// EXPLICIT 0 IA5String OPTIONAL
         url: Option<Vec<u8>>,
         /// EXPLICIT 1 INTEGER OPTIONAL
@@ -70,16 +70,16 @@ impl OcspExt {
         let val = oid.value();
         // translate oid
         debug!("Resolving OID");
-        let ext = match b2i_oid(val).await {
+        let ext_id = match b2i_oid(val).await {
             None => return Err(OcspError::Asn1OidUnknown(err_at!())),
             Some(v) => v,
         };
 
-        let r = match ext.id {
+        let r = match ext_id {
             OCSP_EXT_NONCE_ID => {
                 debug!("Found NONCE extension");
                 OcspExt::Nonce {
-                    oid: ext,
+                    oid_id: ext_id,
                     nonce: oneext
                         .get(1)
                         .map_err(OcspError::Asn1DecodingError)?
@@ -124,7 +124,7 @@ impl OcspExt {
                 }
 
                 OcspExt::CrlRef {
-                    oid: ext,
+                    oid_id: ext_id,
                     url: url,
                     num: num,
                     time: time,

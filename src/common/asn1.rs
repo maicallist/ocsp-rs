@@ -8,6 +8,7 @@ use asn1_der::{
 use chrono::{Datelike, Timelike};
 use tracing::{debug, error, trace};
 
+use crate::oid::b2i_oid;
 use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
@@ -166,6 +167,7 @@ impl GeneralizedTime {
 pub struct Oid {
     /// an oid in bytes
     pub id: Vec<u8>,
+    index: usize,
     //null: Vec<u8>,
 }
 
@@ -198,10 +200,26 @@ impl Oid {
             return Err(OcspError::Asn1MismatchError("OID", err_at!()));
         }
 
+        let u = match b2i_oid(id.value()).await {
+            None => return Err(OcspError::Asn1OidUnknown(err_at!())),
+            Some(u) => u,
+        };
+
         debug!("Good OID decoded");
         Ok(Oid {
             id: id.value().to_vec(),
+            index: u,
         })
+    }
+
+    /// return new oid
+    pub async fn new() -> Result<Self, OcspError> {
+        unimplemented!()
+    }
+
+    /// encode to ASN.1 DER
+    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+        unimplemented!()
     }
 }
 /// RFC 6960 CertID
