@@ -8,7 +8,7 @@ use asn1_der::{
 use chrono::{Datelike, Timelike};
 use tracing::{debug, error, trace};
 
-use crate::oid::{b2i_oid, d2i_oid};
+use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
 use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
@@ -21,6 +21,8 @@ pub(crate) const ASN1_EXPLICIT_2: u8 = 0xa2;
 pub(crate) const ASN1_NULL: u8 = 0x05;
 /// asn1 oid
 pub(crate) const ASN1_OID: u8 = 0x06;
+/// OID followed by NULL
+pub(crate) const ASN1_OID_PADDING: [u8; 2] = [0x05, 0x00];
 /// asn1 sequence
 pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
 /// asn1 octet
@@ -222,7 +224,18 @@ impl Oid {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
-        unimplemented!()
+        let val_oid = i2b_oid(self).await?;
+        let len_oid = asn1_encode_length(val_oid.len()).await?;
+        let mut tlv_oid = vec![ASN1_OID];
+        tlv_oid.extend(len_oid);
+        tlv_oid.extend(val_oid);
+        tlv_oid.extend(&ASN1_OID_PADDING);
+        let len_seq = asn1_encode_length(tlv_oid.len()).await?;
+        let mut tlv_seq_oid = vec![ASN1_SEQUENCE];
+        tlv_seq_oid.extend(len_seq);
+        tlv_seq_oid.extend(tlv_oid);
+
+        Ok(tlv_seq_oid)
     }
 }
 /// RFC 6960 CertID
