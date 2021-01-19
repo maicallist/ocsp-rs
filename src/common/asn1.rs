@@ -8,7 +8,9 @@ use asn1_der::{
 use chrono::{Datelike, Timelike};
 use tracing::{debug, error, trace};
 
-use crate::oid::b2i_oid;
+use crate::{
+    oid::{b2i_oid, d2i_oid},
+};
 use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
@@ -212,9 +214,11 @@ impl Oid {
         })
     }
 
-    /// return new oid
-    pub async fn new() -> Result<Self, OcspError> {
-        unimplemented!()
+    /// return new oid from dot notation
+    pub async fn new_from_dot(name_dot_notation: &str) -> Result<Self, OcspError> {
+        d2i_oid(name_dot_notation)
+            .await
+            .ok_or(OcspError::Asn1OidUnknown(err_at!()))
     }
 
     /// encode to ASN.1 DER
@@ -291,7 +295,17 @@ impl CertId {
 mod test {
     use hex::FromHex;
 
-    use super::{asn1_encode_length, GeneralizedTime, ASN1_GENERALIZED_TIME};
+    use crate::oid::{OCSP_EXT_CRL_REASON_ID, OCSP_EXT_CRL_REASON_NUM};
+
+    use super::*;
+
+    /// test oid dot notation to internal
+    #[tokio::test]
+    async fn oid_dot_new() {
+        let dot = OCSP_EXT_CRL_REASON_NUM;
+        let d = Oid::new_from_dot(dot).await.unwrap().index;
+        assert_eq!(d, OCSP_EXT_CRL_REASON_ID);
+    }
 
     /// test generalized time to der
     #[tokio::test]

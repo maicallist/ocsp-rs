@@ -32,8 +32,8 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
     }
 }
 
-/// OID dot notation to internal
-pub async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
+// OID dot notation to internal
+pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
     debug!("OID dot name to internal");
     trace!("OID to internal from dot notation: {:?}", oid_dot);
     match OCSP_EXT_NUM_LIST
