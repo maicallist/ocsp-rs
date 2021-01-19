@@ -32,7 +32,21 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
     }
 }
 
-/// OID id to byte array
+/// OID dot notation to internal
+pub async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
+    debug!("OID dot name to internal");
+    trace!("OID to internal from dot notation: {:?}", oid_dot);
+    match OCSP_EXT_NUM_LIST
+        .iter()
+        .enumerate()
+        .find(|(_, dot_name)| **dot_name == oid_dot)
+    {
+        None => None,
+        Some((i, _)) => Some(Oid { index: i }),
+    }
+}
+
+/// OID internal to byte array
 pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
     debug!("OID internal to bytes");
     trace!("OID to byte array from {:?}", oid);
@@ -176,5 +190,27 @@ lazy_static! {
         OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(),
         ALGO_SHA1_HEX.to_vec()
     ];
+}
 
+#[cfg(test)]
+mod test {
+    use tokio;
+
+    use super::*;
+
+    // test dot notation to oid
+    #[tokio::test]
+    async fn test_dot2oid() {
+        let dot = OCSP_EXT_EXTENDED_REVOKE_NUM;
+        let oid = d2i_oid(dot).await.unwrap().index;
+        assert_eq!(oid, OCSP_EXT_EXTENDED_REVOKE_ID);
+    }
+
+    // test dot to oid return None for unknown id
+    #[tokio::test]
+    async fn test_unknown_oid() {
+        let dot = "this does not exists, obviously";
+        let oid = d2i_oid(dot).await;
+        assert!(oid.is_none());
+    }
 }
