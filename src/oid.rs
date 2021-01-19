@@ -2,6 +2,7 @@
 
 use lazy_static::lazy_static;
 use std::collections::HashMap;
+use tracing::{debug, error, trace, warn};
 
 use crate::{common::asn1::Oid, err::OcspError, err_at};
 
@@ -20,16 +21,24 @@ use crate::{common::asn1::Oid, err::OcspError, err_at};
 //}
 
 pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
+    debug!("OID bytes to internal");
+    trace!("OID to internal from bytes: {:02X?}", oid);
     match OID_MAP.get(oid) {
-        None => None,
+        None => {
+            warn!("No OID found");
+            None
+        }
         Some(u) => Some(u.to_owned()),
     }
 }
 
 /// OID id to byte array
 pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
+    debug!("OID internal to bytes");
+    trace!("OID to byte array from {:?}", oid);
     let id = oid.index;
     if id > OID_MAX_ID {
+        error!("No OID found");
         return Err(OcspError::Asn1OidUnknown(err_at!()));
     }
     Ok(&OCSP_EXT_HEX_LIST[id][..])
