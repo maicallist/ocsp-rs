@@ -24,18 +24,18 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
     }
 }
 
-/// OID info
-#[derive(Debug)]
-pub struct ConstOid {
-    /// internal id for OID
-    pub(crate) id: usize,
-    /// OID in number format, eg. 1.3.6.1.3.5
-    pub num: &'static str,
-    /// OID in text format, eg. pkix-ocsp 1
-    pub name: &'static str,
-    /// OID in binary format
-    pub bin: Vec<u8>,
-}
+// OID info
+//#[derive(Debug)]
+//pub struct ConstOid {
+//    /// internal id for OID
+//    pub(crate) id: usize,
+//    /// OID in number format, eg. 1.3.6.1.3.5
+//    pub num: &'static str,
+//    /// OID in text format, eg. pkix-ocsp 1
+//    pub name: &'static str,
+//    /// OID in binary format
+//    pub bin: Vec<u8>,
+//}
 
 pub(crate) const OCSP_EXT_NONCE_ID: usize = 0;
 pub(crate) const OCSP_EXT_NONCE_HEX: [u8; 9] =
