@@ -41,7 +41,10 @@ pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
         .enumerate()
         .find(|(_, dot_name)| **dot_name == oid_dot)
     {
-        None => None,
+        None => {
+            warn!("No OID found");
+            None
+        }
         Some((i, _)) => Some(Oid { index: i }),
     }
 }

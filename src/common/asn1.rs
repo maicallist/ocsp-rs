@@ -8,9 +8,7 @@ use asn1_der::{
 use chrono::{Datelike, Timelike};
 use tracing::{debug, error, trace};
 
-use crate::{
-    oid::{b2i_oid, d2i_oid},
-};
+use crate::oid::{b2i_oid, d2i_oid};
 use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
@@ -216,6 +214,7 @@ impl Oid {
 
     /// return new oid from dot notation
     pub async fn new_from_dot(name_dot_notation: &str) -> Result<Self, OcspError> {
+        // ignoring logging here, trace if logged in d2i_oid
         d2i_oid(name_dot_notation)
             .await
             .ok_or(OcspError::Asn1OidUnknown(err_at!()))
