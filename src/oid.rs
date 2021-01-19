@@ -3,6 +3,8 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
+use crate::{common::asn1::Oid, err::OcspError, err_at};
+
 // search oid in binary
 // see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
 //pub async fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
@@ -22,6 +24,15 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
         None => None,
         Some(u) => Some(u.to_owned()),
     }
+}
+
+/// OID id to byte array
+pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
+    let id = oid.index;
+    if id > OID_MAX_ID {
+        return Err(OcspError::Asn1OidUnknown(err_at!()));
+    }
+    Ok(&OCSP_EXT_HEX_LIST[id][..])
 }
 
 // OID info
@@ -95,6 +106,8 @@ pub(crate) const ALGO_SHA1_ID: usize = 9;
 pub(crate) const ALGO_SHA1_HEX: [u8; 5] = [0x2b, 0x0e, 0x03, 0x02, 0x1a];
 pub(crate) const ALGO_SHA1_NUM: &str = "1.3.14.3.2.26";
 pub(crate) const ALGO_SHA1_NAME: &str = "{iso(1) identified-organization(3) oiw(14) secsig(3) algorithms(2) hashAlgorithmIdentifier(26)}";
+
+pub(crate) const OID_MAX_ID: usize = 9;
 
 lazy_static! {
     /// search oid index by oid binary

@@ -261,6 +261,8 @@ mod test {
     use hex;
     use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
+    use crate::oid::i2b_oid;
+
     use super::{CertId, OcspRequest, Oid, OneReq, TBSRequest};
 
     // init log
@@ -377,7 +379,10 @@ mod test {
         let oid_hex = "300906052b0e03021a0500";
         let oid_v8 = hex::decode(oid_hex).unwrap();
         let oid = Oid::parse(&oid_v8).await.unwrap();
-        assert_eq!(oid.id, vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]);
+        assert_eq!(
+            i2b_oid(&oid).await.unwrap(),
+            vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]
+        );
     }
 
     // display error with file & line info

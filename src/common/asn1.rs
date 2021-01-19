@@ -165,9 +165,9 @@ impl GeneralizedTime {
 /// REVIEW 0x05
 #[derive(Debug)]
 pub struct Oid {
-    /// an oid in bytes
-    pub id: Vec<u8>,
-    index: usize,
+    // an oid in bytes
+    //pub id: Vec<u8>,
+    pub(crate) index: usize,
     //null: Vec<u8>,
 }
 
@@ -207,7 +207,7 @@ impl Oid {
 
         debug!("Good OID decoded");
         Ok(Oid {
-            id: id.value().to_vec(),
+            //id: id.value().to_vec(),
             index: u,
         })
     }
