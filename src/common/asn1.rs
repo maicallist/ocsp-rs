@@ -307,9 +307,20 @@ impl CertId {
 mod test {
     use hex::FromHex;
 
-    use crate::oid::{OCSP_EXT_CRL_REASON_ID, OCSP_EXT_CRL_REASON_NUM};
+    use crate::oid::{ALGO_SHA1_NUM, OCSP_EXT_CRL_REASON_ID, OCSP_EXT_CRL_REASON_NUM};
 
     use super::*;
+
+    /// test oid to ASN.1 DER
+    #[tokio::test]
+    async fn oid_to_der() {
+        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let v = oid.to_der().await.unwrap();
+        assert_eq!(
+            vec![0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00],
+            v
+        );
+    }
 
     /// test oid dot notation to internal
     #[tokio::test]
