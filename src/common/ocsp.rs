@@ -148,10 +148,23 @@ impl OcspExt {
         Ok(r)
     }
 
-    /// encode a list of extensions
-    pub async fn list_to_der(ext_list: &[OcspExt]) -> Result<Vec<u8>, OcspError> {
-        debug!("Start encoding {} ext", ext_list.len());
+    /// encode a list of extensions, wrapped in explicit tag
+    pub async fn list_to_der(ext_list: &[OcspExt], exp_tag: u8) -> Result<Vec<u8>, OcspError> {
+        debug!(
+            "Start encoding {} ext, with tag {:02x?}",
+            ext_list.len(),
+            exp_tag
+        );
         trace!("Ext list: {:?}", ext_list);
+
+        // in req and resp, extensions are labelled either 0, 1, 2
+        match exp_tag {
+            ASN1_EXPLICIT_0 | ASN1_EXPLICIT_1 | ASN1_EXPLICIT_2 => {}
+            _ => {
+                return Err(OcspError::OcspUndefinedTagging(err_at!()));
+            }
+        }
+
         let mut v = vec![];
         for i in 0..ext_list.len() {
             v.extend(ext_list[i].to_der().await?);
@@ -161,8 +174,13 @@ impl OcspExt {
         r.extend(len);
         r.extend(v);
 
+        let mut exp = vec![exp_tag];
+        let len = asn1_encode_length(r.len()).await?;
+        exp.extend(len);
+        exp.extend(r);
+
         debug!("Good ext list encoded");
-        Ok(r)
+        Ok(exp)
     }
 
     /// encode one extension to ASN.1 DER
@@ -209,11 +227,11 @@ mod test {
             ],
         };
         let list = [nonce];
-        let v = OcspExt::list_to_der(&list).await.unwrap();
+        let v = OcspExt::list_to_der(&list, ASN1_EXPLICIT_2).await.unwrap();
         let c = vec![
-            0x30, 0x21, 0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01,
-            0x02, 0x04, 0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79,
-            0x45, 0x46, 0x58, 0xBB, 0x09, 0x02, 0x44,
+            0xa2, 0x23, 0x30, 0x21, 0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07,
+            0x30, 0x01, 0x02, 0x04, 0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A,
+            0x3F, 0x79, 0x45, 0x46, 0x58, 0xBB, 0x09, 0x02, 0x44,
         ];
 
         assert_eq!(c, v);

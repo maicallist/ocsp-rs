@@ -38,6 +38,10 @@ pub enum OcspError {
     #[error("Unable to recognize extension {0}")]
     OcspExtUnknown(&'static str),
 
+    /// Explicit tag not defined in RFC
+    #[error("Non RFC defined tagging")]
+    OcspUndefinedTagging(&'static str),
+
     /// Cannot parse provided date
     #[error("Invalid date year {0} month {1} day {2} {3}")]
     GenInvalidDate(i32, u32, u32, &'static str),
