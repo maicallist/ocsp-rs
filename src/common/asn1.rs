@@ -242,6 +242,8 @@ impl Oid {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+        debug!("Start encoding oid");
+        trace!("Oid: {:?}", self);
         let val_oid = i2b_oid(self).await?;
         let len_oid = asn1_encode_length(val_oid.len()).await?;
         let mut tlv_oid = vec![ASN1_OID];
@@ -253,6 +255,7 @@ impl Oid {
         tlv_seq_oid.extend(len_seq);
         tlv_seq_oid.extend(tlv_oid);
 
+        debug!("Good OID encoded");
         Ok(tlv_seq_oid)
     }
 }
@@ -334,6 +337,8 @@ impl CertId {
 
     /// encode CertID to ASN.1 DER
     pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+        debug!("Start encoding Cert Id");
+        trace!("CertId: {:?}", self);
         let mut oid = self.hash_algo.to_der().await?;
         let name = asn1_encode_octet(&self.issuer_name_hash).await?;
         let key = asn1_encode_octet(&self.issuer_key_hash).await?;
@@ -345,6 +350,8 @@ impl CertId {
         let mut tlv = vec![ASN1_SEQUENCE];
         tlv.extend(len);
         tlv.extend(oid);
+
+        debug!("Good CERTID encoded");
         Ok(tlv)
     }
 }
