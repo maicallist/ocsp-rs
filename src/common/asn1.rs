@@ -416,23 +416,8 @@ mod test {
         let der = gt.to_der_utc().await.unwrap();
         assert_eq!(
             vec![
-                ASN1_GENERALIZED_TIME,
-                0x0f,
-                0x32,
-                0x30,
-                0x32,
-                0x31,
-                0x30,
-                0x31,
-                0x31,
-                0x33,
-                0x30,
-                0x33,
-                0x30,
-                0x39,
-                0x32,
-                0x35,
-                0x5a
+                0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x31, 0x33, 0x30, 0x33, 0x30, 0x39,
+                0x32, 0x35, 0x5a
             ],
             der
         );
