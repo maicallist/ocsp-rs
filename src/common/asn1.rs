@@ -87,6 +87,24 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError>
     }
 }
 
+/// pack octet into asn1
+pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+    let mut tlv = vec![ASN1_OCTET];
+    let len = asn1_encode_length(data.len()).await?;
+    tlv.extend(len);
+    tlv.extend(data);
+    Ok(tlv)
+}
+
+/// pack integer into asn1
+pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+    let mut tlv = vec![ASN1_INTEGER];
+    let len = asn1_encode_length(data.len()).await?;
+    tlv.extend(len);
+    tlv.extend(data);
+    Ok(tlv)
+}
+
 /// represents a ASN1 GeneralizedTime
 /// only support UTC
 #[derive(Debug)]
@@ -238,6 +256,7 @@ impl Oid {
         Ok(tlv_seq_oid)
     }
 }
+
 /// RFC 6960 CertID
 #[derive(Debug)]
 pub struct CertId {
@@ -302,6 +321,32 @@ impl CertId {
             serial_num: sn,
         })
     }
+
+    /// return new CertId
+    pub async fn new(oid: Oid, name_hash: &[u8], key_hash: &[u8], sn: &[u8]) -> Self {
+        CertId {
+            hash_algo: oid,
+            issuer_name_hash: name_hash.to_vec(),
+            issuer_key_hash: key_hash.to_vec(),
+            serial_num: sn.to_vec(),
+        }
+    }
+
+    /// encode CertID to ASN.1 DER
+    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+        let mut oid = self.hash_algo.to_der().await?;
+        let name = asn1_encode_octet(&self.issuer_name_hash).await?;
+        let key = asn1_encode_octet(&self.issuer_key_hash).await?;
+        let sn = asn1_encode_integer(&self.serial_num).await?;
+        oid.extend(name);
+        oid.extend(key);
+        oid.extend(sn);
+        let len = asn1_encode_length(oid.len()).await?;
+        let mut tlv = vec![ASN1_SEQUENCE];
+        tlv.extend(len);
+        tlv.extend(oid);
+        Ok(tlv)
+    }
 }
 #[cfg(test)]
 mod test {
@@ -310,6 +355,32 @@ mod test {
     use crate::oid::{ALGO_SHA1_NUM, OCSP_EXT_CRL_REASON_ID, OCSP_EXT_CRL_REASON_NUM};
 
     use super::*;
+
+    /// test certid to ASN.1 DER
+    #[tokio::test]
+    async fn certid_to_der() {
+        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let name = vec![
+            0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
+            0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
+        ];
+        let key = vec![
+            0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1, 0x7a,
+            0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55,
+        ];
+        let sn = vec![0x41, 0x30, 0x09, 0x83, 0x33, 0x1f, 0x9d, 0x4f];
+        let certid = CertId::new(oid, &name, &key, &sn).await;
+        let v = certid.to_der().await.unwrap();
+        let c = vec![
+            0x30, 0x41, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04,
+            0x14, 0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
+            0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20, 0x04, 0x14, 0x39, 0x7b, 0xe0, 0x02, 0xa2,
+            0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1, 0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7,
+            0x55, 0x02, 0x08, 0x41, 0x30, 0x09, 0x83, 0x33, 0x1f, 0x9d, 0x4f,
+        ];
+
+        assert_eq!(c, v);
+    }
 
     /// test oid to ASN.1 DER
     #[tokio::test]
