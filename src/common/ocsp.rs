@@ -1,13 +1,15 @@
 //! common ocsp components
 
 use asn1_der::DerObject;
-use tracing::{debug, trace};
+use tracing::{debug, error, trace};
 
 use crate::common::asn1::{
     TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2, ASN1_OID,
 };
 use crate::err_at;
 use crate::{err::OcspError, oid::*};
+
+use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
 
 /// RFC 6960 4.4 OCSP extensions
 #[derive(Debug)]
@@ -144,5 +146,97 @@ impl OcspExt {
 
         debug!("Good single extension decoded");
         Ok(r)
+    }
+
+    /// encode a list of extensions
+    pub async fn list_to_der(ext_list: &[OcspExt]) -> Result<Vec<u8>, OcspError> {
+        debug!("Start encoding {} ext", ext_list.len());
+        trace!("Ext list: {:?}", ext_list);
+        let mut v = vec![];
+        for i in 0..ext_list.len() {
+            v.extend(ext_list[i].to_der().await?);
+        }
+        let len = asn1_encode_length(v.len()).await?;
+        let mut r = vec![ASN1_SEQUENCE];
+        r.extend(len);
+        r.extend(v);
+
+        debug!("Good ext list encoded");
+        Ok(r)
+    }
+
+    /// encode one extension to ASN.1 DER
+    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+        let mut v = vec![ASN1_SEQUENCE];
+        match &self {
+            OcspExt::Nonce { oid_id: _, nonce } => {
+                debug!("Start encoding Nonce extension");
+                trace!("Nonce {:?}", self);
+                // == OCSP_EXT_HEX_NONCE
+                let mut id = vec![
+                    0x06, 0x09, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02,
+                ];
+                let nc = asn1_encode_octet(&nonce).await?;
+                id.extend(nc);
+                let len = asn1_encode_length(id.len()).await?;
+                v.extend(len);
+                v.extend(id);
+            }
+            _ => {
+                error!("Unsupported Extension");
+                unimplemented!()
+            }
+        };
+
+        debug!("Good extension encoded");
+        Ok(v)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use tokio;
+
+    /// test ext list to ASN.1 DER
+    #[tokio::test]
+    async fn list_nonce_to_der() {
+        let nonce = OcspExt::Nonce {
+            oid_id: OCSP_EXT_NONCE_ID,
+            nonce: vec![
+                0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46, 0x58,
+                0xBB, 0x09, 0x02, 0x44,
+            ],
+        };
+        let list = [nonce];
+        let v = OcspExt::list_to_der(&list).await.unwrap();
+        let c = vec![
+            0x30, 0x21, 0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01,
+            0x02, 0x04, 0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79,
+            0x45, 0x46, 0x58, 0xBB, 0x09, 0x02, 0x44,
+        ];
+
+        assert_eq!(c, v);
+    }
+
+    /// test nonce to ASN.1 DER
+    #[tokio::test]
+    async fn nonce_to_der() {
+        let nonce = OcspExt::Nonce {
+            oid_id: OCSP_EXT_NONCE_ID,
+            nonce: vec![
+                0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46, 0x58,
+                0xBB, 0x09, 0x02, 0x44,
+            ],
+        };
+
+        let v = nonce.to_der().await.unwrap();
+        let c = vec![
+            0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02, 0x04,
+            0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46,
+            0x58, 0xBB, 0x09, 0x02, 0x44,
+        ];
+
+        assert_eq!(c, v);
     }
 }
