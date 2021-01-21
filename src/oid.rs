@@ -149,16 +149,16 @@ pub(crate) const OID_MAX_ID: usize = 10;
 lazy_static! {
     /// search oid index by oid binary
     pub static ref OID_MAP: HashMap<Vec<u8>, usize> = vec![
-        (OCSP_EXT_NONCE_HEX.to_vec(), 0),
-        (OCSP_EXT_CRLREF_HEX.to_vec(), 1),
-        (OCSP_EXT_RESP_TYPE_HEX.to_vec(), 2),
-        (OCSP_EXT_ARCHIVE_CUTOFF_HEX.to_vec(), 3),
-        (OCSP_EXT_CRL_REASON_HEX.to_vec(), 4),
-        (OCSP_EXT_INVALID_DATE_HEX.to_vec(), 5),
-        (OCSP_EXT_SERVICE_LOCATOR_HEX.to_vec(), 6),
-        (OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(), 7),
-        (OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(), 8),
-        (ALGO_SHA1_HEX.to_vec(), 9),
+        (OCSP_EXT_NONCE_HEX.to_vec(), OCSP_EXT_NONCE_ID),
+        (OCSP_EXT_CRLREF_HEX.to_vec(), OCSP_EXT_CRLREF_ID),
+        (OCSP_EXT_RESP_TYPE_HEX.to_vec(), OCSP_EXT_RESP_TYPE_ID),
+        (OCSP_EXT_ARCHIVE_CUTOFF_HEX.to_vec(), OCSP_EXT_ARCHIVE_CUTOFF_ID),
+        (OCSP_EXT_CRL_REASON_HEX.to_vec(), OCSP_EXT_CRL_REASON_ID),
+        (OCSP_EXT_INVALID_DATE_HEX.to_vec(), OCSP_EXT_INVALID_DATE_ID),
+        (OCSP_EXT_SERVICE_LOCATOR_HEX.to_vec(), OCSP_EXT_SERVICE_LOCATOR_ID),
+        (OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(), OCSP_EXT_PREF_SIG_ALGS_ID),
+        (OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(), OCSP_EXT_EXTENDED_REVOKE_ID),
+        (ALGO_SHA1_HEX.to_vec(), ALGO_SHA1_ID),
         (ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX.to_vec(), ALGO_SHA1_WITH_RSA_ENCRYPTION_ID),
     ]
     .into_iter()
