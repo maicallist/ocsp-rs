@@ -107,7 +107,7 @@ pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Vec<u8>, OcspErro
 
 /// represents a ASN1 GeneralizedTime
 /// only support UTC
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct GeneralizedTime {
     year: i32,
     month: u32,

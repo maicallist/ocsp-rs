@@ -12,7 +12,7 @@ use crate::{err::OcspError, oid::*};
 use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
 
 /// RFC 6960 4.4 OCSP extensions
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OcspExt {
     /// 4.4.1
     Nonce {
