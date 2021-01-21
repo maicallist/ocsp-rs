@@ -105,6 +105,15 @@ pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Vec<u8>, OcspErro
     Ok(tlv)
 }
 
+/// pack bit string into asn1
+pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+    let mut tlv = vec![ASN1_BIT_STRING];
+    let len = asn1_encode_length(data.len()).await?;
+    tlv.extend(len);
+    tlv.extend(data);
+    Ok(tlv)
+}
+
 /// represents a ASN1 GeneralizedTime
 /// only support UTC
 #[derive(Debug, Copy, Clone)]
