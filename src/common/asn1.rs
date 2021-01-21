@@ -249,8 +249,8 @@ impl Oid {
             .ok_or(OcspError::Asn1OidUnknown(err_at!()))
     }
 
-    /// encode to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+    /// encode to ASN.1 DER with tailing NULL
+    pub async fn to_der_with_null(&self) -> Result<Vec<u8>, OcspError> {
         debug!("Start encoding oid");
         trace!("Oid: {:?}", self);
         let val_oid = i2b_oid(self).await?;
@@ -266,6 +266,27 @@ impl Oid {
 
         debug!("Good OID encoded");
         Ok(tlv_seq_oid)
+    }
+
+    /// encode to ASN.1 DER
+    /// - without sequence header
+    /// - without tailing NULL
+    pub async fn to_der_raw(&self) -> Result<Vec<u8>, OcspError> {
+        debug!("Start encoding oid without sequence");
+        trace!("Oid: {:?}", self);
+        let val_oid = i2b_oid(self).await?;
+        let len_oid = asn1_encode_length(val_oid.len()).await?;
+        let mut tlv_oid = vec![ASN1_OID];
+        tlv_oid.extend(len_oid);
+        tlv_oid.extend(val_oid);
+        //tlv_oid.extend(&ASN1_OID_PADDING);
+        //let len_seq = asn1_encode_length(tlv_oid.len()).await?;
+        //let mut tlv_seq_oid = vec![ASN1_SEQUENCE];
+        //tlv_seq_oid.extend(len_seq);
+        //tlv_seq_oid.extend(tlv_oid);
+
+        debug!("Good raw OID encoded");
+        Ok(tlv_oid)
     }
 }
 
@@ -348,7 +369,7 @@ impl CertId {
     pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
         debug!("Start encoding Cert Id");
         trace!("CertId: {:?}", self);
-        let mut oid = self.hash_algo.to_der().await?;
+        let mut oid = self.hash_algo.to_der_with_null().await?;
         let name = asn1_encode_octet(&self.issuer_name_hash).await?;
         let key = asn1_encode_octet(&self.issuer_key_hash).await?;
         let sn = asn1_encode_integer(&self.serial_num).await?;
@@ -402,7 +423,7 @@ mod test {
     #[tokio::test]
     async fn oid_to_der() {
         let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
-        let v = oid.to_der().await.unwrap();
+        let v = oid.to_der_with_null().await.unwrap();
         assert_eq!(
             vec![0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00],
             v
