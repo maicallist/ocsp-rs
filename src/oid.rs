@@ -36,7 +36,7 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
 pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
     debug!("OID dot name to internal");
     trace!("OID to internal from dot notation: {:?}", oid_dot);
-    match OCSP_EXT_NUM_LIST
+    match OCSP_OID_NUM_LIST
         .iter()
         .enumerate()
         .find(|(_, dot_name)| **dot_name == oid_dot)
@@ -58,7 +58,7 @@ pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
         error!("No OID found");
         return Err(OcspError::Asn1OidUnknown(err_at!()));
     }
-    Ok(&OCSP_EXT_HEX_LIST[id][..])
+    Ok(&OCSP_OID_HEX_LIST[id][..])
 }
 
 // OID info
@@ -140,11 +140,17 @@ pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM: &str = "1.2.840.113549.1.1.5
 pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_NAME: &str =
     "{iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1) sha1-with-rsa-signature(5)}";
 
+pub(crate) const OCSP_RESPONSE_BASIC_ID: usize = 11;
+pub(crate) const OCSP_RESPONSE_BASIC_HEX: [u8; 9] =
+    [0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x01];
+pub(crate) const OCSP_RESPONSE_BASIC_NUM: &str = "1.3.6.1.5.5.7.48.1.1";
+pub(crate) const OCSP_RESPONSE_BASIC_NAME: &str = "id-pkix-ocsp 1";
+
 /// NOT the number of OID, highest num in OID_MAX  
 /// eg.  
 /// oid_map contains 4 algos [0..3]  
 /// OID_MAX_ID = 3
-pub(crate) const OID_MAX_ID: usize = 10;
+pub(crate) const OID_MAX_ID: usize = 11;
 
 lazy_static! {
     /// search oid index by oid binary
@@ -160,12 +166,13 @@ lazy_static! {
         (OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(), OCSP_EXT_EXTENDED_REVOKE_ID),
         (ALGO_SHA1_HEX.to_vec(), ALGO_SHA1_ID),
         (ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX.to_vec(), ALGO_SHA1_WITH_RSA_ENCRYPTION_ID),
+        (OCSP_RESPONSE_BASIC_HEX.to_vec(), OCSP_RESPONSE_BASIC_ID),
     ]
     .into_iter()
     .collect();
 
     /// list of ocsp extension oid names
-    pub static ref OCSP_EXT_NAME_LIST: [&'static str; 11] = [
+    pub static ref OCSP_OID_NAME_LIST: [&'static str; 12] = [
         OCSP_EXT_NONCE_NAME,
         OCSP_EXT_CRLREF_NAME,
         OCSP_EXT_RESP_TYPE_NAME,
@@ -177,10 +184,11 @@ lazy_static! {
         OCSP_EXT_EXTENDED_REVOKE_NAME,
         ALGO_SHA1_NAME,
         ALGO_SHA1_WITH_RSA_ENCRYPTION_NAME,
+        OCSP_RESPONSE_BASIC_NAME,
     ];
 
     /// list of ocsp extension oid in num dot format
-    pub static ref OCSP_EXT_NUM_LIST: [&'static str; 11] = [
+    pub static ref OCSP_OID_NUM_LIST: [&'static str; 12] = [
         OCSP_EXT_NONCE_NUM,
         OCSP_EXT_CRLREF_NUM,
         OCSP_EXT_RESP_TYPE_NUM,
@@ -192,10 +200,11 @@ lazy_static! {
         OCSP_EXT_EXTENDED_REVOKE_NUM,
         ALGO_SHA1_NUM,
         ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM,
+        OCSP_RESPONSE_BASIC_NUM,
     ];
 
     /// list of ocsp extension oid in bytes
-    pub static ref OCSP_EXT_HEX_LIST: [Vec<u8>; 11] = [
+    pub static ref OCSP_OID_HEX_LIST: [Vec<u8>; 12] = [
         OCSP_EXT_NONCE_HEX.to_vec(),
         OCSP_EXT_CRLREF_HEX.to_vec(),
         OCSP_EXT_RESP_TYPE_HEX.to_vec(),
@@ -207,6 +216,7 @@ lazy_static! {
         OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(),
         ALGO_SHA1_HEX.to_vec(),
         ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX.to_vec(),
+        OCSP_RESPONSE_BASIC_HEX.to_vec(),
     ];
 }
 
