@@ -3,7 +3,7 @@
 use tracing::{debug, trace, warn};
 
 use crate::{
-    common::asn1::ASN1_SEQUENCE,
+    common::asn1::{ASN1_EXPLICIT_2, ASN1_OCTET, ASN1_SEQUENCE},
     err::{OcspError, Result},
 };
 use crate::{
@@ -220,18 +220,14 @@ impl OneResp {
     }
 }
 
-/// Responder ID type
-pub const OCSP_RESPONDER_BY_NAME: u8 = 0x0;
-/// Responder ID type
-pub const OCSP_RESPONDER_BY_KEY_HASH: u8 = 0x01;
 /// responder type
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub enum ResponderType {
     /// responder by name
-    OCSP_RESPONDER_BY_NAME,
+    BY_NAME = 0x00,
     /// responder by key hash
-    OCSP_RESPONDER_BY_KEY_HASH,
+    BY_KEY_HASH = 0x01,
 }
 
 /// indicates responder type
@@ -241,6 +237,50 @@ pub struct ResponderId {
     pub id_by: ResponderType,
     /// id
     pub id: Vec<u8>,
+}
+
+impl ResponderId {
+    /// return new responder id
+    pub async fn new_key_hash(key_hash: &[u8]) -> Self {
+        ResponderId {
+            id_by: ResponderType::BY_KEY_HASH,
+            id: key_hash.to_vec(),
+        }
+    }
+
+    /// encode to ASN.1
+    // example by name
+    // a1 56
+    //  30 54
+    //      31 0b 30 09 06 03 55 04 06 13 02 41 55
+    //      31 13 30 11 06 03 55 04 08 0c 0a 53 6f 6d 65 2d 53 74 61 74 65
+    //      31 21 30 1f 06 03 55 04 0a 0c 18 49 6e 74 65 72 6e 65 74 20 57 69 64 67 69 74 73 20 50 74 79 20 4c 74 64
+    //      31 0d 30 0b 06 03 55 04 03 0c 04 4f 43 53 50
+    pub async fn to_der(&self) -> Result<Vec<u8>> {
+        debug!("Start encoding Responder Id by {:?}", self.id_by);
+        trace!("Responder Id: {:?}", self);
+
+        let mut v = vec![];
+        match self.id_by {
+            ResponderType::BY_NAME => {
+                // FIXME:
+                unimplemented!()
+            }
+            ResponderType::BY_KEY_HASH => {
+                let len = asn1_encode_length(self.id.len()).await?;
+                let mut octet = vec![ASN1_OCTET];
+                octet.extend(len);
+                octet.extend(self.id.clone());
+                let len = asn1_encode_length(octet.len()).await?;
+                v.push(ASN1_EXPLICIT_2);
+                v.extend(len);
+                v.extend(octet);
+            }
+        }
+
+        debug!("Good RESPONDER ID encoded");
+        Ok(v)
+    }
 }
 
 /// RFC 6960
@@ -320,6 +360,23 @@ mod test {
     use crate::oid::ALGO_SHA1_NUM;
 
     use super::*;
+
+    /// responder by key hash
+    #[tokio::test]
+    async fn responder_by_key_to_der() {
+        let key = [
+            0x36, 0x6f, 0x35, 0xfb, 0xef, 0x16, 0xc6, 0xba, 0x8a, 0x31, 0x83, 0x42, 0x6d, 0x97,
+            0xba, 0x89, 0x4d, 0x55, 0x6e, 0x91,
+        ];
+        let id = ResponderId::new_key_hash(&key).await;
+        let v = id.to_der().await.unwrap();
+        let c = vec![
+            0xa2, 0x16, 0x04, 0x14, 0x36, 0x6f, 0x35, 0xfb, 0xef, 0x16, 0xc6, 0xba, 0x8a, 0x31,
+            0x83, 0x42, 0x6d, 0x97, 0xba, 0x89, 0x4d, 0x55, 0x6e, 0x91,
+        ];
+
+        assert_eq!(c, v);
+    }
 
     /// two resp to ASN.1 DER
     #[tokio::test]
