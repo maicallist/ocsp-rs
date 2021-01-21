@@ -19,29 +19,29 @@ use crate::{
     err_at,
 };
 
-/// possible revoke reason, See RFC 5280
+/// possible revocation reasons, See RFC 5280
 #[repr(u8)]
 #[derive(Debug, Copy, Clone)]
 pub enum CrlReason {
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeUnspecified = 0u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeKeyCompromise = 1u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeCaCompromise = 2u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeAffChanged = 3u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeSuperseded = 4u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeCessOperation = 5u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeCertHold = 6u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeRemoveFromCrl = 8u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokePrivWithdrawn = 9u8,
-    /// possible cert revocation reason
+    /// RFC defined revocation reason
     OcspRevokeAaCompromise = 10u8,
 }
 
@@ -50,12 +50,12 @@ pub enum CrlReason {
 pub struct RevokedInfo {
     /// revocation time
     pub revocation_time: GeneralizedTime,
-    /// revocation reason, exp 0, ENUMERATED
+    /// revocation reason, EXP 0 tagging, ASN.1 ENUMERATED
     pub revocation_reason: Option<CrlReason>,
 }
 
 impl RevokedInfo {
-    /// return new RevokeInfo
+    /// create new RevokeInfo
     pub async fn new(gt: GeneralizedTime, reason: Option<CrlReason>) -> Self {
         RevokedInfo {
             revocation_time: gt,
@@ -63,7 +63,7 @@ impl RevokedInfo {
         }
     }
 
-    /// serialize to DER encoding
+    /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Vec<u8>> {
         debug!("Start encoding RevokeInfo");
         trace!("RevokeInfo to der: {:?}", self);
@@ -85,7 +85,7 @@ impl RevokedInfo {
     }
 }
 
-/// possible status for a cert
+/// certificate status enum, value is in ASN.1
 #[repr(u8)]
 #[derive(Debug, Clone)]
 pub enum CertStatusCode {
@@ -148,10 +148,10 @@ impl CertStatus {
     }
 }
 
-/// RFC 6960 single response
+/// RFC 6960 response of single cert
 #[derive(Debug, Clone)]
 pub struct OneResp {
-    /// certid of a single response
+    /// certid of a resp
     pub one_resp: CertId,
     /// cert status
     pub cert_status: CertStatus,
@@ -159,7 +159,7 @@ pub struct OneResp {
     pub this_update: GeneralizedTime,
     /// Responses whose nextUpdate value is earlier than the local system time value SHOULD be considered unreliable
     pub next_update: Option<GeneralizedTime>,
-    /// extension for single response
+    /// extension for a resp
     pub one_resp_ext: Option<Vec<OcspExt>>,
 }
 
@@ -222,7 +222,7 @@ impl OneResp {
     }
 }
 
-/// responder type
+/// responder type enum
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub enum ResponderType {
@@ -232,7 +232,7 @@ pub enum ResponderType {
     BY_KEY_HASH = 0x01,
 }
 
-/// indicates responder type
+/// responder id
 #[derive(Debug)]
 pub struct ResponderId {
     /// id by name or key hash
@@ -242,7 +242,7 @@ pub struct ResponderId {
 }
 
 impl ResponderId {
-    /// return new responder id
+    /// create new responder id
     pub async fn new_key_hash(key_hash: &[u8]) -> Self {
         ResponderId {
             id_by: ResponderType::BY_KEY_HASH,
@@ -250,7 +250,7 @@ impl ResponderId {
         }
     }
 
-    /// encode to ASN.1
+    /// encode to ASN.1, by name unimplemented!
     // example by name
     // a1 56
     //  30 54
@@ -285,7 +285,7 @@ impl ResponderId {
     }
 }
 
-/// RFC 6960
+/// response data
 #[derive(Debug)]
 pub struct ResponseData {
     // REVIEW:
@@ -401,7 +401,8 @@ impl BasicResponse {
 
 /// basic response  
 /// The value for responseBytes consists of an OBJECT IDENTIFIER and a  
-/// response syntax identified by that OID encoded as an OCTET STRING
+/// response syntax identified by that OID encoded as an OCTET STRING  
+/// only basic response is implemented
 #[derive(Debug)]
 pub struct ResponseBytes {
     /// For a basic OCSP responder, responseType will be id-pkix-ocsp-basic
@@ -461,7 +462,7 @@ impl ResponseBytes {
     }
 }
 
-/// possible status for ocsp request
+/// ocsp request status enum
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub enum OcspRespStatus {
