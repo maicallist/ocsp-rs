@@ -133,7 +133,18 @@ pub(crate) const ALGO_SHA1_HEX: [u8; 5] = [0x2b, 0x0e, 0x03, 0x02, 0x1a];
 pub(crate) const ALGO_SHA1_NUM: &str = "1.3.14.3.2.26";
 pub(crate) const ALGO_SHA1_NAME: &str = "{iso(1) identified-organization(3) oiw(14) secsig(3) algorithms(2) hashAlgorithmIdentifier(26)}";
 
-pub(crate) const OID_MAX_ID: usize = 9;
+pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_ID: usize = 10;
+pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX: [u8; 9] =
+    [0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x05];
+pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM: &str = "1.2.840.113549.1.1.5";
+pub(crate) const ALGO_SHA1_WITH_RSA_ENCRYPTION_NAME: &str =
+    "{iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-1(1) sha1-with-rsa-signature(5)}";
+
+/// NOT the number of OID, highest num in OID_MAX  
+/// eg.  
+/// oid_map contains 4 algos [0..3]  
+/// OID_MAX_ID = 3
+pub(crate) const OID_MAX_ID: usize = 10;
 
 lazy_static! {
     /// search oid index by oid binary
@@ -148,12 +159,13 @@ lazy_static! {
         (OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(), 7),
         (OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(), 8),
         (ALGO_SHA1_HEX.to_vec(), 9),
+        (ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX.to_vec(), ALGO_SHA1_WITH_RSA_ENCRYPTION_ID),
     ]
     .into_iter()
     .collect();
 
     /// list of ocsp extension oid names
-    pub static ref OCSP_EXT_NAME_LIST: [&'static str; 10] = [
+    pub static ref OCSP_EXT_NAME_LIST: [&'static str; 11] = [
         OCSP_EXT_NONCE_NAME,
         OCSP_EXT_CRLREF_NAME,
         OCSP_EXT_RESP_TYPE_NAME,
@@ -164,10 +176,11 @@ lazy_static! {
         OCSP_EXT_PREF_SIG_ALGS_NAME,
         OCSP_EXT_EXTENDED_REVOKE_NAME,
         ALGO_SHA1_NAME,
+        ALGO_SHA1_WITH_RSA_ENCRYPTION_NAME,
     ];
 
     /// list of ocsp extension oid in num dot format
-    pub static ref OCSP_EXT_NUM_LIST: [&'static str; 10] = [
+    pub static ref OCSP_EXT_NUM_LIST: [&'static str; 11] = [
         OCSP_EXT_NONCE_NUM,
         OCSP_EXT_CRLREF_NUM,
         OCSP_EXT_RESP_TYPE_NUM,
@@ -178,10 +191,11 @@ lazy_static! {
         OCSP_EXT_PREF_SIG_ALGS_NUM,
         OCSP_EXT_EXTENDED_REVOKE_NUM,
         ALGO_SHA1_NUM,
+        ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM,
     ];
 
     /// list of ocsp extension oid in bytes
-    pub static ref OCSP_EXT_HEX_LIST: [Vec<u8>; 10] = [
+    pub static ref OCSP_EXT_HEX_LIST: [Vec<u8>; 11] = [
         OCSP_EXT_NONCE_HEX.to_vec(),
         OCSP_EXT_CRLREF_HEX.to_vec(),
         OCSP_EXT_RESP_TYPE_HEX.to_vec(),
@@ -191,7 +205,8 @@ lazy_static! {
         OCSP_EXT_SERVICE_LOCATOR_HEX.to_vec(),
         OCSP_EXT_PREF_SIG_ALGS_HEX.to_vec(),
         OCSP_EXT_EXTENDED_REVOKE_HEX.to_vec(),
-        ALGO_SHA1_HEX.to_vec()
+        ALGO_SHA1_HEX.to_vec(),
+        ALGO_SHA1_WITH_RSA_ENCRYPTION_HEX.to_vec(),
     ];
 }
 
