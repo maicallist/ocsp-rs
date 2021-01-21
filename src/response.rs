@@ -44,7 +44,7 @@ pub enum CrlReason {
 }
 
 /// see RFC 6960
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RevokedInfo {
     /// revocation time
     pub revocation_time: GeneralizedTime,
@@ -85,7 +85,7 @@ impl RevokedInfo {
 
 /// possible status for a cert
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CertStatusCode {
     /// cert is valid
     Good = 0x80,
@@ -98,7 +98,7 @@ pub enum CertStatusCode {
 }
 
 /// RFC 6960 cert status
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CertStatus {
     code: CertStatusCode,
     revoke_info: Option<RevokedInfo>,
@@ -147,7 +147,7 @@ impl CertStatus {
 }
 
 /// RFC 6960 single response
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OneResp {
     /// certid of a single response
     pub one_resp: CertId,
@@ -293,11 +293,51 @@ pub struct ResponseData {
     /// SHA-1 hash of responder's public key (excluding the tag and length fields)
     pub responder_id: ResponderId,
     /// time of creating response
-    pub produced_at: Vec<u8>,
+    pub produced_at: GeneralizedTime,
     /// list of responses
     pub responses: Vec<OneResp>,
     /// exp 1
-    pub resp_ext: Option<OcspExt>,
+    pub resp_ext: Option<Vec<OcspExt>>,
+}
+
+impl ResponseData {
+    /// return new response data
+    pub async fn new(
+        id: ResponderId,
+        produce: GeneralizedTime,
+        list: Vec<OneResp>,
+        ext: Option<Vec<OcspExt>>,
+    ) -> Self {
+        ResponseData {
+            responder_id: id,
+            produced_at: produce,
+            responses: list,
+            resp_ext: ext,
+        }
+    }
+
+    /// encode to ASN.1 DER
+    pub async fn to_der(&self) -> Result<Vec<u8>> {
+        debug!("Start encoding Response Data");
+        trace!("Response Data: {:?}", self);
+
+        let mut v = vec![];
+        v.extend(self.responder_id.to_der().await?);
+        v.extend(self.produced_at.to_der_utc().await?);
+        v.extend(OneResp::list_to_der(&self.responses).await?);
+        if let Some(l) = &self.resp_ext {
+            debug!("Found extensions");
+            v.extend(OcspExt::list_to_der(&l, ASN1_EXPLICIT_1).await?);
+        }
+
+        let len = asn1_encode_length(v.len()).await?;
+        let mut tlv = vec![ASN1_SEQUENCE];
+        tlv.extend(len);
+        tlv.extend(v);
+
+        debug!("Good RESPONSE DATA encoded");
+        Ok(tlv)
+    }
 }
 
 /// basic response
@@ -360,6 +400,78 @@ mod test {
     use crate::oid::ALGO_SHA1_NUM;
 
     use super::*;
+
+    /// response data to ASN.1 DER
+    #[tokio::test]
+    async fn response_data_to_der() {
+        let key = [
+            0x36, 0x6f, 0x35, 0xfb, 0xef, 0x16, 0xc6, 0xba, 0x8a, 0x31, 0x83, 0x42, 0x6d, 0x97,
+            0xba, 0x89, 0x4d, 0x55, 0x6e, 0x91,
+        ];
+        let id = ResponderId::new_key_hash(&key).await;
+        let produce = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let name = vec![
+            0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
+            0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
+        ];
+        let key = vec![
+            0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52, 0xa1, 0x7a,
+            0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55,
+        ];
+        let sn = vec![0x41, 0x30, 0x09, 0x83, 0x33, 0x1f, 0x9d, 0x4f];
+        let certid = CertId::new(oid.clone(), &name, &key, &sn).await;
+        let good = CertStatus::new(CertStatusCode::Good, None).await;
+        let gt = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
+
+        let one = OneResp {
+            one_resp: certid.clone(),
+            cert_status: good,
+            this_update: gt.clone(),
+            next_update: None,
+            one_resp_ext: None,
+        };
+
+        let sn2 = vec![0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d];
+        let certid2 = CertId::new(oid, &name, &key, &sn2).await;
+        let rev_t = GeneralizedTime::new(2020, 11, 30, 1, 48, 25).await.unwrap();
+        let rev_info = RevokedInfo::new(rev_t, Some(CrlReason::OcspRevokeUnspecified)).await;
+        let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
+        let two = OneResp {
+            one_resp: certid2,
+            cert_status: revoke,
+            this_update: gt,
+            next_update: None,
+            one_resp_ext: None,
+        };
+
+        let list = [one, two].to_vec();
+        let data = ResponseData::new(id, produce, list, None).await;
+        let v = data.to_der().await.unwrap();
+
+        let c = vec![
+            0x30, 0x81, 0xf2, 0xa2, 0x16, 0x04, 0x14, 0x36, 0x6f, 0x35, 0xfb, 0xef, 0x16, 0xc6,
+            0xba, 0x8a, 0x31, 0x83, 0x42, 0x6d, 0x97, 0xba, 0x89, 0x4d, 0x55, 0x6e, 0x91, 0x18,
+            0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x31, 0x32, 0x30, 0x33, 0x32, 0x36, 0x34,
+            0x33, 0x5a, 0x30, 0x81, 0xc6, 0x30, 0x56, 0x30, 0x41, 0x30, 0x09, 0x06, 0x05, 0x2b,
+            0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14, 0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42,
+            0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23, 0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
+            0x04, 0x14, 0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd, 0x80, 0xdc, 0xeb, 0x52,
+            0xa1, 0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55, 0x02, 0x08, 0x41, 0x30, 0x09, 0x83,
+            0x33, 0x1f, 0x9d, 0x4f, 0x80, 0x00, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31,
+            0x31, 0x32, 0x30, 0x33, 0x32, 0x36, 0x34, 0x33, 0x5a, 0x30, 0x6c, 0x30, 0x41, 0x30,
+            0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14, 0x69, 0x4d,
+            0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23, 0x60, 0x14,
+            0x78, 0xb7, 0x88, 0x20, 0x04, 0x14, 0x39, 0x7b, 0xe0, 0x02, 0xa2, 0xf5, 0x71, 0xfd,
+            0x80, 0xdc, 0xeb, 0x52, 0xa1, 0x7a, 0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55, 0x02, 0x08,
+            0x63, 0x78, 0xe5, 0x1d, 0x44, 0x8f, 0xf4, 0x6d, 0xa1, 0x16, 0x18, 0x0f, 0x32, 0x30,
+            0x32, 0x30, 0x31, 0x31, 0x33, 0x30, 0x30, 0x31, 0x34, 0x38, 0x32, 0x35, 0x5a, 0xa0,
+            0x03, 0x0a, 0x01, 0x00, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x31, 0x32,
+            0x30, 0x33, 0x32, 0x36, 0x34, 0x33, 0x5a,
+        ];
+
+        assert_eq!(c, v);
+    }
 
     /// responder by key hash
     #[tokio::test]
