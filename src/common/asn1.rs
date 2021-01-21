@@ -183,7 +183,7 @@ impl GeneralizedTime {
 /// Oid represents a 0x06 OID type in ASN.1  
 /// In OpenSSL ocsp request, OID is followed by NULL 0x05  
 /// REVIEW 0x05
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Oid {
     // an oid in bytes
     //pub id: Vec<u8>,
@@ -261,7 +261,7 @@ impl Oid {
 }
 
 /// RFC 6960 CertID
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CertId {
     /// hash algo oid
     pub hash_algo: Oid,
