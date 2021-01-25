@@ -7,8 +7,8 @@ use crate::err::{OcspError, Result};
 use crate::{
     common::{
         asn1::{
-            CertId, Oid, TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2,
-            ASN1_IA5STRING, ASN1_SEQUENCE,
+            CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
+            ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
         },
         ocsp::OcspExt,
     },
@@ -176,11 +176,11 @@ impl Signature {
                 oid = Oid::parse(id.raw()).await?;
 
                 debug!("Getting raw signature data");
-                signature = s
-                    .get(1)
-                    .map_err(OcspError::Asn1DecodingError)?
-                    .raw()
-                    .to_vec();
+                let raw = s.get(1).map_err(OcspError::Asn1DecodingError)?;
+                if raw.tag() != ASN1_BIT_STRING {
+                    return Err(OcspError::Asn1MismatchError("SIGNATURE", err_at!()));
+                }
+                signature = raw.value().to_vec();
             }
             3 => {
                 warn!("CERT is defined in RFC but yet implemented");
