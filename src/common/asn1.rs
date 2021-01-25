@@ -389,14 +389,14 @@ impl CertId {
 mod test {
     use hex::FromHex;
 
-    use crate::oid::{ALGO_SHA1_NUM, OCSP_EXT_CRL_REASON_ID, OCSP_EXT_CRL_REASON_NUM};
+    use crate::oid::{ALGO_SHA1_DOT, OCSP_EXT_CRL_REASON_DOT, OCSP_EXT_CRL_REASON_ID};
 
     use super::*;
 
     /// test certid to ASN.1 DER
     #[tokio::test]
     async fn certid_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -422,7 +422,7 @@ mod test {
     /// test oid to ASN.1 DER
     #[tokio::test]
     async fn oid_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let v = oid.to_der_with_null().await.unwrap();
         assert_eq!(
             vec![0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00],
@@ -433,7 +433,7 @@ mod test {
     /// test oid dot notation to internal
     #[tokio::test]
     async fn oid_dot_new() {
-        let dot = OCSP_EXT_CRL_REASON_NUM;
+        let dot = OCSP_EXT_CRL_REASON_DOT;
         let d = Oid::new_from_dot(dot).await.unwrap().index;
         assert_eq!(d, OCSP_EXT_CRL_REASON_ID);
     }

@@ -2,7 +2,7 @@
 //! for binary details, see [crate::doc::resp]
 use tracing::{debug, error, trace, warn};
 
-use crate::oid::OCSP_OID_NUM_LIST;
+use crate::oid::OCSP_OID_DOT_LIST;
 use crate::{
     common::asn1::{ASN1_EXPLICIT_2, ASN1_OCTET, ASN1_SEQUENCE},
     err::{OcspError, Result},
@@ -413,7 +413,7 @@ impl ResponseBytes {
     /// currently only support basic response
     pub async fn new_basic(oid: Oid, data: BasicResponse) -> Result<Self> {
         if oid.index != OCSP_RESPONSE_BASIC_ID {
-            let dot_name = OCSP_OID_NUM_LIST[oid.index];
+            let dot_name = OCSP_OID_DOT_LIST[oid.index];
             error!("Response type {} is not supported", dot_name);
             return Err(OcspError::OcspUnsupportedResponseType(err_at!()));
         }
@@ -534,7 +534,7 @@ impl OcspResponse {
 
 #[cfg(test)]
 mod test {
-    use crate::oid::{ALGO_SHA1_NUM, ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM, OCSP_RESPONSE_BASIC_NUM};
+    use crate::oid::{ALGO_SHA1_DOT, ALGO_SHA1_WITH_RSA_ENCRYPTION_DOT, OCSP_RESPONSE_BASIC_DOT};
     use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
     use super::*;
@@ -548,7 +548,7 @@ mod test {
         ];
         let id = ResponderId::new_key_hash(&key).await;
         let produce = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -586,7 +586,7 @@ mod test {
         let list = [one, two].to_vec();
         let data = ResponseData::new(id, produce, list, None).await;
 
-        let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM)
+        let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_DOT)
             .await
             .unwrap();
         let sign = vec![
@@ -612,7 +612,7 @@ mod test {
         ];
 
         let basic = BasicResponse::new(data, oid, sign, None).await;
-        let resp_type = Oid::new_from_dot(OCSP_RESPONSE_BASIC_NUM).await.unwrap();
+        let resp_type = Oid::new_from_dot(OCSP_RESPONSE_BASIC_DOT).await.unwrap();
         let bytes = ResponseBytes::new_basic(resp_type, basic).await.unwrap();
         let ocsp = OcspResponse::new_success(bytes).await;
         let v = ocsp.to_der().await.unwrap();
@@ -672,7 +672,7 @@ mod test {
         ];
         let id = ResponderId::new_key_hash(&key).await;
         let produce = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -710,7 +710,7 @@ mod test {
         let list = [one, two].to_vec();
         let data = ResponseData::new(id, produce, list, None).await;
 
-        let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_NUM)
+        let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_DOT)
             .await
             .unwrap();
         let sign = vec![
@@ -791,7 +791,7 @@ mod test {
         ];
         let id = ResponderId::new_key_hash(&key).await;
         let produce = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -874,7 +874,7 @@ mod test {
     /// two resp to ASN.1 DER
     #[tokio::test]
     async fn two_resp_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -936,7 +936,7 @@ mod test {
     /// good one resp with next update
     #[tokio::test]
     async fn one_resp_good_next_update_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -977,7 +977,7 @@ mod test {
     // test encode one resp to ASN.1 DER
     #[tokio::test]
     async fn one_resp_good_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_NUM).await.unwrap();
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
