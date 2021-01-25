@@ -155,7 +155,7 @@ pub struct Signature {
     /// so using Vec\<u8\> here.
     pub signature: Vec<u8>,
     /// \[0\] EXPLICIT SEQUENCE OF Certificate OPTIONAL
-    pub certs: Option<Vec<Vec<u8>>>,
+    pub certs: Option<Vec<u8>>,
 }
 
 impl Signature {
