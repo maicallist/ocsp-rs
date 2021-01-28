@@ -14,8 +14,10 @@ use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
 /// OCSP extension with internal id
 #[derive(Debug, Clone)]
 pub struct OcspExtI {
-    id: usize,
-    ext: OcspExt,
+    /// internal id of extension, see const in [ocsp_rs::oid]
+    pub id: usize,
+    /// extension variant
+    pub ext: OcspExt,
 }
 
 impl OcspExtI {

@@ -3,16 +3,19 @@
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
-use crate::err::{OcspError, Result};
 use crate::{
     common::{
         asn1::{
             CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
             ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
         },
-        ocsp::OcspExtI,
+        ocsp::{OcspExt, OcspExtI},
     },
     err_at,
+};
+use crate::{
+    err::{OcspError, Result},
+    oid::OCSP_EXT_NONCE_ID,
 };
 
 /// RFC 6960 Request
@@ -261,6 +264,26 @@ impl OcspRequest {
         list.into_iter()
             .for_each(|r| sn.push(r.certid.serial_num.clone()));
         sn
+    }
+
+    /// extract nonce from request
+    pub async fn extract_nonce(&self) -> Option<Vec<u8>> {
+        let list = match &self.tbs_request.request_ext {
+            Some(v) => v,
+            None => return None,
+        };
+
+        let nonce = match list.into_iter().find(|x| x.id == OCSP_EXT_NONCE_ID) {
+            Some(nc) => match &nc.ext {
+                OcspExt::Nonce { nonce: value } => value,
+                _ => {
+                    unimplemented!()
+                }
+            },
+            None => return None,
+        };
+
+        Some(nonce.clone())
     }
 }
 
