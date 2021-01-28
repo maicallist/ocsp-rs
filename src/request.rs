@@ -19,7 +19,7 @@ use crate::{
 #[derive(Debug)]
 pub struct OneReq {
     /// certid of a single request
-    pub one_req: CertId,
+    pub certid: CertId,
     /// extension of a single request  
     /// REVIEW: untested
     pub one_req_ext: Option<Vec<OcspExt>>,
@@ -56,7 +56,7 @@ impl OneReq {
 
         debug!("good SINGLE REQUEST decoded");
         Ok(OneReq {
-            one_req: certid,
+            certid: certid,
             one_req_ext: ext,
         })
     }
