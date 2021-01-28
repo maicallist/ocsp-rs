@@ -10,7 +10,7 @@ use crate::{
             CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
             ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
         },
-        ocsp::OcspExt,
+        ocsp::OcspExtI,
     },
     err_at,
 };
@@ -22,7 +22,7 @@ pub struct OneReq {
     pub certid: CertId,
     /// extension of a single request  
     /// REVIEW: untested
-    pub one_req_ext: Option<Vec<OcspExt>>,
+    pub one_req_ext: Option<Vec<OcspExtI>>,
 }
 
 impl OneReq {
@@ -43,7 +43,7 @@ impl OneReq {
             }
             2 => {
                 let raw_ext = s.get(1).map_err(OcspError::Asn1DecodingError)?.raw();
-                ext = Some(OcspExt::parse(raw_ext).await?);
+                ext = Some(OcspExtI::parse(raw_ext).await?);
             }
             _ => {
                 error!(
@@ -76,7 +76,7 @@ pub struct TBSRequest {
     pub request_list: Vec<OneReq>,
     /// requestExtensions is OPTIONAL and includes extensions applicable
     /// to the requests found in reqCert.
-    pub request_ext: Option<Vec<OcspExt>>,
+    pub request_ext: Option<Vec<OcspExtI>>,
 }
 
 impl TBSRequest {
@@ -113,7 +113,7 @@ impl TBSRequest {
                 ASN1_EXPLICIT_2 => {
                     debug!("Found extension");
                     let ext_list = tbs_item.value();
-                    let ext_list = OcspExt::parse(ext_list).await?;
+                    let ext_list = OcspExtI::parse(ext_list).await?;
                     ext = Some(ext_list);
                 }
                 ASN1_SEQUENCE => {

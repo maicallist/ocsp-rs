@@ -14,7 +14,7 @@ use crate::{
             asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
             ASN1_EXPLICIT_1,
         },
-        ocsp::OcspExt,
+        ocsp::OcspExtI,
     },
     err_at,
 };
@@ -162,7 +162,7 @@ pub struct OneResp {
     /// Responses whose nextUpdate value is earlier than the local system time value SHOULD be considered unreliable
     pub next_update: Option<GeneralizedTime>,
     /// extension for a resp
-    pub one_resp_ext: Option<Vec<OcspExt>>,
+    pub one_resp_ext: Option<Vec<OcspExtI>>,
 }
 
 impl OneResp {
@@ -210,7 +210,7 @@ impl OneResp {
         if let Some(e) = self.one_resp_ext.clone() {
             debug!("Found extensions");
             // list_to_der comes with explicit tagging
-            let list = OcspExt::list_to_der(&e, ASN1_EXPLICIT_1).await?;
+            let list = OcspExtI::list_to_der(&e, ASN1_EXPLICIT_1).await?;
             certid.extend(list);
         }
 
@@ -301,7 +301,7 @@ pub struct ResponseData {
     /// list of responses
     pub responses: Vec<OneResp>,
     /// exp 1
-    pub resp_ext: Option<Vec<OcspExt>>,
+    pub resp_ext: Option<Vec<OcspExtI>>,
 }
 
 impl ResponseData {
@@ -310,7 +310,7 @@ impl ResponseData {
         id: ResponderId,
         produce: GeneralizedTime,
         list: Vec<OneResp>,
-        ext: Option<Vec<OcspExt>>,
+        ext: Option<Vec<OcspExtI>>,
     ) -> Self {
         ResponseData {
             responder_id: id,
@@ -331,7 +331,7 @@ impl ResponseData {
         v.extend(OneResp::list_to_der(&self.responses).await?);
         if let Some(l) = &self.resp_ext {
             debug!("Found extensions");
-            v.extend(OcspExt::list_to_der(&l, ASN1_EXPLICIT_1).await?);
+            v.extend(OcspExtI::list_to_der(&l, ASN1_EXPLICIT_1).await?);
         }
 
         let len = asn1_encode_length(v.len()).await?;
