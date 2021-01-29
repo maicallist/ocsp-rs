@@ -3,19 +3,16 @@
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
+use crate::err::{OcspError, Result};
 use crate::{
     common::{
         asn1::{
             CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
             ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
         },
-        ocsp::{OcspExt, OcspExtI},
+        ocsp::OcspExtI,
     },
     err_at,
-};
-use crate::{
-    err::{OcspError, Result},
-    oid::OCSP_EXT_NONCE_ID,
 };
 
 /// RFC 6960 Request
@@ -258,32 +255,20 @@ impl OcspRequest {
     }
 
     /// extract all cert serial numbers from request
-    pub async fn extract_cert_sn(&self) -> Vec<Vec<u8>> {
+    pub async fn extract_cert_sn(&self) -> Vec<&Vec<u8>> {
         let mut sn = vec![];
         let list = &self.tbs_request.request_list;
         list.into_iter()
-            .for_each(|r| sn.push(r.certid.serial_num.clone()));
+            .for_each(|r| sn.push(&(r.certid.serial_num)));
         sn
     }
 
-    /// extract nonce from request
-    pub async fn extract_nonce(&self) -> Option<Vec<u8>> {
-        let list = match &self.tbs_request.request_ext {
-            Some(v) => v,
+    /// extract extensions from request
+    pub async fn extract_ext(&self) -> Option<&Vec<OcspExtI>> {
+        match &self.tbs_request.request_ext {
+            Some(v) => Some(v),
             None => return None,
-        };
-
-        let nonce = match list.into_iter().find(|x| x.id == OCSP_EXT_NONCE_ID) {
-            Some(nc) => match &nc.ext {
-                OcspExt::Nonce { nonce: value } => value,
-                _ => {
-                    unimplemented!()
-                }
-            },
-            None => return None,
-        };
-
-        Some(nonce.clone())
+        }
     }
 }
 
@@ -330,10 +315,9 @@ mod test {
         let req = OcspRequest::parse(&req_v8[..]).await.unwrap();
         let v = req.extract_cert_sn().await;
 
-        let c = vec![
-            vec![0x41u8, 0x30, 0x09, 0x83, 0x33, 0x1F, 0x9D, 0x4F],
-            vec![0x63, 0x78, 0xE5, 0x1D, 0x44, 0x8F, 0xF4, 0x6D],
-        ];
+        let c1 = vec![0x41u8, 0x30, 0x09, 0x83, 0x33, 0x1F, 0x9D, 0x4F];
+        let c2 = vec![0x63, 0x78, 0xE5, 0x1D, 0x44, 0x8F, 0xF4, 0x6D];
+        let c = vec![&c1, &c2];
 
         assert_eq!(c, v);
     }
