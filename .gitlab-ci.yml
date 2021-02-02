@@ -7,7 +7,7 @@ clippy:
   stage: lint
   tags:
     - rust
-  script: cargo --offline clippy
+  script: cargo --offline clippy -- -D warnings
 
 build:
   stage: build
