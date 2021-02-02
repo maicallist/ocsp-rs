@@ -56,7 +56,7 @@ impl OneReq {
 
         debug!("good SINGLE REQUEST decoded");
         Ok(OneReq {
-            certid: certid,
+            certid,
             one_req_ext: ext,
         })
     }
@@ -195,7 +195,7 @@ impl Signature {
         debug!("good SIGNATURE decoded");
         Ok(Signature {
             signing_algo: oid,
-            signature: signature,
+            signature,
             // unimplemented 3
             certs: None,
         })
@@ -258,8 +258,7 @@ impl OcspRequest {
     pub async fn extract_cert_sn(&self) -> Vec<&Vec<u8>> {
         let mut sn = vec![];
         let list = &self.tbs_request.request_list;
-        list.into_iter()
-            .for_each(|r| sn.push(&(r.certid.serial_num)));
+        list.iter().for_each(|r| sn.push(&(r.certid.serial_num)));
         sn
     }
 

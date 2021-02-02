@@ -36,7 +36,7 @@ impl OcspExtI {
             //let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
             let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
             let (id, ext) = OcspExt::parse_oneext(ext.raw()).await?;
-            r.push(OcspExtI { id: id, ext: ext });
+            r.push(OcspExtI { id, ext });
         }
 
         debug!("Good extensions decoded");
@@ -61,9 +61,10 @@ impl OcspExtI {
         }
 
         let mut v = vec![];
-        for i in 0..ext_list.len() {
-            v.extend(ext_list[i].ext.to_der().await?);
+        for e in ext_list {
+            v.extend(e.ext.to_der().await?)
         }
+
         let len = asn1_encode_length(v.len()).await?;
         let mut r = vec![ASN1_SEQUENCE];
         r.extend(len);
@@ -167,11 +168,7 @@ impl OcspExt {
                     }
                 }
 
-                OcspExt::CrlRef {
-                    url: url,
-                    num: num,
-                    time: time,
-                }
+                OcspExt::CrlRef { url, num, time }
             }
             OCSP_EXT_RESP_TYPE_ID
             | OCSP_EXT_ARCHIVE_CUTOFF_ID

@@ -146,12 +146,12 @@ impl GeneralizedTime {
             .ok_or(OcspError::GenInvalidTime(hour, min, sec, err_at!()))?;
 
         Ok(GeneralizedTime {
-            year: year,
-            month: month,
-            day: day,
-            hour: hour,
-            min: min,
-            sec: sec,
+            year,
+            month,
+            day,
+            hour,
+            min,
+            sec,
         })
     }
 

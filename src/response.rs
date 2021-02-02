@@ -172,9 +172,8 @@ impl OneResp {
         trace!("Resp list: {:?}", list);
 
         let mut v = vec![];
-        for i in 0..list.len() {
-            let t = list[i].to_der().await?;
-            v.extend(t);
+        for i in list {
+            v.extend(i.to_der().await?);
         }
 
         let len = asn1_encode_length(v.len()).await?;
