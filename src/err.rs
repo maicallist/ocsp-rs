@@ -13,8 +13,8 @@ pub enum OcspError {
 
     /// cannot find matching sequence  
     /// eg. OID sequence is not 0x06, 0x05
-    #[error("Unable to extract desired sequence of {0} {1}")]
-    Asn1MismatchError(&'static str, &'static str),
+    #[error("Unable to extract desired sequence of {0}")]
+    Asn1MismatchError(&'static str),
 
     /// unable to parse vec\<u8\> to &str   
     /// eg. requestorName
@@ -23,32 +23,32 @@ pub enum OcspError {
 
     /// sequence length does not match intended data  
     /// eg. OID length is not 2, 0x06, 0x05
-    #[error("Unable to deserialize {0} due to incorrect sequence length {1}")]
-    Asn1LengthError(&'static str, &'static str),
+    #[error("Unable to deserialize {0} due to incorrect sequence length")]
+    Asn1LengthError(&'static str),
 
     /// Cannot find OID in predefined list
-    #[error("Unable to locate OID info {0}")]
-    Asn1OidUnknown(&'static str),
+    #[error("Unable to locate OID info")]
+    Asn1OidUnknown,
 
     /// ASN.1 TLV reaches max length allowed
-    #[error("ASN.1 allows max 127 bytes to represents a length in TLV, but got {0} {1}")]
-    Asn1LengthOverflow(usize, &'static str),
+    #[error("ASN.1 allows max 127 bytes to represents a length in TLV, but got {0}")]
+    Asn1LengthOverflow(usize),
 
     /// Cannot recognize ocsp extension
-    #[error("Unable to recognize extension {0}")]
-    OcspExtUnknown(&'static str),
+    #[error("Unable to recognize extension")]
+    OcspExtUnknown,
 
     /// Explicit tag not defined in RFC
     #[error("Non RFC defined tagging")]
-    OcspUndefinedTagging(&'static str),
+    OcspUndefinedTagging,
 
     /// OCSP response type is not supported
     // only basic type is supported now
-    #[error("Unsupported response type {0}")]
-    OcspUnsupportedResponseType(&'static str),
+    #[error("Unsupported response type")]
+    OcspUnsupportedResponseType,
 
     /// Creating an OCSP response with inappropriate method
-    #[error("Inappropriate response creation, {0}")]
+    #[error("Inappropriate response creation due to {0}")]
     OcspRespInappropriateCreation(&'static str),
 
     /// Undefined OCSP response status
@@ -56,22 +56,22 @@ pub enum OcspError {
     OcspRespUndefinedStatus(u8),
 
     /// Cannot parse provided date
-    #[error("Invalid date year {0} month {1} day {2} {3}")]
-    GenInvalidDate(i32, u32, u32, &'static str),
+    #[error("Invalid date year {0} month {1} day {2}")]
+    GenInvalidDate(i32, u32, u32),
 
     /// Cannot parse provided time
-    #[error("Invalid time hour {0} minute {1} second {2} {3}")]
-    GenInvalidTime(u32, u32, u32, &'static str),
+    #[error("Invalid time hour {0} minute {1} second {2}")]
+    GenInvalidTime(u32, u32, u32),
 
     /// Missing revoke info for revoked certificate
-    #[error("Revoke info not found {0}")]
-    GenRevokeInfoNotFound(&'static str),
+    #[error("Revoke info not found")]
+    GenRevokeInfoNotFound,
 }
 
-/// display error location
-#[macro_export]
-macro_rules! err_at {
-    () => {
-        concat!("at ", file!(), " line ", line!(), " column ", column!())
-    };
-}
+// display error location
+//#[macro_export]
+//macro_rules! err_at {
+//    () => {
+//        concat!("at ", file!(), " line ", line!(), " column ", column!())
+//    };
+//}

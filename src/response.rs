@@ -2,21 +2,18 @@
 //! for binary details, see [crate::doc::resp]
 use tracing::{debug, error, trace, warn};
 
+use crate::common::{
+    asn1::{
+        asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
+        ASN1_EXPLICIT_1,
+    },
+    ocsp::OcspExtI,
+};
 use crate::{common::asn1::asn1_encode_bit_string, oid::OCSP_OID_DOT_LIST};
 use crate::{
     common::asn1::{ASN1_EXPLICIT_2, ASN1_OCTET, ASN1_SEQUENCE},
     err::{OcspError, Result},
     oid::OCSP_RESPONSE_BASIC_ID,
-};
-use crate::{
-    common::{
-        asn1::{
-            asn1_encode_length, CertId, GeneralizedTime, Oid, ASN1_ENUMERATED, ASN1_EXPLICIT_0,
-            ASN1_EXPLICIT_1,
-        },
-        ocsp::OcspExtI,
-    },
-    err_at,
 };
 
 /// possible revocation reasons, See RFC 5280
@@ -142,7 +139,7 @@ impl CertStatus {
                         // revoke_info to_der contains status code
                         v = r.to_der().await?
                     }
-                    None => return Err(OcspError::GenRevokeInfoNotFound(err_at!())),
+                    None => return Err(OcspError::GenRevokeInfoNotFound),
                 }
                 Ok(v)
             }
@@ -414,7 +411,7 @@ impl ResponseBytes {
         if oid.index != OCSP_RESPONSE_BASIC_ID {
             let dot_name = OCSP_OID_DOT_LIST[oid.index];
             error!("Response type {} is not supported", dot_name);
-            return Err(OcspError::OcspUnsupportedResponseType(err_at!()));
+            return Err(OcspError::OcspUnsupportedResponseType);
         }
 
         Ok(ResponseBytes {

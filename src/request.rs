@@ -3,17 +3,14 @@
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
-use crate::err::{OcspError, Result};
-use crate::{
-    common::{
-        asn1::{
-            CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
-            ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
-        },
-        ocsp::OcspExtI,
+use crate::common::{
+    asn1::{
+        CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
+        ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
     },
-    err_at,
+    ocsp::OcspExtI,
 };
+use crate::err::{OcspError, Result};
 
 /// RFC 6960 Request
 #[derive(Debug)]
@@ -50,7 +47,7 @@ impl OneReq {
                     "Provided request contains {} items, expecting no more than 2",
                     s.len()
                 );
-                return Err(OcspError::Asn1LengthError("OneReq", err_at!()));
+                return Err(OcspError::Asn1LengthError("OneReq"));
             }
         }
 
@@ -103,10 +100,7 @@ impl TBSRequest {
                     let val = tbs_item.value();
                     let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                     if val.tag() != ASN1_IA5STRING {
-                        return Err(OcspError::Asn1MismatchError(
-                            "TBS requestor name",
-                            err_at!(),
-                        ));
+                        return Err(OcspError::Asn1MismatchError("TBS requestor name"));
                     }
                     name = Some(val.value().to_vec());
                 }
@@ -128,7 +122,7 @@ impl TBSRequest {
                     }
                 }
                 _ => {
-                    return Err(OcspError::Asn1MismatchError("TBS Request", err_at!()));
+                    return Err(OcspError::Asn1MismatchError("TBS Request"));
                 }
             }
         }
@@ -181,7 +175,7 @@ impl Signature {
                 debug!("Getting raw signature data");
                 let raw = s.get(1).map_err(OcspError::Asn1DecodingError)?;
                 if raw.tag() != ASN1_BIT_STRING {
-                    return Err(OcspError::Asn1MismatchError("SIGNATURE", err_at!()));
+                    return Err(OcspError::Asn1MismatchError("SIGNATURE"));
                 }
                 signature = raw.value().to_vec();
             }
@@ -189,7 +183,7 @@ impl Signature {
                 warn!("CERT is defined in RFC but yet implemented");
                 unimplemented!()
             }
-            _ => return Err(OcspError::Asn1LengthError("SIGNATURE", err_at!())),
+            _ => return Err(OcspError::Asn1LengthError("SIGNATURE")),
         }
 
         debug!("good SIGNATURE decoded");
@@ -234,12 +228,7 @@ impl OcspRequest {
                         let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                         sig = Some(Signature::parse(val.value()).await?);
                     }
-                    _ => {
-                        return Err(OcspError::Asn1MismatchError(
-                            "SIGNATURE EXP 0 tag",
-                            err_at!(),
-                        ))
-                    }
+                    _ => return Err(OcspError::Asn1MismatchError("SIGNATURE EXP 0 tag")),
                 }
             }
             _ => {}

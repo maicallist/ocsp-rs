@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use tracing::{debug, error, trace, warn};
 
-use crate::{common::asn1::Oid, err::OcspError, err_at};
+use crate::{common::asn1::Oid, err::OcspError};
 
 // search oid in binary
 // see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
@@ -56,7 +56,7 @@ pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
     let id = oid.index;
     if id > OID_MAX_ID {
         error!("No OID found");
-        return Err(OcspError::Asn1OidUnknown(err_at!()));
+        return Err(OcspError::Asn1OidUnknown);
     }
     Ok(&OCSP_OID_HEX_LIST[id][..])
 }

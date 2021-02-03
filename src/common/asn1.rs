@@ -8,8 +8,8 @@ use asn1_der::{
 use chrono::{Datelike, Timelike};
 use tracing::{debug, error, trace};
 
+use crate::err::OcspError;
 use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
-use crate::{err::OcspError, err_at};
 
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
@@ -78,7 +78,7 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError>
 
             // safety check
             if v.len() > 126 {
-                return Err(OcspError::Asn1LengthOverflow(v.len(), err_at!()));
+                return Err(OcspError::Asn1LengthOverflow(v.len()));
             }
             let l = 0x80 + v.len() as u8;
             let l = vec![l];
@@ -140,10 +140,10 @@ impl GeneralizedTime {
         // lazy check if date time is valid
         // turn it into chrono
         let dt = chrono::NaiveDate::from_ymd_opt(year, month, day)
-            .ok_or(OcspError::GenInvalidDate(year, month, day, err_at!()))?;
+            .ok_or(OcspError::GenInvalidDate(year, month, day))?;
         let _ = dt
             .and_hms_opt(hour, min, sec)
-            .ok_or(OcspError::GenInvalidTime(hour, min, sec, err_at!()))?;
+            .ok_or(OcspError::GenInvalidTime(hour, min, sec))?;
 
         Ok(GeneralizedTime {
             year,
@@ -214,7 +214,7 @@ impl Oid {
                 "Provided OID contains {} items in sequence, expecting 2",
                 s.len()
             );
-            return Err(OcspError::Asn1LengthError("OID", err_at!()));
+            return Err(OcspError::Asn1LengthError("OID"));
         }
 
         let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
@@ -226,11 +226,11 @@ impl Oid {
                 id.tag(),
                 nil.tag()
             );
-            return Err(OcspError::Asn1MismatchError("OID", err_at!()));
+            return Err(OcspError::Asn1MismatchError("OID"));
         }
 
         let u = match b2i_oid(id.value()).await {
-            None => return Err(OcspError::Asn1OidUnknown(err_at!())),
+            None => return Err(OcspError::Asn1OidUnknown),
             Some(u) => u,
         };
 
@@ -246,7 +246,7 @@ impl Oid {
         // ignoring logging here, trace if logged in d2i_oid
         d2i_oid(name_dot_notation)
             .await
-            .ok_or(OcspError::Asn1OidUnknown(err_at!()))
+            .ok_or(OcspError::Asn1OidUnknown)
     }
 
     /// encode to ASN.1 DER with tailing NULL
@@ -317,7 +317,7 @@ impl CertId {
                 "Provided CERTID contains {} items in sequence, expecting 4",
                 s.len()
             );
-            return Err(OcspError::Asn1LengthError("CertID", err_at!()));
+            return Err(OcspError::Asn1LengthError("CertID"));
         }
 
         let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
@@ -338,7 +338,7 @@ impl CertId {
                 key_hash.tag(),
                 sn.tag()
             );
-            return Err(OcspError::Asn1MismatchError("CertId", err_at!()));
+            return Err(OcspError::Asn1MismatchError("CertId"));
         }
 
         let oid = Oid::parse(oid.raw()).await?;

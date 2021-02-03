@@ -6,7 +6,6 @@ use tracing::{debug, error, trace};
 use crate::common::asn1::{
     TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2, ASN1_OID,
 };
-use crate::err_at;
 use crate::{err::OcspError, oid::*};
 
 use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
@@ -56,7 +55,7 @@ impl OcspExtI {
         match exp_tag {
             ASN1_EXPLICIT_0 | ASN1_EXPLICIT_1 | ASN1_EXPLICIT_2 => {}
             _ => {
-                return Err(OcspError::OcspUndefinedTagging(err_at!()));
+                return Err(OcspError::OcspUndefinedTagging);
             }
         }
 
@@ -111,13 +110,13 @@ impl OcspExt {
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
         debug!("Checking OID tag");
         if oid.tag() != ASN1_OID {
-            return Err(OcspError::Asn1MismatchError("OID", err_at!()));
+            return Err(OcspError::Asn1MismatchError("OID", ));
         }
         let val = oid.value();
         // translate oid
         debug!("Resolving OID");
         let ext_id = match b2i_oid(val).await {
-            None => return Err(OcspError::Asn1OidUnknown(err_at!())),
+            None => return Err(OcspError::Asn1OidUnknown),
             Some(v) => v,
         };
 
@@ -141,7 +140,7 @@ impl OcspExt {
                     let tmp = oneext.get(i).map_err(OcspError::Asn1DecodingError)?;
                     let val = match tmp.tag() {
                         ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => tmp.value(),
-                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", err_at!())),
+                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", )),
                     };
                     match tmp.tag() {
                         ASN1_EXPLICIT_0 => {
@@ -162,7 +161,7 @@ impl OcspExt {
                         _ => {
                             return Err(OcspError::Asn1MismatchError(
                                 "Ext CrlRef EXP tag",
-                                err_at!(),
+                                
                             ))
                         }
                     }
@@ -179,7 +178,7 @@ impl OcspExt {
             | OCSP_EXT_EXTENDED_REVOKE_ID => {
                 unimplemented!()
             }
-            _ => return Err(OcspError::OcspExtUnknown(err_at!())),
+            _ => return Err(OcspError::OcspExtUnknown),
         };
 
         debug!("Good single extension decoded");
