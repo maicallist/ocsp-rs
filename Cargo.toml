@@ -1,5 +1,5 @@
 [package]
-name = "ocsp-rs"
+name = "ocsp"
 version = "0.1.0"
 authors = ["chen gao<maicallist@gmail.com>"]
 edition = "2018"
