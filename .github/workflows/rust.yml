@@ -19,7 +19,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v2
     - name: Lint
       run: cargo clippy -- -D warnings
       continue-on-error: true
