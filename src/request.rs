@@ -1,5 +1,7 @@
 //! OCSP request
 
+use std::vec;
+
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
@@ -257,6 +259,16 @@ impl OcspRequest {
             Some(v) => Some(v),
             None => return None,
         }
+    }
+
+    /// extract cert certid
+    pub async fn extract_certid(&self) -> Vec<&CertId> {
+        let mut certid = vec![];
+        let list = &self.tbs_request.request_list;
+        list.iter().for_each(|r| {
+            certid.push(&r.certid);
+        });
+        certid
     }
 }
 
