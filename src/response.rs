@@ -498,7 +498,7 @@ impl OcspResponse {
             0 => Err(OcspError::OcspRespInappropriateCreation(
                 "creating success response with non_success function",
             )),
-            1..=6 => Ok(OcspResponse {
+            1 | 2 | 3 | 5 | 6 => Ok(OcspResponse {
                 resp_status: status,
                 resp_bytes: None,
             }),
