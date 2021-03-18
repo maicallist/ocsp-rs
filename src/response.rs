@@ -495,8 +495,8 @@ impl OcspResponse {
     /// create new response with non-success status
     pub async fn new_non_success(status: OcspRespStatus) -> Result<Self> {
         match status as u8 {
-            0 => Err(OcspError::OcspRespInappropriateCreation(
-                "creating success response with non_success function",
+            0 => Err(OcspError::OcspRespStatusError(
+                "creating a success response with non_success function",
             )),
             1 | 2 | 3 | 5 | 6 => Ok(OcspResponse {
                 resp_status: status,

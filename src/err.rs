@@ -49,7 +49,7 @@ pub enum OcspError {
 
     /// Creating an OCSP response with inappropriate method
     #[error("Inappropriate response creation due to {0}")]
-    OcspRespInappropriateCreation(&'static str),
+    OcspRespStatusError(&'static str),
 
     /// Undefined OCSP response status
     #[error("Undefined OCSP response status {0}")]
