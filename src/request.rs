@@ -272,11 +272,11 @@ impl OcspRequest {
     }
 
     /// extract certid map sn to certid
-    pub async fn extract_certid_map(&self) -> HashMap<&Vec<u8>, &CertId> {
+    pub async fn extract_certid_map(&self) -> HashMap<Vec<u8>, CertId> {
         let mut map = HashMap::new();
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
-            let _ = map.insert(&r.certid.serial_num, &r.certid);
+            let _ = map.insert(r.certid.serial_num.clone(), r.certid.clone());
         });
         map
     }
