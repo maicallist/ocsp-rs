@@ -77,7 +77,7 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError>
             v.retain(|e| *e != 0);
 
             // safety check
-            if v.len() > 126 {
+            if v.len() > 127 {
                 return Err(OcspError::Asn1LengthOverflow(v.len()));
             }
             let l = 0x80 + v.len() as u8;
