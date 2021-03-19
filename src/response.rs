@@ -376,7 +376,9 @@ impl BasicResponse {
 
         v.extend(self.tbs_resp_data.to_der().await?);
         v.extend(self.signature_algo.to_der_with_null().await?);
-        v.extend(asn1_encode_bit_string(&self.signature).await?);
+        let mut pad = vec![0x00u8];
+        pad.extend(&self.signature);
+        v.extend(asn1_encode_bit_string(&pad).await?);
         // FIXME:
         if let Some(_c) = &self.certs {
             unimplemented!()
