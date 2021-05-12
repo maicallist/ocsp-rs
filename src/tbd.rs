@@ -145,8 +145,8 @@ impl<'d> OcspAsn1Der<'d> {
     /// extracted CERTID tag and value stores in 'tag' and 'val'
     fn extract_certid_raw(
         &'d self,
-        tag: &'d mut Vec<u8>,
-        val: &'d mut Vec<Vec<u8>>,
+        tag: &'d mut Bytes,
+        val: &'d mut Vec<Bytes>,
     ) -> BoxFuture<'d, Result<u8, OcspError>> {
         async move {
             let mut examine = false;

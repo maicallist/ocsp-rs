@@ -9,6 +9,7 @@ use crate::common::asn1::{
 use crate::{err::OcspError, oid::*};
 
 use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
+use crate::common::asn1::Bytes;
 
 /// OCSP extension with internal id
 #[derive(Debug, Clone)]
@@ -43,7 +44,7 @@ impl OcspExtI {
     }
 
     /// encode a list of extensions, wrapped in explicit tag
-    pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Vec<u8>, OcspError> {
+    pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
         debug!(
             "Start encoding {} ext, with tag {:02x?}",
             ext_list.len(),
@@ -85,17 +86,17 @@ pub enum OcspExt {
     /// 4.4.1
     Nonce {
         /// nonce value
-        nonce: Vec<u8>,
+        nonce: Bytes,
     },
     /// 4.4.2  
     /// REVIEW: untested
     CrlRef {
         /// EXPLICIT 0 IA5String OPTIONAL
-        url: Option<Vec<u8>>,
+        url: Option<Bytes>,
         /// EXPLICIT 1 INTEGER OPTIONAL
-        num: Option<Vec<u8>>,
+        num: Option<Bytes>,
         /// EXPLICIT 2 GeneralizedTime OPTIONAL
-        time: Option<Vec<u8>>,
+        time: Option<Bytes>,
     },
 }
 
@@ -110,7 +111,7 @@ impl OcspExt {
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
         debug!("Checking OID tag");
         if oid.tag() != ASN1_OID {
-            return Err(OcspError::Asn1MismatchError("OID", ));
+            return Err(OcspError::Asn1MismatchError("OID"));
         }
         let val = oid.value();
         // translate oid
@@ -140,7 +141,7 @@ impl OcspExt {
                     let tmp = oneext.get(i).map_err(OcspError::Asn1DecodingError)?;
                     let val = match tmp.tag() {
                         ASN1_EXPLICIT_0..=ASN1_EXPLICIT_2 => tmp.value(),
-                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef", )),
+                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef")),
                     };
                     match tmp.tag() {
                         ASN1_EXPLICIT_0 => {
@@ -158,12 +159,7 @@ impl OcspExt {
                                 DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                             time = Some(val.value().to_vec());
                         }
-                        _ => {
-                            return Err(OcspError::Asn1MismatchError(
-                                "Ext CrlRef EXP tag",
-                                
-                            ))
-                        }
+                        _ => return Err(OcspError::Asn1MismatchError("Ext CrlRef EXP tag")),
                     }
                 }
 
@@ -186,7 +182,7 @@ impl OcspExt {
     }
 
     /// encode one extension to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+    pub async fn to_der(&self) -> Result<Bytes, OcspError> {
         let mut v = vec![ASN1_SEQUENCE];
         match &self {
             OcspExt::Nonce { nonce } => {

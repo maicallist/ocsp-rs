@@ -4,6 +4,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use tracing::{debug, error, trace, warn};
 
+use crate::common::asn1::Bytes;
 use crate::{common::asn1::Oid, err::OcspError};
 
 // search oid in binary
@@ -71,7 +72,7 @@ pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
 //    /// OID in text format, eg. pkix-ocsp 1
 //    pub name: &'static str,
 //    /// OID in binary format
-//    pub bin: Vec<u8>,
+//    pub bin: Bytes,
 //}
 
 // ocsp nonce extension internal id
@@ -197,7 +198,7 @@ pub(crate) const OID_MAX_ID: usize = 12;
 
 lazy_static! {
     /// search oid index by oid binary
-    pub static ref OID_MAP: HashMap<Vec<u8>, usize> = vec![
+    pub static ref OID_MAP: HashMap<Bytes, usize> = vec![
         (OCSP_EXT_NONCE_HEX.to_vec(), OCSP_EXT_NONCE_ID),
         (OCSP_EXT_CRLREF_HEX.to_vec(), OCSP_EXT_CRLREF_ID),
         (OCSP_EXT_RESP_TYPE_HEX.to_vec(), OCSP_EXT_RESP_TYPE_ID),
@@ -250,7 +251,7 @@ lazy_static! {
     ];
 
     /// list of ocsp extension oid in bytes
-    pub static ref OCSP_OID_HEX_LIST: [Vec<u8>; 13] = [
+    pub static ref OCSP_OID_HEX_LIST: [Bytes; 13] = [
         OCSP_EXT_NONCE_HEX.to_vec(),
         OCSP_EXT_CRLREF_HEX.to_vec(),
         OCSP_EXT_RESP_TYPE_HEX.to_vec(),

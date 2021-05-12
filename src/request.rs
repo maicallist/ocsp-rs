@@ -5,6 +5,7 @@ use std::{collections::HashMap, vec};
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
+use crate::common::asn1::Bytes;
 use crate::common::{
     asn1::{
         CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
@@ -70,7 +71,7 @@ pub struct TBSRequest {
     // version: u8,
     /// requestorName is OPTIONAL and indicates the name of the OCSP requestor.
     /// explicit 1
-    pub requestor_name: Option<Vec<u8>>,
+    pub requestor_name: Option<Bytes>,
     /// requestList contains one or more single certificate status requests.
     pub request_list: Vec<OneReq>,
     /// requestExtensions is OPTIONAL and includes extensions applicable
@@ -152,9 +153,9 @@ pub struct Signature {
     /// which has arbitrary length comparing to OCTET,  
     /// but all signatures' length are multiple of 8,  
     /// so using Vec\<u8\> here.
-    pub signature: Vec<u8>,
+    pub signature: Bytes,
     /// \[0\] EXPLICIT SEQUENCE OF Certificate OPTIONAL
-    pub certs: Option<Vec<u8>>,
+    pub certs: Option<Bytes>,
 }
 
 impl Signature {
@@ -246,7 +247,7 @@ impl OcspRequest {
     }
 
     /// extract all cert serial numbers from request
-    pub async fn extract_cert_sn(&self) -> Vec<&Vec<u8>> {
+    pub async fn extract_cert_sn(&self) -> Vec<&Bytes> {
         let mut sn = vec![];
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| sn.push(&(r.certid.serial_num)));
@@ -272,7 +273,7 @@ impl OcspRequest {
     }
 
     /// extract certid map sn to certid
-    pub async fn extract_certid_map(&self) -> HashMap<Vec<u8>, CertId> {
+    pub async fn extract_certid_map(&self) -> HashMap<Bytes, CertId> {
         let mut map = HashMap::new();
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
@@ -449,7 +450,7 @@ mod test {
         //println!("{:?}", d.header());
     }
 
-    // get oid vec<u8> from raw hex
+    // get oid Bytes from raw hex
     #[tokio::test]
     async fn parse_oid_v8() {
         let oid_hex = "300906052b0e03021a0500";

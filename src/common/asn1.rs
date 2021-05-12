@@ -11,6 +11,9 @@ use tracing::{debug, error, trace};
 use crate::err::OcspError;
 use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
 
+/// aliasing Vec<u8> with Bytes
+pub type Bytes = Vec<u8>;
+
 /// asn1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
 /// asn1 explicit tag 1
@@ -53,7 +56,7 @@ impl<'d> TryIntoSequence<'d> for DerObject<'d> {
     }
 }
 
-impl<'d> TryIntoSequence<'d> for Vec<u8> {
+impl<'d> TryIntoSequence<'d> for Bytes {
     type Error = OcspError;
     fn try_into(&'d self) -> Result<Sequence, Self::Error> {
         Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
@@ -68,13 +71,13 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
 }
 
 /// determine asn1 length
-pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError> {
+pub(crate) async fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
     match len {
         0..=127 => Ok(vec![len as u8]),
         _ => {
             let v = len.to_be_bytes().to_vec();
             // removing leading zero in usize
-            let v: Vec<u8> = v.into_iter().skip_while(|n| *n == 0).collect();
+            let v: Bytes = v.into_iter().skip_while(|n| *n == 0).collect();
 
             // safety check
             if v.len() > 127 {
@@ -88,7 +91,7 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Vec<u8>, OcspError>
 }
 
 /// pack octet into asn1
-pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_OCTET];
     let len = asn1_encode_length(data.len()).await?;
     tlv.extend(len);
@@ -97,7 +100,7 @@ pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Vec<u8>, OcspError>
 }
 
 /// pack integer into asn1
-pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_INTEGER];
     let len = asn1_encode_length(data.len()).await?;
     tlv.extend(len);
@@ -106,7 +109,7 @@ pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Vec<u8>, OcspErro
 }
 
 /// pack bit string into asn1
-pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Vec<u8>, OcspError> {
+pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_BIT_STRING];
     let len = asn1_encode_length(data.len()).await?;
     tlv.extend(len);
@@ -174,7 +177,7 @@ impl GeneralizedTime {
 
     /// serialize to DER encoding  
     /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
-    pub async fn to_der_utc(&self) -> Result<Vec<u8>, OcspError> {
+    pub async fn to_der_utc(&self) -> Result<Bytes, OcspError> {
         let v = format!(
             "{}{:02}{:02}{:02}{:02}{:02}Z",
             self.year, self.month, self.day, self.hour, self.min, self.sec
@@ -195,9 +198,9 @@ impl GeneralizedTime {
 #[derive(Debug, Clone)]
 pub struct Oid {
     // an oid in bytes
-    //pub id: Vec<u8>,
+    //pub id: Bytes,
     pub(crate) index: usize,
-    //null: Vec<u8>,
+    //null: Bytes,
 }
 
 impl Oid {
@@ -250,7 +253,7 @@ impl Oid {
     }
 
     /// encode to ASN.1 DER with tailing NULL
-    pub async fn to_der_with_null(&self) -> Result<Vec<u8>, OcspError> {
+    pub async fn to_der_with_null(&self) -> Result<Bytes, OcspError> {
         debug!("Start encoding oid");
         trace!("Oid: {:?}", self);
         let val_oid = i2b_oid(self).await?;
@@ -271,7 +274,7 @@ impl Oid {
     /// encode to ASN.1 DER
     /// - without sequence header
     /// - without tailing NULL
-    pub async fn to_der_raw(&self) -> Result<Vec<u8>, OcspError> {
+    pub async fn to_der_raw(&self) -> Result<Bytes, OcspError> {
         debug!("Start encoding oid without sequence");
         trace!("Oid: {:?}", self);
         let val_oid = i2b_oid(self).await?;
@@ -296,11 +299,11 @@ pub struct CertId {
     /// hash algo oid
     pub hash_algo: Oid,
     /// issuer name hash in byte
-    pub issuer_name_hash: Vec<u8>,
+    pub issuer_name_hash: Bytes,
     /// issuer key hash in byte
-    pub issuer_key_hash: Vec<u8>,
+    pub issuer_key_hash: Bytes,
     /// certificate serial number in byte
-    pub serial_num: Vec<u8>,
+    pub serial_num: Bytes,
 }
 
 impl CertId {
@@ -366,7 +369,7 @@ impl CertId {
     }
 
     /// encode CertID to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Vec<u8>, OcspError> {
+    pub async fn to_der(&self) -> Result<Bytes, OcspError> {
         debug!("Start encoding Cert Id");
         trace!("CertId: {:?}", self);
         let mut oid = self.hash_algo.to_der_with_null().await?;
