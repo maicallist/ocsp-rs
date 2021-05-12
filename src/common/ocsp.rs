@@ -212,7 +212,6 @@ impl OcspExt {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tokio;
 
     /// test ext list to ASN.1 DER
     #[tokio::test]

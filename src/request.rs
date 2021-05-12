@@ -289,7 +289,6 @@ mod test {
         typed::{DerDecodable, Sequence},
         DerObject,
     };
-    use hex;
     use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
     use crate::oid::i2b_oid;

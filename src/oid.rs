@@ -270,8 +270,6 @@ lazy_static! {
 
 #[cfg(test)]
 mod test {
-    use tokio;
-
     use super::*;
 
     // test dot notation to oid
