@@ -1,4 +1,4 @@
-//! common components in asn1
+//! Common components in ASN.1  
 //! For ASN.1 universal tags list, see [here](https://www.obj-sys.com/asn1tutorial/node124.html)
 
 use asn1_der::{
@@ -11,41 +11,41 @@ use tracing::{debug, error, trace};
 use crate::err::OcspError;
 use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
 
-/// aliasing Vec<u8> with Bytes
+/// Aliasing Vec<u8> with Bytes
 pub type Bytes = Vec<u8>;
 
-/// asn1 explicit tag 0
+/// ASN.1 explicit tag 0
 pub(crate) const ASN1_EXPLICIT_0: u8 = 0xa0;
-/// asn1 explicit tag 1
+/// ASN.1 explicit tag 1
 pub(crate) const ASN1_EXPLICIT_1: u8 = 0xa1;
-/// asn1 explicit tag 1
+/// ASN.1 explicit tag 1
 pub(crate) const ASN1_EXPLICIT_2: u8 = 0xa2;
-/// asn1 null
+/// ASN.1 null
 pub(crate) const ASN1_NULL: u8 = 0x05;
-/// asn1 oid
+/// ASN.1 oid
 pub(crate) const ASN1_OID: u8 = 0x06;
-/// OID followed by NULL
+/// ASN.1 oid followed by NULL
 pub(crate) const ASN1_OID_PADDING: [u8; 2] = [0x05, 0x00];
-/// asn1 sequence
+/// ASN.1 sequence
 pub(crate) const ASN1_SEQUENCE: u8 = 0x30;
-/// asn1 octet
+/// ASN.1 octet
 pub(crate) const ASN1_OCTET: u8 = 0x04;
-/// asn1 integer
+/// ASN.1 integer
 pub(crate) const ASN1_INTEGER: u8 = 0x02;
-/// asn1 ia5string
+/// ASN.1 ia5string
 pub(crate) const ASN1_IA5STRING: u8 = 0x16;
-/// asn1 generalized time
+/// ASN.1 generalized time
 pub(crate) const ASN1_GENERALIZED_TIME: u8 = 0x18;
-/// asn1 enumerated
+/// ASN.1 enumerated
 pub(crate) const ASN1_ENUMERATED: u8 = 0x0a;
-/// asn1 bit string
+/// ASN.1 bit string
 pub(crate) const ASN1_BIT_STRING: u8 = 0x03;
 
-/// allowing data to be converted to [Sequence](https://docs.rs/asn1_der/0.7.2/asn1_der/typed/struct.Sequence.html)
+/// Allowing byte data to be converted to [Sequence](https://docs.rs/asn1_der/0.7.2/asn1_der/typed/struct.Sequence.html)
 pub trait TryIntoSequence<'d> {
-    /// converting asn1_der::err
+    /// Converting asn1_der::err
     type Error;
-    /// try converting to Sequence
+    /// Try converting to Sequence
     fn try_into(&'d self) -> Result<Sequence, Self::Error>;
 }
 
@@ -70,7 +70,8 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
     }
 }
 
-/// determine asn1 length
+/// Determining ASN.1 length  
+/// For details, check ASN.1 encoding rules at [here](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-encoded-length-and-value-bytes)
 pub(crate) async fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
     match len {
         0..=127 => Ok(vec![len as u8]),
@@ -90,7 +91,7 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
     }
 }
 
-/// pack octet into asn1
+/// Packing octet into ASN.1 DER
 pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_OCTET];
     let len = asn1_encode_length(data.len()).await?;
@@ -99,7 +100,7 @@ pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Bytes, OcspError> {
     Ok(tlv)
 }
 
-/// pack integer into asn1
+/// Packing integer into ASN.1 DER
 pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_INTEGER];
     let len = asn1_encode_length(data.len()).await?;
@@ -108,7 +109,7 @@ pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Bytes, OcspError>
     Ok(tlv)
 }
 
-/// pack bit string into asn1
+/// Packing bit string into ASN.1 DER
 pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_BIT_STRING];
     let len = asn1_encode_length(data.len()).await?;
@@ -117,8 +118,8 @@ pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspErr
     Ok(tlv)
 }
 
-/// represents a ASN1 GeneralizedTime
-/// only support UTC
+/// Represents a ASN.1 GeneralizedTime
+/// Only support UTC
 #[derive(Debug, Copy, Clone)]
 pub struct GeneralizedTime {
     year: i32,
@@ -131,7 +132,7 @@ pub struct GeneralizedTime {
 }
 
 impl GeneralizedTime {
-    /// create generalized time at specified time
+    /// Create a generalized time at specified time
     pub async fn new(
         year: i32,
         month: u32,
@@ -158,7 +159,7 @@ impl GeneralizedTime {
         })
     }
 
-    /// create time **now** in UTC
+    /// Create a generalized time **now** in UTC
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
         // nano to millis
@@ -175,7 +176,7 @@ impl GeneralizedTime {
         }
     }
 
-    /// serialize to DER encoding  
+    /// Serialize to DER encoding  
     /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
     pub async fn to_der_utc(&self) -> Result<Bytes, OcspError> {
         let v = format!(

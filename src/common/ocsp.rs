@@ -1,4 +1,4 @@
-//! common ocsp components
+//! Common ocsp components
 
 use asn1_der::DerObject;
 use tracing::{debug, error, trace};
@@ -11,10 +11,10 @@ use crate::{err::OcspError, oid::*};
 use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
 use crate::common::asn1::Bytes;
 
-/// OCSP extension with internal id
+/// OCSP extension with internal id 
 #[derive(Debug, Clone)]
 pub struct OcspExtI {
-    /// internal id of extension, see const in [ocsp_rs::oid]
+    /// internal id of extension, see const in [crate::oid]
     pub id: usize,
     /// extension variant
     pub ext: OcspExt,
@@ -22,7 +22,7 @@ pub struct OcspExtI {
 
 impl OcspExtI {
     /// parse ocsp extension  
-    /// raw is sequence of list extensions  
+    /// raw is a sequence of multiple extensions  
     /// remove explicit and implicit tags first
     pub async fn parse(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
         debug!("Start decoding Extensions");
@@ -33,7 +33,6 @@ impl OcspExtI {
         debug!("Converting EXT data into asn1 sequence");
         let list = raw.try_into()?;
         for i in 0..list.len() {
-            //let ext: Sequence = list.get_as(i).map_err(OcspError::Asn1DecodingError)?;
             let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
             let (id, ext) = OcspExt::parse_oneext(ext.raw()).await?;
             r.push(OcspExtI { id, ext });

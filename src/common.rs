@@ -1,3 +1,3 @@
-//! common components in asn1 and ocsp
+//! Common components in ASN.1 and OCSP
 pub mod asn1;
 pub mod ocsp;
