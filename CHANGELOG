@@ -1,0 +1,5 @@
+ocsp (0.1.1-1) UNRELEASED; urgency=low
+
+  * allowing CertId to be HashMap key
+
+ -- Chen Gao <maicallist@gmail.com>  Wed, 26 May 2021 16:55:27 +0800
