@@ -1,3 +1,9 @@
+ocsp (0.3.0) UNRELEASED; urgency=low
+
+  * allowing extracting owned cids from request
+
+ -- Chen Gao <maicallist@gmail.com>  Wed, 27 May 2021 13:48:50 +0800
+
 ocsp (0.2.0) UNRELEASED; urgency=low
 
   * BREAKING CHANGE rename one_resp to cid to eliminate confusion
