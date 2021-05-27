@@ -1,4 +1,10 @@
-ocsp (0.1.1-1) UNRELEASED; urgency=low
+ocsp (0.2.0) UNRELEASED; urgency=low
+
+  * BREAKING CHANGE rename one_resp to cid to eliminate confusion
+
+ -- Chen Gao <maicallist@gmail.com>  Wed, 27 May 2021 09:35:16 +0800
+
+ocsp (0.1.1) UNRELEASED; urgency=low
 
   * allowing CertId to be HashMap key
 
