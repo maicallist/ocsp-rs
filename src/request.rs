@@ -344,7 +344,7 @@ mod test {
         assert_eq!(c, v);
     }
 
-    // test extract cert serial numbers from request
+    // extracting cert serial numbers from request
     #[tokio::test]
     async fn extract_cert_sn() {
         let ocsp_req_hex = "3081B53081B230818A30433041300906\
@@ -370,7 +370,7 @@ mod test {
         assert_eq!(c, v);
     }
 
-    // test two certs in request
+    // parsing two certs in single request
     #[tokio::test]
     async fn ocsp_two_cert_req() {
         let ocsp_req_hex = "3081B53081B230818A30433041300906\
