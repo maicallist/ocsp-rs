@@ -152,7 +152,7 @@ impl CertStatus {
 #[derive(Debug, Clone)]
 pub struct OneResp {
     /// certid of a resp
-    pub one_resp: CertId,
+    pub cid: CertId,
     /// cert status
     pub cert_status: CertStatus,
     /// Responses whose thisUpdate time is later than the local system time SHOULD be considered unreliable.
@@ -187,7 +187,7 @@ impl OneResp {
     pub async fn to_der(&self) -> Result<Bytes> {
         debug!("Encoding one response");
         trace!("Response: {:?}", self);
-        let mut certid = self.one_resp.to_der().await?;
+        let mut certid = self.cid.to_der().await?;
         let status = self.cert_status.to_der().await?;
         let this = self.this_update.to_der_utc().await?;
 
@@ -562,7 +562,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid.clone(),
+            cid: certid.clone(),
             cert_status: good,
             this_update: gt.clone(),
             next_update: None,
@@ -575,7 +575,7 @@ mod test {
         let rev_info = RevokedInfo::new(rev_t, Some(CrlReason::OcspRevokeUnspecified)).await;
         let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
         let two = OneResp {
-            one_resp: certid2,
+            cid: certid2,
             cert_status: revoke,
             this_update: gt,
             next_update: None,
@@ -686,7 +686,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid.clone(),
+            cid: certid.clone(),
             cert_status: good,
             this_update: gt.clone(),
             next_update: None,
@@ -699,7 +699,7 @@ mod test {
         let rev_info = RevokedInfo::new(rev_t, Some(CrlReason::OcspRevokeUnspecified)).await;
         let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
         let two = OneResp {
-            one_resp: certid2,
+            cid: certid2,
             cert_status: revoke,
             this_update: gt,
             next_update: None,
@@ -805,7 +805,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid.clone(),
+            cid: certid.clone(),
             cert_status: good,
             this_update: gt.clone(),
             next_update: None,
@@ -818,7 +818,7 @@ mod test {
         let rev_info = RevokedInfo::new(rev_t, Some(CrlReason::OcspRevokeUnspecified)).await;
         let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
         let two = OneResp {
-            one_resp: certid2,
+            cid: certid2,
             cert_status: revoke,
             this_update: gt,
             next_update: None,
@@ -888,7 +888,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 12, 3, 26, 43).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid.clone(),
+            cid: certid.clone(),
             cert_status: good,
             this_update: gt.clone(),
             next_update: None,
@@ -901,7 +901,7 @@ mod test {
         let rev_info = RevokedInfo::new(rev_t, Some(CrlReason::OcspRevokeUnspecified)).await;
         let revoke = CertStatus::new(CertStatusCode::Revoked, Some(rev_info)).await;
         let two = OneResp {
-            one_resp: certid2,
+            cid: certid2,
             cert_status: revoke,
             this_update: gt,
             next_update: None,
@@ -950,7 +950,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 13, 3, 9, 25).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid,
+            cid: certid,
             cert_status: good,
             this_update: gt.clone(),
             next_update: Some(gt),
@@ -991,7 +991,7 @@ mod test {
         let gt = GeneralizedTime::new(2021, 1, 13, 3, 9, 25).await.unwrap();
 
         let one = OneResp {
-            one_resp: certid,
+            cid: certid,
             cert_status: good,
             this_update: gt.clone(),
             next_update: None,
