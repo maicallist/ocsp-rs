@@ -262,12 +262,22 @@ impl OcspRequest {
         }
     }
 
-    /// extract cert certid
+    /// extract certid
     pub async fn extract_certid(&self) -> Vec<&CertId> {
         let mut certid = vec![];
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
             certid.push(&r.certid);
+        });
+        certid
+    }
+
+    /// extract owned certid
+    pub async fn extract_certid_owned(self) -> Vec<CertId> {
+        let mut certid = vec![];
+        let list = self.tbs_request.request_list;
+        list.iter().for_each(|r| {
+            certid.push(r.certid.clone());
         });
         certid
     }
@@ -304,6 +314,34 @@ mod test {
         let reg = Registry::default().with(env_layer).with(fmt_layer);
         tracing_log::LogTracer::init().unwrap();
         tracing::subscriber::set_global_default(reg).unwrap();
+    }
+
+    // extracting cert cids from request
+    #[tokio::test]
+    async fn extract_cert_certid_owned() {
+        let ocsp_req_hex = "3081B53081B230818A30433041300906\
+    052B0E03021A05000414694D18A9BE42\
+    F7802614D4844F23601478B788200414\
+    397BE002A2F571FD80DCEB52A17A7F8B\
+    632BE755020841300983331F9D4F3043\
+    3041300906052B0E03021A0500041469\
+    4D18A9BE42F7802614D4844F23601478\
+    B788200414397BE002A2F571FD80DCEB\
+    52A17A7F8B632BE75502086378E51D44\
+    8FF46DA2233021301F06092B06010505\
+    07300102041204105E7A74E51C861A3F\
+    79454658BB090244";
+        let req_v8 = hex::decode(ocsp_req_hex).unwrap();
+        let req = OcspRequest::parse(&req_v8[..]).await.unwrap();
+        let clist = req.extract_certid_owned().await;
+        let mut v = vec![];
+        clist.iter().for_each(|c| v.push(c.serial_num.clone()));
+
+        let c1 = vec![0x41u8, 0x30, 0x09, 0x83, 0x33, 0x1F, 0x9D, 0x4F];
+        let c2 = vec![0x63, 0x78, 0xE5, 0x1D, 0x44, 0x8F, 0xF4, 0x6D];
+        let c = vec![c1, c2];
+
+        assert_eq!(c, v);
     }
 
     // test extract cert serial numbers from request
