@@ -25,12 +25,10 @@ impl OcspExtI {
     /// raw is a sequence of multiple extensions  
     /// remove explicit and implicit tags first
     pub async fn parse(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
-        debug!("Start decoding Extensions");
-        trace!("Parsing EXTENSION list {:02X?}", raw);
+        trace!("Parsing EXTENSION list");
 
         let mut r: Vec<OcspExtI> = Vec::new();
 
-        debug!("Converting EXT data into asn1 sequence");
         let list = raw.try_into()?;
         for i in 0..list.len() {
             let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
@@ -38,14 +36,14 @@ impl OcspExtI {
             r.push(OcspExtI { id, ext });
         }
 
-        debug!("Good extensions decoded");
+        trace!("Extensions decoded");
         Ok(r)
     }
 
     /// encode a list of extensions, wrapped in explicit tag
     pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
         debug!(
-            "Start encoding {} ext, with tag {:02x?}",
+            "Encoding {} ext, with tag {:02x?}",
             ext_list.len(),
             exp_tag
         );
@@ -74,7 +72,7 @@ impl OcspExtI {
         exp.extend(len);
         exp.extend(r);
 
-        debug!("Good ext list encoded");
+        debug!("Ext list encoded");
         Ok(exp)
     }
 }
@@ -102,19 +100,15 @@ pub enum OcspExt {
 impl OcspExt {
     /// pass in each sequence of extension, return OcspExt
     async fn parse_oneext<'d>(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
-        debug!("Start decoding one extension");
-        trace!("Parsing SINGLE EXTENSION {:02X?}", oneext);
-        debug!("Converting EXT data into asn1 sequence");
+        trace!("Parsing SINGLE EXTENSION {}", hex::encode(oneext));
         let oneext = oneext.try_into()?;
 
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
-        debug!("Checking OID tag");
         if oid.tag() != ASN1_OID {
             return Err(OcspError::Asn1MismatchError("OID"));
         }
         let val = oid.value();
         // translate oid
-        debug!("Resolving OID");
         let ext_id = match b2i_oid(val).await {
             None => return Err(OcspError::Asn1OidUnknown),
             Some(v) => v,
@@ -176,7 +170,7 @@ impl OcspExt {
             _ => return Err(OcspError::OcspExtUnknown),
         };
 
-        debug!("Good single extension decoded");
+        debug!("One extension decoded");
         Ok((ext_id, r))
     }
 
@@ -185,7 +179,7 @@ impl OcspExt {
         let mut v = vec![ASN1_SEQUENCE];
         match &self {
             OcspExt::Nonce { nonce } => {
-                debug!("Start encoding Nonce extension");
+                debug!("Encoding Nonce extension");
                 trace!("Nonce {:?}", self);
                 // == OCSP_EXT_HEX_NONCE
                 let mut id = vec![
@@ -203,7 +197,7 @@ impl OcspExt {
             }
         };
 
-        debug!("Good extension encoded");
+        debug!("Extension encoded");
         Ok(v)
     }
 }
