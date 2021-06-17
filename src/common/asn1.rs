@@ -207,12 +207,9 @@ pub struct Oid {
 impl Oid {
     /// get oid from raw sequence
     pub async fn parse(oid: &[u8]) -> Result<Self, OcspError> {
-        debug!("Start decoding OID");
-        trace!("Parsing OID {:02X?}", oid);
-        debug!("Converting OID data into asn1 sequence");
+        trace!("Parsing OID {}", hex::encode(oid));
         let s = oid.try_into()?;
 
-        debug!("Checking OID sequence length");
         if s.len() != 2 {
             error!(
                 "Provided OID contains {} items in sequence, expecting 2",
@@ -223,7 +220,6 @@ impl Oid {
 
         let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
-        debug!("Checking OID tags");
         if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
             error!(
                 "Provided OID sequence tags are {} and {}, expecting 0x06 and 0x05",
@@ -238,7 +234,7 @@ impl Oid {
             Some(u) => u,
         };
 
-        debug!("Good OID decoded");
+        trace!("OID decoded");
         Ok(Oid {
             //id: id.value().to_vec(),
             index: u,
@@ -255,8 +251,7 @@ impl Oid {
 
     /// encode to ASN.1 DER with tailing NULL
     pub async fn to_der_with_null(&self) -> Result<Bytes, OcspError> {
-        debug!("Start encoding oid");
-        trace!("Oid: {:?}", self);
+        trace!("Encoding oid index {}", self.index);
         let val_oid = i2b_oid(self).await?;
         let len_oid = asn1_encode_length(val_oid.len()).await?;
         let mut tlv_oid = vec![ASN1_OID];
@@ -268,7 +263,7 @@ impl Oid {
         tlv_seq_oid.extend(len_seq);
         tlv_seq_oid.extend(tlv_oid);
 
-        debug!("Good OID encoded");
+        trace!("OID encoded");
         Ok(tlv_seq_oid)
     }
 
@@ -276,8 +271,7 @@ impl Oid {
     /// - without sequence header
     /// - without tailing NULL
     pub async fn to_der_raw(&self) -> Result<Bytes, OcspError> {
-        debug!("Start encoding oid without sequence");
-        trace!("Oid: {:?}", self);
+        trace!("Encoding oid without sequence index {}", self.index);
         let val_oid = i2b_oid(self).await?;
         let len_oid = asn1_encode_length(val_oid.len()).await?;
         let mut tlv_oid = vec![ASN1_OID];
@@ -289,7 +283,7 @@ impl Oid {
         //tlv_seq_oid.extend(len_seq);
         //tlv_seq_oid.extend(tlv_oid);
 
-        debug!("Good raw OID encoded");
+        trace!("raw OID encoded");
         Ok(tlv_oid)
     }
 }
@@ -310,12 +304,9 @@ pub struct CertId {
 impl CertId {
     /// get certid from raw bytes
     pub async fn parse(certid: &[u8]) -> Result<Self, OcspError> {
-        debug!("Start decoding CertID");
-        trace!("Parsing CERTID {:02X?}", certid);
-        debug!("Converting CERTID data into asn1 sequence");
+        trace!("Parsing CERTID {}", hex::encode(certid));
         let s = certid.try_into()?;
 
-        debug!("Checking CERTID sequence length");
         if s.len() != 4 {
             error!(
                 "Provided CERTID contains {} items in sequence, expecting 4",
@@ -329,7 +320,6 @@ impl CertId {
         let key_hash = s.get(2).map_err(OcspError::Asn1DecodingError)?;
         let sn = s.get(3).map_err(OcspError::Asn1DecodingError)?;
 
-        debug!("Checking CERTID tags");
         if oid.tag() != ASN1_SEQUENCE
             || name_hash.tag() != ASN1_OCTET
             || key_hash.tag() != ASN1_OCTET
@@ -350,7 +340,7 @@ impl CertId {
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
 
-        debug!("Good CERTID decoded");
+        trace!("CERTID decoded");
         Ok(CertId {
             hash_algo: oid,
             issuer_name_hash: name_hash,
@@ -371,8 +361,8 @@ impl CertId {
 
     /// encode CertID to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes, OcspError> {
-        debug!("Start encoding Cert Id");
-        trace!("CertId: {:?}", self);
+        debug!("Encoding CertId with sn {}", hex::encode(&self.serial_num));
+
         let mut oid = self.hash_algo.to_der_with_null().await?;
         let name = asn1_encode_octet(&self.issuer_name_hash).await?;
         let key = asn1_encode_octet(&self.issuer_key_hash).await?;
@@ -385,7 +375,7 @@ impl CertId {
         tlv.extend(len);
         tlv.extend(oid);
 
-        debug!("Good CERTID encoded");
+        trace!("CERTID encoded");
         Ok(tlv)
     }
 }

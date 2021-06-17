@@ -63,22 +63,20 @@ impl RevokedInfo {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding RevokeInfo");
-        trace!("RevokeInfo to der: {:?}", self);
+        trace!("Encoding RevokeInfo");
+        trace!("RevokeInfo reason {:?}", self.revocation_reason);
         let mut time = self.revocation_time.to_der_utc().await?;
         let mut reason = vec![];
         if let Some(re) = self.revocation_reason {
-            debug!("revoke with reason {}", re as u8);
             reason = vec![ASN1_EXPLICIT_0, 0x03, ASN1_ENUMERATED, 0x01, re as u8];
         }
         time.extend(reason);
-        debug!("RevokeInfo value length {}", time.len());
         let len = asn1_encode_length(time.len()).await?;
         let mut tag = vec![ASN1_EXPLICIT_1];
         tag.extend(len);
         tag.extend(time);
 
-        debug!("Good REVOKEINFO encoded");
+        trace!("REVOKEINFO encoded");
         Ok(tag)
     }
 }
@@ -127,13 +125,11 @@ impl CertStatus {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding cert status");
-        trace!("Cert status: {:?}", self);
+        debug!("Encoding cert status {:?}", self);
         match self.code {
             CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, 0x00]),
             CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, 0x00]),
             CertStatusCode::Revoked => {
-                debug!("Encoding revoke status");
                 let v;
                 match &self.revoke_info {
                     Some(r) => {
@@ -166,8 +162,7 @@ pub struct OneResp {
 impl OneResp {
     /// encode list of resp to ASN.1 DER
     pub async fn list_to_der(list: &[OneResp]) -> Result<Bytes> {
-        debug!("Start encoding {} responses", list.len());
-        trace!("Resp list: {:?}", list);
+        debug!("Encoding {} OneResp", list.len());
 
         let mut v = vec![];
         for i in list {
@@ -179,14 +174,14 @@ impl OneResp {
         tlv.extend(len);
         tlv.extend(v);
 
-        debug!("Good RESPONSES list encoded");
+        trace!("Good RESPONSES list encoded");
         Ok(tlv)
     }
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding one response");
-        trace!("Response: {:?}", self);
+        debug!("Encoding OneResp sn {} with status {:?}", hex::encode(&self.cid.serial_num), self.cert_status);
+        trace!("OneResp: {:?}", self);
         let mut certid = self.cid.to_der().await?;
         let status = self.cert_status.to_der().await?;
         let this = self.this_update.to_der_utc().await?;
@@ -195,7 +190,7 @@ impl OneResp {
         certid.extend(this);
 
         if let Some(t) = self.next_update {
-            debug!("Found nextUpdate");
+            trace!("Found OneResp nextUpdate");
             let next = t.to_der_utc().await?;
             let len = asn1_encode_length(next.len()).await?;
             let mut tagging = vec![ASN1_EXPLICIT_0];
@@ -205,7 +200,7 @@ impl OneResp {
         }
 
         if let Some(e) = self.one_resp_ext.clone() {
-            debug!("Found extensions");
+            trace!("Found OneResp extensions");
             // list_to_der comes with explicit tagging
             let list = OcspExtI::list_to_der(&e, ASN1_EXPLICIT_1).await?;
             certid.extend(list);
@@ -216,7 +211,7 @@ impl OneResp {
         r.extend(len);
         r.extend(certid);
 
-        debug!("Good RESP encoded");
+        trace!("OneResp encoded");
         Ok(r)
     }
 }
@@ -258,7 +253,7 @@ impl ResponderId {
     //      31 21 30 1f 06 03 55 04 0a 0c 18 49 6e 74 65 72 6e 65 74 20 57 69 64 67 69 74 73 20 50 74 79 20 4c 74 64
     //      31 0d 30 0b 06 03 55 04 03 0c 04 4f 43 53 50
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding Responder Id by {:?}", self.id_by);
+        trace!("Encoding Responder Id by {:?}", self.id_by);
         trace!("Responder Id: {:?}", self);
 
         let mut v = vec![];
@@ -279,7 +274,7 @@ impl ResponderId {
             }
         }
 
-        debug!("Good RESPONDER ID encoded");
+        trace!("RESPONDER ID encoded");
         Ok(v)
     }
 }
@@ -319,7 +314,7 @@ impl ResponseData {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding Response Data");
+        debug!("Encoding Response Data");
         trace!("Response Data: {:?}", self);
 
         let mut v = vec![];
@@ -327,7 +322,7 @@ impl ResponseData {
         v.extend(self.produced_at.to_der_utc().await?);
         v.extend(OneResp::list_to_der(&self.responses).await?);
         if let Some(l) = &self.resp_ext {
-            debug!("Found extensions");
+            trace!("Found Resp extensions");
             v.extend(OcspExtI::list_to_der(&l, ASN1_EXPLICIT_1).await?);
         }
 
@@ -336,7 +331,7 @@ impl ResponseData {
         tlv.extend(len);
         tlv.extend(v);
 
-        debug!("Good RESPONSE DATA encoded");
+        trace!("RESPONSE DATA encoded");
         Ok(tlv)
     }
 }
@@ -370,7 +365,7 @@ impl BasicResponse {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding Basic Response");
+        debug!("Encoding Basic Response");
         trace!("Basic Response: {:?}", self);
 
         let mut v = vec![];
@@ -390,7 +385,7 @@ impl BasicResponse {
         tlv.extend(len);
         tlv.extend(v);
 
-        debug!("Good BASIC RESPONSE encoded");
+        trace!("BASIC RESPONSE encoded");
         Ok(tlv)
     }
 }
@@ -453,7 +448,7 @@ impl ResponseBytes {
         tagging.extend(len);
         tagging.extend(tlv);
 
-        debug!("Good RESPONSE BYTES encoded");
+        trace!("RESPONSE BYTES encoded");
         Ok(tagging)
     }
 }
@@ -511,7 +506,7 @@ impl OcspResponse {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding Ocsp Response");
+        debug!("Encoding Ocsp Response");
         trace!("Ocsp Response: {:?}", self);
 
         let mut v = vec![ASN1_ENUMERATED, 0x01];
@@ -526,7 +521,7 @@ impl OcspResponse {
         tlv.extend(len);
         tlv.extend(v);
 
-        debug!("Good OCSP RESPONSE encoded");
+        trace!("OCSP RESPONSE encoded");
         Ok(tlv)
     }
 }
