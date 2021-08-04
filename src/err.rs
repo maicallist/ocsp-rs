@@ -12,7 +12,7 @@ pub enum OcspError {
     Asn1DecodingError(#[from] asn1_der::Asn1DerError),
 
     /// cannot find matching sequence  
-    /// eg. OID sequence is not 0x06, 0x05
+    /// eg. oid sequence is not 0x06, 0x05
     #[error("Unable to extract desired sequence of {0}")]
     Asn1MismatchError(&'static str),
 
@@ -22,11 +22,11 @@ pub enum OcspError {
     Asn1Utf8Error(#[from] std::str::Utf8Error),
 
     /// sequence length does not match intended data  
-    /// eg. OID length is not 2, 0x06, 0x05
+    /// eg. oid length is not 2, 0x06, 0x05
     #[error("Unable to deserialize {0} due to incorrect sequence length")]
     Asn1LengthError(&'static str),
 
-    /// Cannot find OID in predefined list
+    /// Cannot find oid in predefined list
     #[error("Unable to locate OID info")]
     Asn1OidUnknown,
 
@@ -67,11 +67,3 @@ pub enum OcspError {
     #[error("Revoke info not found")]
     GenRevokeInfoNotFound,
 }
-
-// display error location
-//#[macro_export]
-//macro_rules! err_at {
-//    () => {
-//        concat!("at ", file!(), " line ", line!(), " column ", column!())
-//    };
-//}

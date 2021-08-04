@@ -1,7 +1,7 @@
 //! Common ocsp components
 
 use asn1_der::DerObject;
-use tracing::{debug, error, trace};
+use tracing::{error, trace};
 
 use crate::common::asn1::{
     TryIntoSequence, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1, ASN1_EXPLICIT_2, ASN1_OID,
@@ -25,7 +25,7 @@ impl OcspExtI {
     /// raw is a sequence of multiple extensions  
     /// remove explicit and implicit tags first
     pub async fn parse(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
-        trace!("Parsing EXTENSION list");
+        trace!("Parsing extension list");
 
         let mut r: Vec<OcspExtI> = Vec::new();
 
@@ -36,13 +36,13 @@ impl OcspExtI {
             r.push(OcspExtI { id, ext });
         }
 
-        trace!("Extensions decoded");
+        trace!("{} extensions successfully decoded", r.len());
         Ok(r)
     }
 
     /// encode a list of extensions, wrapped in explicit tag
     pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
-        debug!("Encoding {} ext, with tag {:02x?}", ext_list.len(), exp_tag);
+        trace!("Encoding {} ext, with tag {:02x?}", ext_list.len(), exp_tag);
         trace!("Ext list: {:?}", ext_list);
 
         // in req and resp, extensions are labelled either 0, 1, 2
@@ -68,7 +68,7 @@ impl OcspExtI {
         exp.extend(len);
         exp.extend(r);
 
-        debug!("Ext list encoded");
+        trace!("Ext list successfully encoded");
         Ok(exp)
     }
 }
@@ -96,7 +96,7 @@ pub enum OcspExt {
 impl OcspExt {
     /// pass in each sequence of extension, return OcspExt
     async fn parse_oneext<'d>(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
-        trace!("Parsing SINGLE EXTENSION {}", hex::encode(oneext));
+        trace!("Parsing single extension {}", hex::encode(oneext));
         let oneext = oneext.try_into()?;
 
         let oid = oneext.get(0).map_err(OcspError::Asn1DecodingError)?;
@@ -112,7 +112,7 @@ impl OcspExt {
 
         let r = match ext_id {
             OCSP_EXT_NONCE_ID => {
-                debug!("Found NONCE extension");
+                trace!("Found nonce extension");
                 OcspExt::Nonce {
                     nonce: oneext
                         .get(1)
@@ -122,7 +122,7 @@ impl OcspExt {
                 }
             }
             OCSP_EXT_CRLREF_ID => {
-                debug!("Found CRLREF extension");
+                trace!("Found crlref extension");
                 let mut url = None;
                 let mut num = None;
                 let mut time = None;
@@ -166,7 +166,7 @@ impl OcspExt {
             _ => return Err(OcspError::OcspExtUnknown),
         };
 
-        debug!("One extension decoded");
+        trace!("One extension successfully decoded");
         Ok((ext_id, r))
     }
 
@@ -175,7 +175,7 @@ impl OcspExt {
         let mut v = vec![ASN1_SEQUENCE];
         match &self {
             OcspExt::Nonce { nonce } => {
-                debug!("Encoding Nonce extension");
+                trace!("Encoding nonce extension");
                 trace!("Nonce {:?}", self);
                 // == OCSP_EXT_HEX_NONCE
                 let mut id = vec![
@@ -193,7 +193,7 @@ impl OcspExt {
             }
         };
 
-        debug!("Extension encoded");
+        trace!("Extension successfully encoded");
         Ok(v)
     }
 }

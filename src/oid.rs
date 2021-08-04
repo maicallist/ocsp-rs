@@ -2,78 +2,49 @@
 
 use lazy_static::lazy_static;
 use std::collections::HashMap;
-use tracing::{debug, error, trace, warn};
+use tracing::{debug, error};
 
 use crate::common::asn1::Bytes;
 use crate::{common::asn1::Oid, err::OcspError};
 
-// search oid in binary
-// see [doc](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-object-identifier?redirectedfrom=MSDN)
-//pub async fn b2i_oid(oid: &[u8]) -> Option<ConstOid> {
-//    match OID_MAP.get(oid) {
-//        None => None,
-//        Some(&index) => Some(ConstOid {
-//            id: index,
-//            num: OCSP_EXT_NUM_LIST[index],
-//            name: OCSP_EXT_NAME_LIST[index],
-//            bin: OCSP_EXT_HEX_LIST[index].clone(),
-//        }),
-//    }
-//}
-
+/// oid bytes to internal id
 pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
-    debug!("OID bytes to internal");
-    trace!("OID to internal from bytes: {:02X?}", oid);
+    debug!("Oid bytes {} to internal", hex::encode(oid));
     match OID_MAP.get(oid) {
         None => {
-            warn!("No OID found");
+            error!("No matching oid found");
             None
         }
         Some(u) => Some(u.to_owned()),
     }
 }
 
-// OID dot notation to internal
+/// oid dot notation to internal id
 pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
-    debug!("OID dot name to internal");
-    trace!("OID to internal from dot notation: {:?}", oid_dot);
+    debug!("Oid dot notation {} to internal", hex::encode(oid_dot));
     match OCSP_OID_DOT_LIST
         .iter()
         .enumerate()
         .find(|(_, dot_name)| **dot_name == oid_dot)
     {
         None => {
-            warn!("No OID found");
+            error!("No matching oid found");
             None
         }
         Some((i, _)) => Some(Oid { index: i }),
     }
 }
 
-/// OID internal to byte array
+/// oid internal to bytes
 pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
-    debug!("OID internal to bytes");
-    trace!("OID to byte array from {:?}", oid);
+    debug!("Oid {:?} to bytes", oid);
     let id = oid.index;
     if id > OID_MAX_ID {
-        error!("No OID found");
+        error!("No matching oid found");
         return Err(OcspError::Asn1OidUnknown);
     }
     Ok(&OCSP_OID_HEX_LIST[id][..])
 }
-
-// OID info
-//#[derive(Debug)]
-//pub struct ConstOid {
-//    /// internal id for OID
-//    pub(crate) id: usize,
-//    /// OID in number format, eg. 1.3.6.1.3.5
-//    pub num: &'static str,
-//    /// OID in text format, eg. pkix-ocsp 1
-//    pub name: &'static str,
-//    /// OID in binary format
-//    pub bin: Bytes,
-//}
 
 // ocsp nonce extension internal id
 pub(crate) const OCSP_EXT_NONCE_ID: usize = 0;

@@ -1,6 +1,5 @@
 //! OCSP response  
-//! for binary details, see [crate::doc::resp]
-use tracing::{debug, error, trace, warn};
+use tracing::{error, trace, warn};
 
 use crate::common::asn1::Bytes;
 use crate::common::{
@@ -43,7 +42,7 @@ pub enum CrlReason {
     OcspRevokeAaCompromise = 10u8,
 }
 
-/// see RFC 6960
+/// RFC 6960 Revokeinfo
 #[derive(Debug, Clone)]
 pub struct RevokedInfo {
     /// revocation time
@@ -63,8 +62,10 @@ impl RevokedInfo {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        trace!("Encoding RevokeInfo");
-        trace!("RevokeInfo reason {:?}", self.revocation_reason);
+        trace!(
+            "Encoding revokeinfo with reason {:?}",
+            self.revocation_reason
+        );
         let mut time = self.revocation_time.to_der_utc().await?;
         let mut reason = vec![];
         if let Some(re) = self.revocation_reason {
@@ -76,12 +77,13 @@ impl RevokedInfo {
         tag.extend(len);
         tag.extend(time);
 
-        trace!("REVOKEINFO encoded");
+        trace!("Revokeinfo successfully encoded");
+        trace!("Revokeinfo {}", hex::encode(&tag));
         Ok(tag)
     }
 }
 
-/// certificate status enum, value is in ASN.1
+/// Certificate status enum, value is defined in RFC 6960
 #[repr(u8)]
 #[derive(Debug, Clone)]
 pub enum CertStatusCode {
@@ -125,7 +127,7 @@ impl CertStatus {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding cert status {:?}", self);
+        trace!("Encoding cert status {:?}", self);
         match self.code {
             CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, 0x00]),
             CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, 0x00]),
@@ -162,7 +164,7 @@ pub struct OneResp {
 impl OneResp {
     /// encode list of resp to ASN.1 DER
     pub async fn list_to_der(list: &[OneResp]) -> Result<Bytes> {
-        debug!("Encoding {} OneResp", list.len());
+        trace!("Encoding {} OneResp", list.len());
 
         let mut v = vec![];
         for i in list {
@@ -174,13 +176,13 @@ impl OneResp {
         tlv.extend(len);
         tlv.extend(v);
 
-        trace!("Good RESPONSES list encoded");
+        trace!("OneResp list successfully encoded");
         Ok(tlv)
     }
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!(
+        trace!(
             "Encoding OneResp sn {} with status {:?}",
             hex::encode(&self.cid.serial_num),
             self.cert_status
@@ -204,7 +206,7 @@ impl OneResp {
         }
 
         if let Some(e) = self.one_resp_ext.clone() {
-            trace!("Found OneResp extensions");
+            trace!("Found {} OneResp extensions", e.len());
             // list_to_der comes with explicit tagging
             let list = OcspExtI::list_to_der(&e, ASN1_EXPLICIT_1).await?;
             certid.extend(list);
@@ -215,12 +217,13 @@ impl OneResp {
         r.extend(len);
         r.extend(certid);
 
-        trace!("OneResp encoded");
+        trace!("OneResp successfully encoded");
+        trace!("OneResp {}", hex::encode(&r));
         Ok(r)
     }
 }
 
-/// responder type enum
+/// RFC 6960 defined responder types
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 pub enum ResponderType {
@@ -230,7 +233,7 @@ pub enum ResponderType {
     BY_KEY_HASH = 0x01,
 }
 
-/// responder id
+/// Munzo responder id
 #[derive(Debug)]
 pub struct ResponderId {
     /// id by name or key hash
@@ -278,12 +281,13 @@ impl ResponderId {
             }
         }
 
-        trace!("RESPONDER ID encoded");
+        trace!("Responder id successfully encoded");
+        trace!("Responder id {}", hex::encode(&v));
         Ok(v)
     }
 }
 
-/// response data
+/// RFC 6960 Response Data
 #[derive(Debug)]
 pub struct ResponseData {
     // REVIEW:
@@ -318,15 +322,13 @@ impl ResponseData {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding Response Data");
-        trace!("Response Data: {:?}", self);
+        trace!("Encoding response data: {:?}", self);
 
         let mut v = vec![];
         v.extend(self.responder_id.to_der().await?);
         v.extend(self.produced_at.to_der_utc().await?);
         v.extend(OneResp::list_to_der(&self.responses).await?);
         if let Some(l) = &self.resp_ext {
-            trace!("Found Resp extensions");
             v.extend(OcspExtI::list_to_der(&l, ASN1_EXPLICIT_1).await?);
         }
 
@@ -335,12 +337,13 @@ impl ResponseData {
         tlv.extend(len);
         tlv.extend(v);
 
-        trace!("RESPONSE DATA encoded");
+        trace!("Response data successfully encoded");
+        trace!("Response data {}", hex::encode(&tlv));
         Ok(tlv)
     }
 }
 
-/// basic response
+/// RFC 6960 Basic Response
 #[derive(Debug)]
 pub struct BasicResponse {
     /// response data
@@ -369,8 +372,7 @@ impl BasicResponse {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding Basic Response");
-        trace!("Basic Response: {:?}", self);
+        trace!("Encoding basic response: {:?}", self);
 
         let mut v = vec![];
 
@@ -389,12 +391,13 @@ impl BasicResponse {
         tlv.extend(len);
         tlv.extend(v);
 
-        trace!("BASIC RESPONSE encoded");
+        trace!("Basic response successfully encoded");
+        trace!("Basic response {}", hex::encode(&tlv));
         Ok(tlv)
     }
 }
 
-/// basic response  
+/// RFC 6960 Response Bytes
 /// The value for responseBytes consists of an OBJECT IDENTIFIER and a  
 /// response syntax identified by that OID encoded as an OCTET STRING  
 /// only basic response is implemented
@@ -426,8 +429,7 @@ impl ResponseBytes {
     /// - with explicit 0 tagging  
     /// - with octet header for basic response
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Start encoding Response Bytes");
-        trace!("Response Bytes {:?}", self);
+        trace!("Encoding response bytes {:?}", self);
 
         let mut v = vec![];
         v.extend(self.response_type.to_der_raw().await?);
@@ -452,7 +454,8 @@ impl ResponseBytes {
         tagging.extend(len);
         tagging.extend(tlv);
 
-        trace!("RESPONSE BYTES encoded");
+        trace!("Response bytes successfully encoded");
+        trace!("Response bytes {}", hex::encode(&tagging));
         Ok(tagging)
     }
 }
@@ -475,7 +478,7 @@ pub enum OcspRespStatus {
     Unauthorized = 6u8,
 }
 
-/// ocsp response
+/// RFC6960 Ocsp Response
 #[derive(Debug)]
 pub struct OcspResponse {
     /// response status
@@ -510,7 +513,6 @@ impl OcspResponse {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding Ocsp Response");
         trace!("Ocsp Response: {:?}", self);
 
         let mut v = vec![ASN1_ENUMERATED, 0x01];
@@ -525,7 +527,8 @@ impl OcspResponse {
         tlv.extend(len);
         tlv.extend(v);
 
-        trace!("OCSP RESPONSE encoded");
+        trace!("Ocsp response successfully encoded");
+        trace!("Ocsp response {}", hex::encode(&tlv));
         Ok(tlv)
     }
 }

@@ -18,7 +18,7 @@ use crate::err::{OcspError, Result};
 /// RFC 6960 Request
 #[derive(Debug)]
 pub struct OneReq {
-    /// certid of a single request
+    /// cid of a single request
     pub certid: CertId,
     /// extension of a single request  
     /// REVIEW: untested
@@ -28,21 +28,21 @@ pub struct OneReq {
 impl OneReq {
     /// get single request
     pub async fn parse(onereq: &[u8]) -> Result<Self> {
-        trace!("Parsing ONEREQ {}", hex::encode(onereq));
+        trace!("OneReq: {}", hex::encode(onereq));
         let s = onereq.try_into()?;
 
-        let certid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        let certid = CertId::parse(certid.raw()).await?;
-        debug!("OneReq cert sn {}", hex::encode(&certid.serial_num));
-        debug!(
+        let cid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
+        let cid = CertId::parse(cid.raw()).await?;
+        trace!("OneReq cert sn {}", hex::encode(&cid.serial_num));
+        trace!(
             "OneReq issuer key hash {}",
-            hex::encode(&certid.issuer_key_hash)
+            hex::encode(&cid.issuer_key_hash)
         );
 
         let mut ext = None;
         match s.len() {
             1 => {
-                trace!("No extension for OneReq");
+                trace!("No extension in OneReq");
             }
             2 => {
                 let raw_ext = s.get(1).map_err(OcspError::Asn1DecodingError)?.raw();
@@ -57,9 +57,9 @@ impl OneReq {
             }
         }
 
-        trace!("OneReq decoded");
+        trace!("OneReq with cid {:?} successfully decoded", cid);
         Ok(OneReq {
-            certid,
+            certid: cid,
             one_req_ext: ext,
         })
     }
@@ -85,7 +85,7 @@ pub struct TBSRequest {
 impl TBSRequest {
     /// parse a tbs request
     pub async fn parse(tbs: &[u8]) -> Result<Self> {
-        trace!("Parsing TBSREQUEST {}", hex::encode(tbs));
+        trace!("Parsing tbsrequest {}", hex::encode(tbs));
         let mut name = None;
         let mut ext = None;
         let mut req: Vec<OneReq> = Vec::new();
@@ -100,7 +100,7 @@ impl TBSRequest {
                     unimplemented!()
                 }
                 ASN1_EXPLICIT_1 => {
-                    debug!("Found requestor name");
+                    trace!("Found requestor name");
                     let val = tbs_item.value();
                     let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
                     if val.tag() != ASN1_IA5STRING {
@@ -109,13 +109,14 @@ impl TBSRequest {
                     name = Some(val.value().to_vec());
                 }
                 ASN1_EXPLICIT_2 => {
-                    debug!("Found tbs extension");
+                    trace!("Found tbs extension");
                     let ext_list = tbs_item.value();
                     let ext_list = OcspExtI::parse(ext_list).await?;
                     ext = Some(ext_list);
                 }
                 ASN1_SEQUENCE => {
                     let req_list = tbs_item.try_into()?;
+                    trace!("Found {} OneReq", req_list.len());
                     for j in 0..req_list.len() {
                         let onereq = req_list.get(j).map_err(OcspError::Asn1DecodingError)?;
                         // onereq.raw() here always return the full sequence starting from first onereq
@@ -131,7 +132,7 @@ impl TBSRequest {
             }
         }
 
-        trace!("TBS REQUEST decoded");
+        trace!("Tbs request successfully decoded");
         Ok(TBSRequest {
             requestor_name: name,
             request_list: req,
@@ -140,12 +141,12 @@ impl TBSRequest {
     }
 }
 
-/// optional signature in ocsp request  
+/// RFC 6960 Signature
+/// Optional signature in ocsp request  
 /// The requestor MAY choose to sign the OCSP request.  
 /// In that case, the signature is computed over the tbsRequest structure.
 /// REVIEW: *untested*
-/// REVIEW:
-/// If the request is signed, the requestor SHALL specify its name in the requestorName field.
+/// REVIEW: If the request is signed, the requestor SHALL specify its name in the requestorName field.
 #[derive(Debug)]
 pub struct Signature {
     /// algo oid for signature
@@ -162,7 +163,7 @@ pub struct Signature {
 impl Signature {
     /// parsing ocsp signature from raw bytes
     pub async fn parse(sig: &[u8]) -> Result<Self> {
-        trace!("Parsing SIGNATURE: {}", hex::encode(sig));
+        trace!("Raw signature: {}", hex::encode(sig));
         let s = sig.try_into()?;
 
         let oid;
@@ -186,7 +187,7 @@ impl Signature {
             _ => return Err(OcspError::Asn1LengthError("SIGNATURE")),
         }
 
-        trace!("Request SIGNATURE decoded");
+        trace!("Ocsp request signature successfully decoded");
         Ok(Signature {
             signing_algo: oid,
             signature,
@@ -206,16 +207,17 @@ pub struct OcspRequest {
 }
 
 impl OcspRequest {
-    /// parse an ocsp request from raw bytes
+    /// parsing an ocsp request from raw bytes
     pub async fn parse(ocsp_req: &[u8]) -> Result<Self> {
-        trace!("Parsing OCSP REQUEST: {}", hex::encode(ocsp_req));
+        debug!("Parsing ocsp request");
+        trace!("Raw ocsp request: {}", hex::encode(ocsp_req));
         let s = ocsp_req.try_into()?;
 
         let req;
         let mut sig = None;
         match s.len() {
             1 => {
-                debug!("No Signature");
+                trace!("No Signature in Ocsp Request");
             }
             2 => {
                 let sig_v8 = s.get(1).map_err(OcspError::Asn1DecodingError)?;
@@ -233,7 +235,7 @@ impl OcspRequest {
         let req_v8 = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         req = TBSRequest::parse(req_v8.raw()).await?;
 
-        trace!("OCSP REQUEST decoded");
+        debug!("Ocsp request successfully decoded");
         Ok(OcspRequest {
             tbs_request: req,
             optional_signature: sig,
@@ -256,27 +258,27 @@ impl OcspRequest {
         }
     }
 
-    /// extract certid
+    /// extract cid
     pub async fn extract_certid(&self) -> Vec<&CertId> {
-        let mut certid = vec![];
+        let mut cid = vec![];
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
-            certid.push(&r.certid);
+            cid.push(&r.certid);
         });
-        certid
+        cid
     }
 
     /// extract owned certid
     pub async fn extract_certid_owned(self) -> Vec<CertId> {
-        let mut certid = vec![];
+        let mut cid = vec![];
         let list = self.tbs_request.request_list;
         list.iter().for_each(|r| {
-            certid.push(r.certid.clone());
+            cid.push(r.certid.clone());
         });
-        certid
+        cid
     }
 
-    /// extract certid map sn to certid
+    /// extract cid map sn to cid
     pub async fn extract_certid_map(&self) -> HashMap<Bytes, CertId> {
         let mut map = HashMap::new();
         let list = &self.tbs_request.request_list;

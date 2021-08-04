@@ -1,36 +1,10 @@
 //! ocsp-rs provides de/serialization for ocsp request and response in asn.1 der
 
-#![deny(
-    bad_style,
-    const_err,
-    dead_code,
-    improper_ctypes,
-    non_shorthand_field_patterns,
-    no_mangle_generic_items,
-    overflowing_literals,
-    path_statements,
-    patterns_in_fns_without_body,
-    private_in_public,
-    unconditional_recursion,
-    unused,
-    unused_allocation,
-    unused_comparisons,
-    unused_parens,
-    while_true,
-    // following are default allowed lint
-    missing_debug_implementations,
-    missing_docs,
-    trivial_casts,
-    trivial_numeric_casts,
-    unused_extern_crates,
-    unused_import_braces,
-    unused_qualifications,
-    unused_results
-)]
+#![warn(clippy::all)]
+#![warn(rust_2018_idioms)]
 
 //pub mod asn1_common;
 pub mod common;
-pub mod doc;
 pub mod err;
 pub mod oid;
 pub mod request;

@@ -6,7 +6,7 @@ use asn1_der::{
     DerObject,
 };
 use chrono::{Datelike, Timelike};
-use tracing::{debug, error, trace};
+use tracing::{error, trace};
 
 use crate::err::OcspError;
 use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
@@ -46,26 +46,26 @@ pub trait TryIntoSequence<'d> {
     /// Converting asn1_der::err
     type Error;
     /// Try converting to Sequence
-    fn try_into(&'d self) -> Result<Sequence, Self::Error>;
+    fn try_into(&'d self) -> Result<Sequence<'d>, Self::Error>;
 }
 
 impl<'d> TryIntoSequence<'d> for DerObject<'d> {
     type Error = OcspError;
-    fn try_into(&self) -> Result<Sequence, Self::Error> {
+    fn try_into(&self) -> Result<Sequence<'d>, Self::Error> {
         Sequence::decode(self.raw()).map_err(OcspError::Asn1DecodingError)
     }
 }
 
 impl<'d> TryIntoSequence<'d> for Bytes {
     type Error = OcspError;
-    fn try_into(&'d self) -> Result<Sequence, Self::Error> {
+    fn try_into(&'d self) -> Result<Sequence<'d>, Self::Error> {
         Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
     }
 }
 
 impl<'d> TryIntoSequence<'d> for &[u8] {
     type Error = OcspError;
-    fn try_into(&'d self) -> Result<Sequence, Self::Error> {
+    fn try_into(&'d self) -> Result<Sequence<'d>, Self::Error> {
         Sequence::decode(self).map_err(OcspError::Asn1DecodingError)
     }
 }
@@ -118,7 +118,7 @@ pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspErr
     Ok(tlv)
 }
 
-/// Represents a ASN.1 GeneralizedTime
+/// Represents a ASN.1 GeneralizedTime  
 /// Only support UTC
 #[derive(Debug, Copy, Clone)]
 pub struct GeneralizedTime {
@@ -162,8 +162,6 @@ impl GeneralizedTime {
     /// Create a generalized time **now** in UTC
     pub async fn now() -> Self {
         let now = chrono::offset::Utc::now();
-        // nano to millis
-        //let mi = now.nanosecond().checked_div(1_000_000).unwrap_or(0);
 
         GeneralizedTime {
             year: now.year(),
@@ -198,21 +196,19 @@ impl GeneralizedTime {
 /// REVIEW 0x05
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Oid {
-    // an oid in bytes
-    //pub id: Bytes,
     pub(crate) index: usize,
-    //null: Bytes,
 }
 
 impl Oid {
-    /// get oid from raw sequence
+    /// get oid from raw bytes
     pub async fn parse(oid: &[u8]) -> Result<Self, OcspError> {
-        trace!("Parsing OID {}", hex::encode(oid));
+        let oid_hex = hex::encode(oid);
+        trace!("Parsing oid {}", oid_hex);
         let s = oid.try_into()?;
 
         if s.len() != 2 {
             error!(
-                "Provided OID contains {} items in sequence, expecting 2",
+                "Provided oid contains {} items in sequence, expecting 2",
                 s.len()
             );
             return Err(OcspError::Asn1LengthError("OID"));
@@ -222,7 +218,7 @@ impl Oid {
         let nil = s.get(1).map_err(OcspError::Asn1DecodingError)?;
         if id.tag() != ASN1_OID || nil.tag() != ASN1_NULL {
             error!(
-                "Provided OID sequence tags are {} and {}, expecting 0x06 and 0x05",
+                "Provided oid sequence tags are {} and {}, expecting 0x06 and 0x05",
                 id.tag(),
                 nil.tag()
             );
@@ -234,11 +230,8 @@ impl Oid {
             Some(u) => u,
         };
 
-        trace!("OID decoded");
-        Ok(Oid {
-            //id: id.value().to_vec(),
-            index: u,
-        })
+        trace!("Oid {} successfully decoded to internal {}", oid_hex, u);
+        Ok(Oid { index: u })
     }
 
     /// return new oid from dot notation
@@ -263,7 +256,7 @@ impl Oid {
         tlv_seq_oid.extend(len_seq);
         tlv_seq_oid.extend(tlv_oid);
 
-        trace!("OID encoded");
+        trace!("Internal oid {} successfully encoded", self.index);
         Ok(tlv_seq_oid)
     }
 
@@ -277,18 +270,16 @@ impl Oid {
         let mut tlv_oid = vec![ASN1_OID];
         tlv_oid.extend(len_oid);
         tlv_oid.extend(val_oid);
-        //tlv_oid.extend(&ASN1_OID_PADDING);
-        //let len_seq = asn1_encode_length(tlv_oid.len()).await?;
-        //let mut tlv_seq_oid = vec![ASN1_SEQUENCE];
-        //tlv_seq_oid.extend(len_seq);
-        //tlv_seq_oid.extend(tlv_oid);
 
-        trace!("raw OID encoded");
+        trace!(
+            "Internal oid {} successfully encoded without padding",
+            self.index
+        );
         Ok(tlv_oid)
     }
 }
 
-/// RFC 6960 CertID
+/// RFC 6960 CertID or abbv cid
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CertId {
     /// hash algo oid
@@ -303,16 +294,17 @@ pub struct CertId {
 
 impl CertId {
     /// get certid from raw bytes
-    pub async fn parse(certid: &[u8]) -> Result<Self, OcspError> {
-        trace!("Parsing CERTID {}", hex::encode(certid));
-        let s = certid.try_into()?;
+    pub async fn parse(cid: &[u8]) -> Result<Self, OcspError> {
+        let cid_hex = hex::encode(cid);
+        trace!("Parsing cid {}", cid_hex);
+        let s = cid.try_into()?;
 
         if s.len() != 4 {
             error!(
-                "Provided CERTID contains {} items in sequence, expecting 4",
+                "Provided cid contains {} items in sequence, expecting 4",
                 s.len()
             );
-            return Err(OcspError::Asn1LengthError("CertID"));
+            return Err(OcspError::Asn1LengthError("CID"));
         }
 
         let oid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
@@ -326,13 +318,13 @@ impl CertId {
             || sn.tag() != ASN1_INTEGER
         {
             error!(
-                "Provided CERTID sequence tags are {}, {}, {} and {}, expecting 0x30, 0x04, 0x04, 0x02", 
+                "Provided cid sequence tags are {}, {}, {} and {}, expecting 0x30, 0x04, 0x04, 0x02", 
                 oid.tag(),
                 name_hash.tag(),
                 key_hash.tag(),
                 sn.tag()
             );
-            return Err(OcspError::Asn1MismatchError("CertId"));
+            return Err(OcspError::Asn1MismatchError("CID"));
         }
 
         let oid = Oid::parse(oid.raw()).await?;
@@ -340,7 +332,7 @@ impl CertId {
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
 
-        trace!("CERTID decoded");
+        trace!("Cid {} successfully decoded", cid_hex);
         Ok(CertId {
             hash_algo: oid,
             issuer_name_hash: name_hash,
@@ -349,7 +341,7 @@ impl CertId {
         })
     }
 
-    /// return new CertId
+    /// return new cid
     pub async fn new(oid: Oid, name_hash: &[u8], key_hash: &[u8], sn: &[u8]) -> Self {
         CertId {
             hash_algo: oid,
@@ -361,7 +353,7 @@ impl CertId {
 
     /// encode CertID to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes, OcspError> {
-        debug!("Encoding CertId with sn {}", hex::encode(&self.serial_num));
+        trace!("Encoding cid with sn {}", hex::encode(&self.serial_num));
 
         let mut oid = self.hash_algo.to_der_with_null().await?;
         let name = asn1_encode_octet(&self.issuer_name_hash).await?;
@@ -375,7 +367,7 @@ impl CertId {
         tlv.extend(len);
         tlv.extend(oid);
 
-        trace!("CERTID encoded");
+        trace!("Cid {:?} successfully encoded", self);
         Ok(tlv)
     }
 }
