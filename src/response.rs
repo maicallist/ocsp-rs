@@ -180,7 +180,11 @@ impl OneResp {
 
     /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
-        debug!("Encoding OneResp sn {} with status {:?}", hex::encode(&self.cid.serial_num), self.cert_status);
+        debug!(
+            "Encoding OneResp sn {} with status {:?}",
+            hex::encode(&self.cid.serial_num),
+            self.cert_status
+        );
         trace!("OneResp: {:?}", self);
         let mut certid = self.cid.to_der().await?;
         let status = self.cert_status.to_der().await?;

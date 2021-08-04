@@ -34,7 +34,10 @@ impl OneReq {
         let certid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
         let certid = CertId::parse(certid.raw()).await?;
         debug!("OneReq cert sn {}", hex::encode(&certid.serial_num));
-        debug!("OneReq issuer key hash {}", hex::encode(&certid.issuer_key_hash));
+        debug!(
+            "OneReq issuer key hash {}",
+            hex::encode(&certid.issuer_key_hash)
+        );
 
         let mut ext = None;
         match s.len() {

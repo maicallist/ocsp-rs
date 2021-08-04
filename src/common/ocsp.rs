@@ -11,7 +11,7 @@ use crate::{err::OcspError, oid::*};
 use super::asn1::{asn1_encode_length, asn1_encode_octet, ASN1_SEQUENCE};
 use crate::common::asn1::Bytes;
 
-/// OCSP extension with internal id 
+/// OCSP extension with internal id
 #[derive(Debug, Clone)]
 pub struct OcspExtI {
     /// internal id of extension, see const in [crate::oid]
@@ -42,11 +42,7 @@ impl OcspExtI {
 
     /// encode a list of extensions, wrapped in explicit tag
     pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
-        debug!(
-            "Encoding {} ext, with tag {:02x?}",
-            ext_list.len(),
-            exp_tag
-        );
+        debug!("Encoding {} ext, with tag {:02x?}", ext_list.len(), exp_tag);
         trace!("Ext list: {:?}", ext_list);
 
         // in req and resp, extensions are labelled either 0, 1, 2
