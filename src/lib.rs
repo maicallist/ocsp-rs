@@ -2,6 +2,7 @@
 
 #![warn(clippy::all)]
 #![warn(rust_2018_idioms)]
+#![warn(missing_docs)]
 
 //pub mod asn1_common;
 pub mod common;

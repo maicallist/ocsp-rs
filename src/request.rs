@@ -63,6 +63,7 @@ impl OneReq {
         })
     }
 
+    /// encode to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes> {
         let mut cid = self.certid.to_der().await?;
         match &self.one_req_ext {
