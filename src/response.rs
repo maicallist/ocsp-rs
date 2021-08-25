@@ -329,7 +329,7 @@ impl ResponseData {
         v.extend(self.produced_at.to_der_utc().await?);
         v.extend(OneResp::list_to_der(&self.responses).await?);
         if let Some(l) = &self.resp_ext {
-            v.extend(OcspExtI::list_to_der(&l, ASN1_EXPLICIT_1).await?);
+            v.extend(OcspExtI::list_to_der(l, ASN1_EXPLICIT_1).await?);
         }
 
         let len = asn1_encode_length(v.len()).await?;

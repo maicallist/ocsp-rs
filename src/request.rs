@@ -68,7 +68,7 @@ impl OneReq {
         let mut cid = self.certid.to_der().await?;
         match &self.one_req_ext {
             Some(r) => {
-                cid.extend(OcspExtI::list_to_der(&r, ASN1_EXPLICIT_0).await?);
+                cid.extend(OcspExtI::list_to_der(r, ASN1_EXPLICIT_0).await?);
             }
             None => {}
         }
@@ -271,7 +271,7 @@ impl OcspRequest {
     pub async fn extract_ext(&self) -> Option<&Vec<OcspExtI>> {
         match &self.tbs_request.request_ext {
             Some(v) => Some(v),
-            None => return None,
+            None => None,
         }
     }
 
