@@ -328,6 +328,19 @@ mod test {
         tracing::subscriber::set_global_default(reg).unwrap();
     }
 
+    #[tokio::test]
+    async fn onereq_to_der() {
+        let onereq_hex = "30433041300906052b0e\
+    03021a05000414694d18a9be42f78026\
+    14d4844f23601478b788200414397be0\
+    02a2f571fd80dceb52a17a7f8b632be7\
+    5502086378e51d448ff46d";
+        let onereq_v8 = hex::decode(onereq_hex).unwrap();
+        let onereq = OneReq::parse(&onereq_v8[..]).await.unwrap();
+        let v = onereq.to_der().await.unwrap();
+        assert_eq!(onereq_v8, v)
+    }
+
     // extracting cert cids from request
     #[tokio::test]
     async fn extract_cert_certid_owned() {
