@@ -2,7 +2,7 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, action ]
   pull_request:
     branches: [ master ]
 
@@ -11,7 +11,6 @@ env:
 
 jobs:
   build:
-
     runs-on: ${{matrix.os}}
     strategy:
       fail-fast: true
@@ -30,7 +29,9 @@ jobs:
       
     - name: Run tests
       run: cargo test --verbose
-      
-    - name: Codecov
-      if: ${{ success() }} && matrix.os == 'ubuntu-latest'
+  cov:
+    needs: build
+    runs-on: 'ubuntu-latest'
+    steps:
+    - name: cov
       uses: codecov/codecov-action@v2.0.3
