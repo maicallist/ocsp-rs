@@ -5,11 +5,10 @@ use std::{collections::HashMap, vec};
 use asn1_der::DerObject;
 use tracing::{debug, error, trace, warn};
 
-use crate::common::asn1::Bytes;
 use crate::common::{
     asn1::{
-        CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0, ASN1_EXPLICIT_1,
-        ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
+        asn1_encode_length, Bytes, CertId, Oid, TryIntoSequence, ASN1_BIT_STRING, ASN1_EXPLICIT_0,
+        ASN1_EXPLICIT_1, ASN1_EXPLICIT_2, ASN1_IA5STRING, ASN1_SEQUENCE,
     },
     ocsp::OcspExtI,
 };
@@ -62,6 +61,23 @@ impl OneReq {
             certid: cid,
             one_req_ext: ext,
         })
+    }
+
+    pub async fn to_der(&self) -> Result<Bytes> {
+        let mut cid = self.certid.to_der().await?;
+        match &self.one_req_ext {
+            Some(r) => {
+                cid.extend(OcspExtI::list_to_der(&r, ASN1_EXPLICIT_0).await?);
+            }
+            None => {}
+        }
+        let len = asn1_encode_length(cid.len()).await?;
+        let mut r = vec![ASN1_SEQUENCE];
+        r.extend(len);
+        r.extend(cid);
+
+        trace!("Cid successfully encoded");
+        Ok(r)
     }
 }
 
