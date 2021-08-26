@@ -32,6 +32,13 @@ jobs:
   cov:
     needs: build
     runs-on: 'ubuntu-latest'
+
     steps:
-    - name: cov
+    - name: Generate coverage file
+      run: |
+        cargo install cargo-tarpaulin --vers "^0.13"
+        cargo tarpaulin --out Xml --verbose
+    - name: Upload to Codecov
       uses: codecov/codecov-action@v2.0.3
+      with:
+        file: cobertura.xml
