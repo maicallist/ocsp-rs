@@ -29,16 +29,18 @@ jobs:
       
     - name: Run tests
       run: cargo test --verbose
-  cov:
-    needs: build
-    runs-on: 'ubuntu-latest'
-
-    steps:
+      
     - name: Generate coverage file
+      if: >
+        matrix.os == 'ubunut-latest'
       run: |
-        cargo install cargo-tarpaulin --vers "^0.13"
+        cargo install cargo-tarpaulin
         cargo tarpaulin --out Xml --verbose
+        
     - name: Upload to Codecov
+      if: >
+        matrix.os == 'ubunut-latest'
       uses: codecov/codecov-action@v2.0.3
       with:
         file: cobertura.xml
+   
