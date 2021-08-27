@@ -32,12 +32,14 @@ jobs:
       
     - name: Generate coverage file
       if: matrix.os == 'ubuntu-latest'
+          && github.ref == 'refs/heads/master'
       run: |
         cargo install cargo-tarpaulin
         cargo tarpaulin --out Xml --verbose
         
     - name: Upload to Codecov
       if: matrix.os == 'ubuntu-latest'
+          && github.ref == 'refs/heads/master'
       uses: codecov/codecov-action@v2.0.3
       with:
         file: cobertura.xml
