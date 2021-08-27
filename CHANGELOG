@@ -1,3 +1,9 @@
+ocsp (0.3.3) UNSTABLE; urgency=low
+
+  * add metadata for crate.io release
+
+ -- Chen Gao <maicallist@gmail.com>  Fri, 27 Aug 2021 14:17:11 +0800
+ 
 ocsp (0.3.2) UNRELEASED; urgency=low
 
   * rework common module logging missed in last release
