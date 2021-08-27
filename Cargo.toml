@@ -1,8 +1,17 @@
 [package]
 name = "ocsp"
-version = "0.3.2"
+description = "An OCSP encoding/decoding lib for Rust"
+version = "0.3.3"
 authors = ["chen gao<maicallist@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
+keywords = ["ocsp", "pki"]
+categories = ["cryptography"]
+exclude = [".*"]
+readme = "README.md"
+homepage = "https://github.com/maicallist/ocsp-rs"
+repository = "https://github.com/maicallist/ocsp-rs"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
