@@ -77,8 +77,25 @@ impl OneReq {
         r.extend(len);
         r.extend(cid);
 
-        trace!("Cid successfully encoded");
+        trace!("OneReq successfully encoded");
         Ok(r)
+    }
+
+    /// encode a list of onereq
+    pub async fn list_to_der(onereq_list: &[OneReq]) -> Result<Bytes> {
+        trace!("Encoding {} OneReq.", onereq_list.len());
+
+        let mut r = Vec::new();
+
+        for one in onereq_list {
+            r.extend(one.to_der().await?);
+        }
+
+        let mut v = vec![ASN1_SEQUENCE];
+        v.extend(asn1_encode_length(r.len()).await?);
+        v.extend(r);
+
+        Ok(v)
     }
 }
 
