@@ -1,4 +1,4 @@
-//! error definitions
+//! Error module
 use thiserror::Error;
 
 /// all lib functions return OcspError

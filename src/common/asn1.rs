@@ -279,7 +279,7 @@ impl Oid {
     }
 }
 
-/// RFC 6960 CertID or abbv cid
+/// RFC 6960 CertID or cid
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct CertId {
     /// hash algo oid
@@ -293,7 +293,7 @@ pub struct CertId {
 }
 
 impl CertId {
-    /// get certid from raw bytes
+    /// get cid from raw bytes
     pub async fn parse(cid: &[u8]) -> Result<Self, OcspError> {
         let cid_hex = hex::encode(cid);
         trace!("Parsing cid {}", cid_hex);
@@ -341,7 +341,7 @@ impl CertId {
         })
     }
 
-    /// return new cid
+    /// create new cid
     pub async fn new(oid: Oid, name_hash: &[u8], key_hash: &[u8], sn: &[u8]) -> Self {
         CertId {
             hash_algo: oid,
@@ -351,7 +351,7 @@ impl CertId {
         }
     }
 
-    /// encode CertID to ASN.1 DER
+    /// encode cid to ASN.1 DER
     pub async fn to_der(&self) -> Result<Bytes, OcspError> {
         trace!("Encoding cid with sn {}", hex::encode(&self.serial_num));
 
