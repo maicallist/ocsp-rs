@@ -17,12 +17,12 @@
 
 ```toml
 [dependencies]
-ocsp = "*"
+ocsp = "0.3"
 ```
 
 ### Server side
 
-- parsing incoming request
+#### 1. Parsing OCSP request
 
 ```rust
 use ocsp::request::OcspRequest;
@@ -35,7 +35,7 @@ let ocsp_request = OcspRequest::parse(&recv_request[..]).await.unwrap();
 let cid_list = ocsp_request.extract_certid_owned().await;
 ```
 
-- generating response
+#### 2. Generating OCSP response
 
 ```rust
 use ocsp::{
@@ -107,5 +107,3 @@ let resp_binary = ocsp.to_der().await.unwrap();
 ---
 
 ### Client side [WIP]
-
-- generating request
