@@ -28,7 +28,9 @@ ocsp = "0.3"
 use ocsp::request::OcspRequest;
 
 let recv_request: BytesMut = BytesMut::new();
-// reading payload
+
+// reading http payload to `recv_request`
+
 let ocsp_request = OcspRequest::parse(&recv_request[..]).await.unwrap();
 
 // get CertId from request
