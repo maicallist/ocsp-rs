@@ -94,8 +94,8 @@ let data = ResponseData::new(id, produce, list, None);
 // let oid = Oid::new_from_dot("1.2.840.113549.1.1.5").await.unwrap();
 let oid = Oid::new_from_dot(ALGO_SHA256_WITH_RSA_ENCRYPTION_DOT).unwrap();
 
-let some_singing_machine = || async { vec![ 0x00 ] };
-let sign = some_singing_machine().await; //example signature
+let some_signing_machine = || async { vec![ 0x00 ] };
+let sign = some_signing_machine().await; //example signature
 
 let basic = BasicResponse::new(data, oid, sign, None);
 // equivalent to

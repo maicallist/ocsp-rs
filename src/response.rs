@@ -588,7 +588,7 @@ mod test {
 
         let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_DOT).unwrap();
 
-        let some_singing_machine = || async {
+        let some_signing_machine = || async {
             vec![
                 0x1e, 0x02, 0x2d, 0x5b, 0xa2, 0x5a, 0xa6, 0xee, 0x97, 0xc5, 0xd9, 0x10, 0xc6, 0x1e,
                 0xbe, 0xb7, 0x3d, 0xb7, 0x5a, 0x76, 0x7d, 0xeb, 0x43, 0xaf, 0x88, 0xc2, 0xa5, 0x63,
@@ -611,7 +611,7 @@ mod test {
                 0xb8, 0x5f, 0x10, 0xa7,
             ]
         };
-        let sign = some_singing_machine().await;
+        let sign = some_signing_machine().await;
 
         let basic = BasicResponse::new(data, oid, sign, None);
         let resp_type = Oid::new_from_dot(OCSP_RESPONSE_BASIC_DOT).unwrap();
@@ -713,7 +713,7 @@ mod test {
         let data = ResponseData::new(id, produce, list, None);
 
         let oid = Oid::new_from_dot(ALGO_SHA1_WITH_RSA_ENCRYPTION_DOT).unwrap();
-        let some_singing_machine = || async {
+        let some_signing_machine = || async {
             vec![
                 0x1e, 0x02, 0x2d, 0x5b, 0xa2, 0x5a, 0xa6, 0xee, 0x97, 0xc5, 0xd9, 0x10, 0xc6, 0x1e,
                 0xbe, 0xb7, 0x3d, 0xb7, 0x5a, 0x76, 0x7d, 0xeb, 0x43, 0xaf, 0x88, 0xc2, 0xa5, 0x63,
@@ -736,7 +736,7 @@ mod test {
                 0xb8, 0x5f, 0x10, 0xa7,
             ]
         };
-        let sign = some_singing_machine().await;
+        let sign = some_signing_machine().await;
 
         let basic = BasicResponse::new(data, oid, sign, None);
         let v = basic.to_der().unwrap();
