@@ -248,7 +248,7 @@ impl Oid {
         let mut tlv_oid = vec![ASN1_OID];
         tlv_oid.extend(len_oid);
         tlv_oid.extend(val_oid);
-        tlv_oid.extend(&ASN1_OID_PADDING);
+        tlv_oid.extend(ASN1_OID_PADDING);
         let len_seq = asn1_encode_length(tlv_oid.len())?;
         let mut tlv_seq_oid = vec![ASN1_SEQUENCE];
         tlv_seq_oid.extend(len_seq);

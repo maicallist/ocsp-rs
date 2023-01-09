@@ -95,7 +95,7 @@ pub enum OcspExt {
 
 impl OcspExt {
     /// pass in each sequence of extension, return OcspExt
-    fn parse_oneext<'d>(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
+    fn parse_oneext(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
         trace!("Parsing single extension {}", hex::encode(oneext));
         let oneext = oneext.try_into()?;
 

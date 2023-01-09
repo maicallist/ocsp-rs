@@ -247,7 +247,6 @@ impl OcspRequest {
         trace!("Raw ocsp request: {}", hex::encode(ocsp_req));
         let s = ocsp_req.try_into()?;
 
-        let req;
         let mut sig = None;
         match s.len() {
             1 => {
@@ -267,7 +266,7 @@ impl OcspRequest {
             _ => {}
         }
         let req_v8 = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        req = TBSRequest::parse(req_v8.raw())?;
+        let req = TBSRequest::parse(req_v8.raw())?;
 
         debug!("Ocsp request successfully decoded");
         Ok(OcspRequest {

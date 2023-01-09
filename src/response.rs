@@ -132,14 +132,13 @@ impl CertStatus {
             CertStatusCode::Good => Ok(vec![CertStatusCode::Good as u8, 0x00]),
             CertStatusCode::Unknown => Ok(vec![CertStatusCode::Unknown as u8, 0x00]),
             CertStatusCode::Revoked => {
-                let v;
-                match &self.revoke_info {
+                let v = match &self.revoke_info {
                     Some(r) => {
                         // revoke_info to_der contains status code
-                        v = r.to_der()?
+                        r.to_der()?
                     }
                     None => return Err(OcspError::GenRevokeInfoNotFound),
-                }
+                };
                 Ok(v)
             }
         }
