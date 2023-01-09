@@ -1,7 +1,7 @@
 [package]
 name = "ocsp"
 description = "An OCSP encoding/decoding lib for Rust"
-version = "0.3.3"
+version = "0.4.0"
 authors = ["chen gao<maicallist@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"

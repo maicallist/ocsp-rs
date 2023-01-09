@@ -17,7 +17,7 @@
 
 ```toml
 [dependencies]
-ocsp = "0.3"
+ocsp = "0.4"
 ```
 
 ### Server side

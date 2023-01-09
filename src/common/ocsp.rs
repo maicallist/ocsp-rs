@@ -24,7 +24,7 @@ impl OcspExtI {
     /// parse ocsp extension  
     /// raw is a sequence of multiple extensions  
     /// remove explicit and implicit tags first
-    pub async fn parse(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
+    pub fn parse(raw: &[u8]) -> Result<Vec<Self>, OcspError> {
         trace!("Parsing extension list");
 
         let mut r: Vec<OcspExtI> = Vec::new();
@@ -32,7 +32,7 @@ impl OcspExtI {
         let list = raw.try_into()?;
         for i in 0..list.len() {
             let ext = list.get(i).map_err(OcspError::Asn1DecodingError)?;
-            let (id, ext) = OcspExt::parse_oneext(ext.raw()).await?;
+            let (id, ext) = OcspExt::parse_oneext(ext.raw())?;
             r.push(OcspExtI { id, ext });
         }
 
@@ -41,7 +41,7 @@ impl OcspExtI {
     }
 
     /// encode a list of extensions, wrapped in explicit tag
-    pub async fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
+    pub fn list_to_der(ext_list: &[OcspExtI], exp_tag: u8) -> Result<Bytes, OcspError> {
         trace!("Encoding {} ext, with tag {:02x?}", ext_list.len(), exp_tag);
         trace!("Ext list: {:?}", ext_list);
 
@@ -55,16 +55,16 @@ impl OcspExtI {
 
         let mut v = vec![];
         for e in ext_list {
-            v.extend(e.ext.to_der().await?)
+            v.extend(e.ext.to_der()?)
         }
 
-        let len = asn1_encode_length(v.len()).await?;
+        let len = asn1_encode_length(v.len())?;
         let mut r = vec![ASN1_SEQUENCE];
         r.extend(len);
         r.extend(v);
 
         let mut exp = vec![exp_tag];
-        let len = asn1_encode_length(r.len()).await?;
+        let len = asn1_encode_length(r.len())?;
         exp.extend(len);
         exp.extend(r);
 
@@ -95,7 +95,7 @@ pub enum OcspExt {
 
 impl OcspExt {
     /// pass in each sequence of extension, return OcspExt
-    async fn parse_oneext<'d>(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
+    fn parse_oneext<'d>(oneext: &[u8]) -> Result<(usize, Self), OcspError> {
         trace!("Parsing single extension {}", hex::encode(oneext));
         let oneext = oneext.try_into()?;
 
@@ -105,7 +105,7 @@ impl OcspExt {
         }
         let val = oid.value();
         // translate oid
-        let ext_id = match b2i_oid(val).await {
+        let ext_id = match b2i_oid(val) {
             None => return Err(OcspError::Asn1OidUnknown),
             Some(v) => v,
         };
@@ -171,7 +171,7 @@ impl OcspExt {
     }
 
     /// encode one extension to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Bytes, OcspError> {
+    pub fn to_der(&self) -> Result<Bytes, OcspError> {
         let mut v = vec![ASN1_SEQUENCE];
         match &self {
             OcspExt::Nonce { nonce } => {
@@ -181,9 +181,9 @@ impl OcspExt {
                 let mut id = vec![
                     0x06, 0x09, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02,
                 ];
-                let nc = asn1_encode_octet(nonce).await?;
+                let nc = asn1_encode_octet(nonce)?;
                 id.extend(nc);
-                let len = asn1_encode_length(id.len()).await?;
+                let len = asn1_encode_length(id.len())?;
                 v.extend(len);
                 v.extend(id);
             }
@@ -203,8 +203,8 @@ mod test {
     use super::*;
 
     /// test ext list to ASN.1 DER
-    #[tokio::test]
-    async fn list_nonce_to_der() {
+    #[test]
+    fn list_nonce_to_der() {
         let nonce = OcspExt::Nonce {
             nonce: vec![
                 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46, 0x58,
@@ -216,7 +216,7 @@ mod test {
             ext: nonce,
         };
         let list = [nonce];
-        let v = OcspExtI::list_to_der(&list, ASN1_EXPLICIT_2).await.unwrap();
+        let v = OcspExtI::list_to_der(&list, ASN1_EXPLICIT_2).unwrap();
         let c = vec![
             0xa2, 0x23, 0x30, 0x21, 0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07,
             0x30, 0x01, 0x02, 0x04, 0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A,
@@ -227,8 +227,8 @@ mod test {
     }
 
     /// test nonce to ASN.1 DER
-    #[tokio::test]
-    async fn nonce_to_der() {
+    #[test]
+    fn nonce_to_der() {
         let nonce = OcspExt::Nonce {
             nonce: vec![
                 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46, 0x58,
@@ -236,7 +236,7 @@ mod test {
             ],
         };
 
-        let v = nonce.to_der().await.unwrap();
+        let v = nonce.to_der().unwrap();
         let c = vec![
             0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02, 0x04,
             0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46,

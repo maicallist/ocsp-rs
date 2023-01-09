@@ -26,12 +26,12 @@ pub struct OneReq {
 
 impl OneReq {
     /// get single request
-    pub async fn parse(onereq: &[u8]) -> Result<Self> {
+    pub fn parse(onereq: &[u8]) -> Result<Self> {
         trace!("OneReq: {}", hex::encode(onereq));
         let s = onereq.try_into()?;
 
         let cid = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        let cid = CertId::parse(cid.raw()).await?;
+        let cid = CertId::parse(cid.raw())?;
         trace!("OneReq cert sn {}", hex::encode(&cid.serial_num));
         trace!(
             "OneReq issuer key hash {}",
@@ -45,7 +45,7 @@ impl OneReq {
             }
             2 => {
                 let raw_ext = s.get(1).map_err(OcspError::Asn1DecodingError)?.raw();
-                ext = Some(OcspExtI::parse(raw_ext).await?);
+                ext = Some(OcspExtI::parse(raw_ext)?);
             }
             _ => {
                 error!(
@@ -64,15 +64,15 @@ impl OneReq {
     }
 
     /// encode to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Bytes> {
-        let mut cid = self.certid.to_der().await?;
+    pub fn to_der(&self) -> Result<Bytes> {
+        let mut cid = self.certid.to_der()?;
         match &self.one_req_ext {
             Some(r) => {
-                cid.extend(OcspExtI::list_to_der(r, ASN1_EXPLICIT_0).await?);
+                cid.extend(OcspExtI::list_to_der(r, ASN1_EXPLICIT_0)?);
             }
             None => {}
         }
-        let len = asn1_encode_length(cid.len()).await?;
+        let len = asn1_encode_length(cid.len())?;
         let mut r = vec![ASN1_SEQUENCE];
         r.extend(len);
         r.extend(cid);
@@ -82,17 +82,17 @@ impl OneReq {
     }
 
     /// encode a list of onereq
-    pub async fn list_to_der(onereq_list: &[OneReq]) -> Result<Bytes> {
+    pub fn list_to_der(onereq_list: &[OneReq]) -> Result<Bytes> {
         trace!("Encoding {} OneReq.", onereq_list.len());
 
         let mut r = Vec::new();
 
         for one in onereq_list {
-            r.extend(one.to_der().await?);
+            r.extend(one.to_der()?);
         }
 
         let mut v = vec![ASN1_SEQUENCE];
-        v.extend(asn1_encode_length(r.len()).await?);
+        v.extend(asn1_encode_length(r.len())?);
         v.extend(r);
 
         Ok(v)
@@ -118,7 +118,7 @@ pub struct TBSRequest {
 
 impl TBSRequest {
     /// parse a tbs request
-    pub async fn parse(tbs: &[u8]) -> Result<Self> {
+    pub fn parse(tbs: &[u8]) -> Result<Self> {
         trace!("Parsing tbsrequest {}", hex::encode(tbs));
         let mut name = None;
         let mut ext = None;
@@ -145,7 +145,7 @@ impl TBSRequest {
                 ASN1_EXPLICIT_2 => {
                     trace!("Found tbs extension");
                     let ext_list = tbs_item.value();
-                    let ext_list = OcspExtI::parse(ext_list).await?;
+                    let ext_list = OcspExtI::parse(ext_list)?;
                     ext = Some(ext_list);
                 }
                 ASN1_SEQUENCE => {
@@ -156,7 +156,7 @@ impl TBSRequest {
                         // onereq.raw() here always return the full sequence starting from first onereq
                         let mut current = onereq.header().to_vec();
                         current.extend(onereq.value());
-                        let onereq = OneReq::parse(&current).await?;
+                        let onereq = OneReq::parse(&current)?;
                         req.push(onereq);
                     }
                 }
@@ -196,7 +196,7 @@ pub struct Signature {
 
 impl Signature {
     /// parsing ocsp signature from raw bytes
-    pub async fn parse(sig: &[u8]) -> Result<Self> {
+    pub fn parse(sig: &[u8]) -> Result<Self> {
         trace!("Raw signature: {}", hex::encode(sig));
         let s = sig.try_into()?;
 
@@ -206,7 +206,7 @@ impl Signature {
         match s.len() {
             2 => {
                 let id = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-                oid = Oid::parse(id.raw()).await?;
+                oid = Oid::parse(id.raw())?;
 
                 let raw = s.get(1).map_err(OcspError::Asn1DecodingError)?;
                 if raw.tag() != ASN1_BIT_STRING {
@@ -242,7 +242,7 @@ pub struct OcspRequest {
 
 impl OcspRequest {
     /// parsing an ocsp request from raw bytes
-    pub async fn parse(ocsp_req: &[u8]) -> Result<Self> {
+    pub fn parse(ocsp_req: &[u8]) -> Result<Self> {
         debug!("Parsing ocsp request");
         trace!("Raw ocsp request: {}", hex::encode(ocsp_req));
         let s = ocsp_req.try_into()?;
@@ -259,7 +259,7 @@ impl OcspRequest {
                     ASN1_EXPLICIT_0 => {
                         let val = sig_v8.value();
                         let val = DerObject::decode(val).map_err(OcspError::Asn1DecodingError)?;
-                        sig = Some(Signature::parse(val.value()).await?);
+                        sig = Some(Signature::parse(val.value())?);
                     }
                     _ => return Err(OcspError::Asn1MismatchError("SIGNATURE EXP 0 tag")),
                 }
@@ -267,7 +267,7 @@ impl OcspRequest {
             _ => {}
         }
         let req_v8 = s.get(0).map_err(OcspError::Asn1DecodingError)?;
-        req = TBSRequest::parse(req_v8.raw()).await?;
+        req = TBSRequest::parse(req_v8.raw())?;
 
         debug!("Ocsp request successfully decoded");
         Ok(OcspRequest {
@@ -277,7 +277,7 @@ impl OcspRequest {
     }
 
     /// extract all cert serial numbers from request
-    pub async fn extract_cert_sn(&self) -> Vec<&Bytes> {
+    pub fn extract_cert_sn(&self) -> Vec<&Bytes> {
         let mut sn = vec![];
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| sn.push(&(r.certid.serial_num)));
@@ -285,7 +285,7 @@ impl OcspRequest {
     }
 
     /// extract extensions from request
-    pub async fn extract_ext(&self) -> Option<&Vec<OcspExtI>> {
+    pub fn extract_ext(&self) -> Option<&Vec<OcspExtI>> {
         match &self.tbs_request.request_ext {
             Some(v) => Some(v),
             None => None,
@@ -293,7 +293,7 @@ impl OcspRequest {
     }
 
     /// extract cid
-    pub async fn extract_certid(&self) -> Vec<&CertId> {
+    pub fn extract_certid(&self) -> Vec<&CertId> {
         let mut cid = vec![];
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
@@ -303,7 +303,7 @@ impl OcspRequest {
     }
 
     /// extract owned certid
-    pub async fn extract_certid_owned(self) -> Vec<CertId> {
+    pub fn extract_certid_owned(self) -> Vec<CertId> {
         let mut cid = vec![];
         let list = self.tbs_request.request_list;
         list.iter().for_each(|r| {
@@ -313,7 +313,7 @@ impl OcspRequest {
     }
 
     /// extract cid map sn to cid
-    pub async fn extract_certid_map(&self) -> HashMap<Bytes, CertId> {
+    pub fn extract_certid_map(&self) -> HashMap<Bytes, CertId> {
         let mut map = HashMap::new();
         let list = &self.tbs_request.request_list;
         list.iter().for_each(|r| {
@@ -346,22 +346,22 @@ mod test {
         tracing::subscriber::set_global_default(reg).unwrap();
     }
 
-    #[tokio::test]
-    async fn onereq_to_der() {
+    #[test]
+    fn onereq_to_der() {
         let onereq_hex = "30433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let onereq_v8 = hex::decode(onereq_hex).unwrap();
-        let onereq = OneReq::parse(&onereq_v8[..]).await.unwrap();
-        let v = onereq.to_der().await.unwrap();
+        let onereq = OneReq::parse(&onereq_v8[..]).unwrap();
+        let v = onereq.to_der().unwrap();
         assert_eq!(onereq_v8, v)
     }
 
     // extracting cert cids from request
-    #[tokio::test]
-    async fn extract_cert_certid_owned() {
+    #[test]
+    fn extract_cert_certid_owned() {
         let ocsp_req_hex = "3081B53081B230818A30433041300906\
     052B0E03021A05000414694D18A9BE42\
     F7802614D4844F23601478B788200414\
@@ -375,10 +375,10 @@ mod test {
     07300102041204105E7A74E51C861A3F\
     79454658BB090244";
         let req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let req = OcspRequest::parse(&req_v8[..]).await.unwrap();
-        let clist = req.extract_certid_owned().await;
+        let req = OcspRequest::parse(&req_v8[..]).unwrap();
+        let cid_list = req.extract_certid_owned();
         let mut v = vec![];
-        clist.iter().for_each(|c| v.push(c.serial_num.clone()));
+        cid_list.iter().for_each(|c| v.push(c.serial_num.clone()));
 
         let c1 = vec![0x41u8, 0x30, 0x09, 0x83, 0x33, 0x1F, 0x9D, 0x4F];
         let c2 = vec![0x63, 0x78, 0xE5, 0x1D, 0x44, 0x8F, 0xF4, 0x6D];
@@ -388,8 +388,8 @@ mod test {
     }
 
     // extracting cert serial numbers from request
-    #[tokio::test]
-    async fn extract_cert_sn() {
+    #[test]
+    fn extract_cert_sn() {
         let ocsp_req_hex = "3081B53081B230818A30433041300906\
     052B0E03021A05000414694D18A9BE42\
     F7802614D4844F23601478B788200414\
@@ -403,8 +403,8 @@ mod test {
     07300102041204105E7A74E51C861A3F\
     79454658BB090244";
         let req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let req = OcspRequest::parse(&req_v8[..]).await.unwrap();
-        let v = req.extract_cert_sn().await;
+        let req = OcspRequest::parse(&req_v8[..]).unwrap();
+        let v = req.extract_cert_sn();
 
         let c1 = vec![0x41u8, 0x30, 0x09, 0x83, 0x33, 0x1F, 0x9D, 0x4F];
         let c2 = vec![0x63, 0x78, 0xE5, 0x1D, 0x44, 0x8F, 0xF4, 0x6D];
@@ -414,8 +414,8 @@ mod test {
     }
 
     // parsing two certs in single request
-    #[tokio::test]
-    async fn ocsp_two_cert_req() {
+    #[test]
+    fn ocsp_two_cert_req() {
         let ocsp_req_hex = "3081B53081B230818A30433041300906\
     052B0E03021A05000414694D18A9BE42\
     F7802614D4844F23601478B788200414\
@@ -429,12 +429,12 @@ mod test {
     07300102041204105E7A74E51C861A3F\
     79454658BB090244";
         let req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let req = OcspRequest::parse(&req_v8[..]).await;
+        let req = OcspRequest::parse(&req_v8[..]);
         assert!(req.is_ok());
     }
 
-    #[tokio::test]
-    async fn ocsprequest_parse_from_v8() {
+    #[test]
+    fn ocsprequest_parse_from_v8() {
         let ocsp_req_hex = "306e306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -443,7 +443,7 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let ocsp_req_v8 = hex::decode(ocsp_req_hex).unwrap();
-        let ocsp_request = OcspRequest::parse(&ocsp_req_v8[..]).await;
+        let ocsp_request = OcspRequest::parse(&ocsp_req_v8[..]);
         assert!(ocsp_request.is_ok());
     }
 
@@ -465,16 +465,16 @@ mod test {
         let tbs = DerObject::decode(der.value()).unwrap();
         //println!("tag {:02X?}\nvalue {:02X?}", tbs.header(), tbs.value());
 
-        let _reqlist = DerObject::decode(tbs.value()).unwrap();
+        let _req_list = DerObject::decode(tbs.value()).unwrap();
         //println!(
         //    "tag {:02X?}\nvalue {:02X?}",
-        //    _reqlist.header(),
-        //    _reqlist.value()
+        //    _req_list.header(),
+        //    _req_list.value()
         //);
 
-        let ocspseq = Sequence::decode(der.value()).unwrap();
-        let t = ocspseq.get(1).unwrap().header();
-        let v = ocspseq.get(1).unwrap().value();
+        let ocsp_seq = Sequence::decode(der.value()).unwrap();
+        let t = ocsp_seq.get(1).unwrap().header();
+        let v = ocsp_seq.get(1).unwrap().value();
         let mut t = t.to_vec();
         t.extend(v);
         //println!("context specific exp tag 2{:02X?}", t);
@@ -482,8 +482,8 @@ mod test {
     }
 
     // get one tbs request with nonce ext
-    #[tokio::test]
-    async fn parse_tbs_nonce_ext() {
+    #[test]
+    fn parse_tbs_nonce_ext() {
         let tbs_hex = "306c304530433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
@@ -492,84 +492,81 @@ mod test {
     1f06092b060105050730010204120410\
     1cfc8fa3f5e15ed760707bc46670559b";
         let tbs_v8 = hex::decode(tbs_hex).unwrap();
-        let _ = TBSRequest::parse(&tbs_v8[..]).await.unwrap();
+        let _ = TBSRequest::parse(&tbs_v8[..]).unwrap();
     }
 
     // get one request with no extension on either request
-    #[tokio::test]
-    async fn parse_onereq_no_ext() {
+    #[test]
+    fn parse_onereq_no_ext() {
         let onereq_hex = "30433041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let onereq_v8 = hex::decode(onereq_hex).unwrap();
-        let _ = OneReq::parse(&onereq_v8[..]).await.unwrap();
+        let _ = OneReq::parse(&onereq_v8[..]).unwrap();
     }
 
     /// get certid from raw hex
-    #[tokio::test]
-    async fn parse_certid_v8() {
+    #[test]
+    fn parse_certid_v8() {
         let certid_hex = "3041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let certid_v8 = hex::decode(certid_hex).unwrap();
-        let _ = CertId::parse(&certid_v8[..]).await.unwrap();
+        let _ = CertId::parse(&certid_v8[..]).unwrap();
     }
 
     // this proves asn1_der drops data after null tag in a sequence
-    #[tokio::test]
-    async fn parse_oid_null_drops() {
+    #[test]
+    fn parse_oid_null_drops() {
         let oid_hex = "300906052b0e03021a0500040107";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).unwrap();
         //let s = oid_v8.try_into().unwrap();
         //let d = s.get(1).unwrap();
         //println!("{:?}", d.header());
     }
 
     // get oid Bytes from raw hex
-    #[tokio::test]
-    async fn parse_oid_v8() {
+    #[test]
+    fn parse_oid_v8() {
         let oid_hex = "300906052b0e03021a0500";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let oid = Oid::parse(&oid_v8).await.unwrap();
-        assert_eq!(
-            i2b_oid(&oid).await.unwrap(),
-            vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]
-        );
+        let oid = Oid::parse(&oid_v8).unwrap();
+        assert_eq!(i2b_oid(&oid).unwrap(), vec![0x2b, 0x0e, 0x03, 0x02, 0x1a]);
     }
 
     // display error with file & line info
-    #[tokio::test]
+    #[test]
     #[should_panic]
-    async fn parse_oid_sequence_into_err() {
+    fn parse_oid_sequence_into_err() {
         let oid_hex = "300906052b0e03021a";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).unwrap();
     }
 
     // incorrect sequence length
-    #[tokio::test]
+    #[test]
     #[should_panic]
-    async fn parse_oid_length_err() {
+    fn parse_oid_length_err() {
         let oid_hex = "3041300906052b0e\
     03021a05000414694d18a9be42f78026\
     14d4844f23601478b788200414397be0\
     02a2f571fd80dceb52a17a7f8b632be7\
     5502086378e51d448ff46d";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).unwrap();
     }
 
     // mismatch sequence
-    #[tokio::test]
+    #[test]
     #[should_panic]
-    async fn parse_oid_mismatch_err() {
+    fn parse_oid_mismatch_err() {
         let oid_hex = "300a06052b0e03021a0201ff";
         let oid_v8 = hex::decode(oid_hex).unwrap();
-        let _ = Oid::parse(&oid_v8[..]).await.unwrap();
+        let _ = Oid::parse(&oid_v8[..]).unwrap();
     }
 }

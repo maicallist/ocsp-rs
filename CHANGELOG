@@ -1,35 +1,29 @@
-ocsp (0.3.3) UNSTABLE; urgency=low
+# OCSP-RS Changelog
 
-  * add metadata for crate.io release
+## [0.4.0] - 2023.1.9
 
- -- Chen Gao <maicallist@gmail.com>  Fri, 27 Aug 2021 14:17:11 +0800
- 
-ocsp (0.3.2) UNRELEASED; urgency=low
+* [BREAKING CHANGE] remove unnecessary async keyword
 
-  * rework common module logging missed in last release
+## [0.3.3] - 2021.8.27
 
- -- Chen Gao <maicallist@gmail.com>  Thu, 17 Jun 2021 10:42:14 +0800
+* add metadata for crate.io release
 
-ocsp (0.3.1) UNRELEASED; urgency=low
+## [0.3.2] - 2021.6.17
 
-  * rework logging messages
+* rework common module logging missed in last release
 
- -- Chen Gao <maicallist@gmail.com>  Thu, 17 Jun 2021 10:42:14 +0800
+## [0.3.1] - 2021.6.17
 
-ocsp (0.3.0) UNRELEASED; urgency=low
+* rework logging messages
 
-  * allowing extracting owned cids from request
+## [0.3.0] - 2021.5.27
 
- -- Chen Gao <maicallist@gmail.com>  Wed, 27 May 2021 13:48:50 +0800
+* allowing extracting owned cids from request
 
-ocsp (0.2.0) UNRELEASED; urgency=low
+## [0.2.0] - 2021.5.27
 
-  * BREAKING CHANGE rename one_resp to cid to eliminate confusion
+* [BREAKING CHANGE] rename one_resp to cid to eliminate confusion
 
- -- Chen Gao <maicallist@gmail.com>  Wed, 27 May 2021 09:35:16 +0800
+## [0.1.1] - 2021.5.26
 
-ocsp (0.1.1) UNRELEASED; urgency=low
-
-  * allowing CertId to be HashMap key
-
- -- Chen Gao <maicallist@gmail.com>  Wed, 26 May 2021 16:55:27 +0800
+* allowing CertId to be HashMap key

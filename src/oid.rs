@@ -8,7 +8,7 @@ use crate::common::asn1::Bytes;
 use crate::{common::asn1::Oid, err::OcspError};
 
 /// oid bytes to internal id
-pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
+pub(crate) fn b2i_oid(oid: &[u8]) -> Option<usize> {
     debug!("Oid bytes {} to internal", hex::encode(oid));
     match OID_MAP.get(oid) {
         None => {
@@ -20,7 +20,7 @@ pub(crate) async fn b2i_oid(oid: &[u8]) -> Option<usize> {
 }
 
 /// oid dot notation to internal id
-pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
+pub(crate) fn d2i_oid(oid_dot: &str) -> Option<Oid> {
     debug!("Oid dot notation {} to internal", hex::encode(oid_dot));
     match OCSP_OID_DOT_LIST
         .iter()
@@ -36,7 +36,7 @@ pub(crate) async fn d2i_oid(oid_dot: &str) -> Option<Oid> {
 }
 
 /// oid internal to bytes
-pub async fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
+pub fn i2b_oid(oid: &Oid) -> Result<&'static [u8], OcspError> {
     debug!("Oid {:?} to bytes", oid);
     let id = oid.index;
     if id > OID_MAX_ID {
@@ -244,18 +244,18 @@ mod test {
     use super::*;
 
     // test dot notation to oid
-    #[tokio::test]
-    async fn test_dot2oid() {
+    #[test]
+    fn test_dot2oid() {
         let dot = OCSP_EXT_EXTENDED_REVOKE_DOT;
-        let oid = d2i_oid(dot).await.unwrap().index;
+        let oid = d2i_oid(dot).unwrap().index;
         assert_eq!(oid, OCSP_EXT_EXTENDED_REVOKE_ID);
     }
 
     // test dot to oid return None for unknown id
-    #[tokio::test]
-    async fn test_unknown_oid() {
+    #[test]
+    fn test_unknown_oid() {
         let dot = "this does not exists, obviously";
-        let oid = d2i_oid(dot).await;
+        let oid = d2i_oid(dot);
         assert!(oid.is_none());
     }
 }

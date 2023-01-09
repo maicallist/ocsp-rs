@@ -72,7 +72,7 @@ impl<'d> TryIntoSequence<'d> for &[u8] {
 
 /// Determining ASN.1 length  
 /// For details, check ASN.1 encoding rules at [here](https://docs.microsoft.com/en-us/windows/win32/seccertenroll/about-encoded-length-and-value-bytes)
-pub(crate) async fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
+pub(crate) fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
     match len {
         0..=127 => Ok(vec![len as u8]),
         _ => {
@@ -92,27 +92,27 @@ pub(crate) async fn asn1_encode_length(len: usize) -> Result<Bytes, OcspError> {
 }
 
 /// Packing octet into ASN.1 DER
-pub(crate) async fn asn1_encode_octet(data: &[u8]) -> Result<Bytes, OcspError> {
+pub(crate) fn asn1_encode_octet(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_OCTET];
-    let len = asn1_encode_length(data.len()).await?;
+    let len = asn1_encode_length(data.len())?;
     tlv.extend(len);
     tlv.extend(data);
     Ok(tlv)
 }
 
 /// Packing integer into ASN.1 DER
-pub(crate) async fn asn1_encode_integer(data: &[u8]) -> Result<Bytes, OcspError> {
+pub(crate) fn asn1_encode_integer(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_INTEGER];
-    let len = asn1_encode_length(data.len()).await?;
+    let len = asn1_encode_length(data.len())?;
     tlv.extend(len);
     tlv.extend(data);
     Ok(tlv)
 }
 
 /// Packing bit string into ASN.1 DER
-pub(crate) async fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspError> {
+pub(crate) fn asn1_encode_bit_string(data: &[u8]) -> Result<Bytes, OcspError> {
     let mut tlv = vec![ASN1_BIT_STRING];
-    let len = asn1_encode_length(data.len()).await?;
+    let len = asn1_encode_length(data.len())?;
     tlv.extend(len);
     tlv.extend(data);
     Ok(tlv)
@@ -133,7 +133,7 @@ pub struct GeneralizedTime {
 
 impl GeneralizedTime {
     /// Create a generalized time at specified time
-    pub async fn new(
+    pub fn new(
         year: i32,
         month: u32,
         day: u32,
@@ -160,7 +160,7 @@ impl GeneralizedTime {
     }
 
     /// Create a generalized time **now** in UTC
-    pub async fn now() -> Self {
+    pub fn now() -> Self {
         let now = chrono::offset::Utc::now();
 
         GeneralizedTime {
@@ -176,14 +176,14 @@ impl GeneralizedTime {
 
     /// Serialize to DER encoding  
     /// see [html](https://www.obj-sys.com/asn1tutorial/node14.html)
-    pub async fn to_der_utc(&self) -> Result<Bytes, OcspError> {
+    pub fn to_der_utc(&self) -> Result<Bytes, OcspError> {
         let v = format!(
             "{}{:02}{:02}{:02}{:02}{:02}Z",
             self.year, self.month, self.day, self.hour, self.min, self.sec
         )
         .as_bytes()
         .to_vec();
-        let l = asn1_encode_length(v.len()).await?;
+        let l = asn1_encode_length(v.len())?;
         let mut t = vec![ASN1_GENERALIZED_TIME];
         t.extend(l);
         t.extend(v);
@@ -201,7 +201,7 @@ pub struct Oid {
 
 impl Oid {
     /// get oid from raw bytes
-    pub async fn parse(oid: &[u8]) -> Result<Self, OcspError> {
+    pub fn parse(oid: &[u8]) -> Result<Self, OcspError> {
         let oid_hex = hex::encode(oid);
         trace!("Parsing oid {}", oid_hex);
         let s = oid.try_into()?;
@@ -225,7 +225,7 @@ impl Oid {
             return Err(OcspError::Asn1MismatchError("OID"));
         }
 
-        let u = match b2i_oid(id.value()).await {
+        let u = match b2i_oid(id.value()) {
             None => return Err(OcspError::Asn1OidUnknown),
             Some(u) => u,
         };
@@ -235,23 +235,21 @@ impl Oid {
     }
 
     /// return new oid from dot notation
-    pub async fn new_from_dot(name_dot_notation: &str) -> Result<Self, OcspError> {
+    pub fn new_from_dot(name_dot_notation: &str) -> Result<Self, OcspError> {
         // ignoring logging here, trace if logged in d2i_oid
-        d2i_oid(name_dot_notation)
-            .await
-            .ok_or(OcspError::Asn1OidUnknown)
+        d2i_oid(name_dot_notation).ok_or(OcspError::Asn1OidUnknown)
     }
 
     /// encode to ASN.1 DER with tailing NULL
-    pub async fn to_der_with_null(&self) -> Result<Bytes, OcspError> {
+    pub fn to_der_with_null(&self) -> Result<Bytes, OcspError> {
         trace!("Encoding oid index {}", self.index);
-        let val_oid = i2b_oid(self).await?;
-        let len_oid = asn1_encode_length(val_oid.len()).await?;
+        let val_oid = i2b_oid(self)?;
+        let len_oid = asn1_encode_length(val_oid.len())?;
         let mut tlv_oid = vec![ASN1_OID];
         tlv_oid.extend(len_oid);
         tlv_oid.extend(val_oid);
         tlv_oid.extend(&ASN1_OID_PADDING);
-        let len_seq = asn1_encode_length(tlv_oid.len()).await?;
+        let len_seq = asn1_encode_length(tlv_oid.len())?;
         let mut tlv_seq_oid = vec![ASN1_SEQUENCE];
         tlv_seq_oid.extend(len_seq);
         tlv_seq_oid.extend(tlv_oid);
@@ -263,10 +261,10 @@ impl Oid {
     /// encode to ASN.1 DER
     /// - without sequence header
     /// - without tailing NULL
-    pub async fn to_der_raw(&self) -> Result<Bytes, OcspError> {
+    pub fn to_der_raw(&self) -> Result<Bytes, OcspError> {
         trace!("Encoding oid without sequence index {}", self.index);
-        let val_oid = i2b_oid(self).await?;
-        let len_oid = asn1_encode_length(val_oid.len()).await?;
+        let val_oid = i2b_oid(self)?;
+        let len_oid = asn1_encode_length(val_oid.len())?;
         let mut tlv_oid = vec![ASN1_OID];
         tlv_oid.extend(len_oid);
         tlv_oid.extend(val_oid);
@@ -294,7 +292,7 @@ pub struct CertId {
 
 impl CertId {
     /// get cid from raw bytes
-    pub async fn parse(cid: &[u8]) -> Result<Self, OcspError> {
+    pub fn parse(cid: &[u8]) -> Result<Self, OcspError> {
         let cid_hex = hex::encode(cid);
         trace!("Parsing cid {}", cid_hex);
         let s = cid.try_into()?;
@@ -327,7 +325,7 @@ impl CertId {
             return Err(OcspError::Asn1MismatchError("CID"));
         }
 
-        let oid = Oid::parse(oid.raw()).await?;
+        let oid = Oid::parse(oid.raw())?;
         let name_hash = name_hash.value().to_vec();
         let key_hash = key_hash.value().to_vec();
         let sn = sn.value().to_vec();
@@ -342,7 +340,7 @@ impl CertId {
     }
 
     /// create new cid
-    pub async fn new(oid: Oid, name_hash: &[u8], key_hash: &[u8], sn: &[u8]) -> Self {
+    pub fn new(oid: Oid, name_hash: &[u8], key_hash: &[u8], sn: &[u8]) -> Self {
         CertId {
             hash_algo: oid,
             issuer_name_hash: name_hash.to_vec(),
@@ -352,17 +350,17 @@ impl CertId {
     }
 
     /// encode cid to ASN.1 DER
-    pub async fn to_der(&self) -> Result<Bytes, OcspError> {
+    pub fn to_der(&self) -> Result<Bytes, OcspError> {
         trace!("Encoding cid with sn {}", hex::encode(&self.serial_num));
 
-        let mut oid = self.hash_algo.to_der_with_null().await?;
-        let name = asn1_encode_octet(&self.issuer_name_hash).await?;
-        let key = asn1_encode_octet(&self.issuer_key_hash).await?;
-        let sn = asn1_encode_integer(&self.serial_num).await?;
+        let mut oid = self.hash_algo.to_der_with_null()?;
+        let name = asn1_encode_octet(&self.issuer_name_hash)?;
+        let key = asn1_encode_octet(&self.issuer_key_hash)?;
+        let sn = asn1_encode_integer(&self.serial_num)?;
         oid.extend(name);
         oid.extend(key);
         oid.extend(sn);
-        let len = asn1_encode_length(oid.len()).await?;
+        let len = asn1_encode_length(oid.len())?;
         let mut tlv = vec![ASN1_SEQUENCE];
         tlv.extend(len);
         tlv.extend(oid);
@@ -380,32 +378,32 @@ mod test {
     use super::*;
 
     // test encoding length
-    #[tokio::test]
-    async fn encoding_length_over128() {
-        let v = asn1_encode_length(4934).await.unwrap();
+    #[test]
+    fn encoding_length_over128() {
+        let v = asn1_encode_length(4934).unwrap();
         let c = vec![0x82, 0x13, 0x46u8];
         assert_eq!(c, v);
 
-        let v = asn1_encode_length(256).await.unwrap();
+        let v = asn1_encode_length(256).unwrap();
         let c = vec![0x82, 0x01, 0x00u8];
         assert_eq!(c, v);
     }
 
     // test encoding length
-    #[tokio::test]
-    async fn encoding_length_under128() {
-        let v = asn1_encode_length(52).await.unwrap();
+    #[test]
+    fn encoding_length_under128() {
+        let v = asn1_encode_length(52).unwrap();
         let c = vec![0x34u8];
         assert_eq!(c, v);
 
-        let v = asn1_encode_length(127).await.unwrap();
+        let v = asn1_encode_length(127).unwrap();
         let c = vec![0x7fu8];
         assert_eq!(c, v);
     }
 
     // test encoding signature
-    #[tokio::test]
-    async fn encode_bit_string() {
+    #[test]
+    fn encode_bit_string() {
         let sign = vec![
             0x6du8, 0xdb, 0x51, 0x4f, 0x2c, 0x6a, 0x35, 0x49, 0x80, 0x1e, 0x40, 0x1e, 0x31, 0x45,
             0xdd, 0x88, 0x4a, 0x6a, 0x47, 0x2c, 0x8a, 0x09, 0xa6, 0xf9, 0xa3, 0x18, 0x79, 0x85,
@@ -428,7 +426,7 @@ mod test {
             0x57, 0x40, 0x69, 0xb4,
         ];
 
-        let bit = asn1_encode_bit_string(&sign).await.unwrap();
+        let bit = asn1_encode_bit_string(&sign).unwrap();
         let c = vec![
             0x03, 0x82, 0x01, 0x00, 0x6d, 0xdb, 0x51, 0x4f, 0x2c, 0x6a, 0x35, 0x49, 0x80, 0x1e,
             0x40, 0x1e, 0x31, 0x45, 0xdd, 0x88, 0x4a, 0x6a, 0x47, 0x2c, 0x8a, 0x09, 0xa6, 0xf9,
@@ -455,9 +453,9 @@ mod test {
     }
 
     /// test certid to ASN.1 DER
-    #[tokio::test]
-    async fn certid_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
+    #[test]
+    fn certid_to_der() {
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).unwrap();
         let name = vec![
             0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f, 0x23,
             0x60, 0x14, 0x78, 0xb7, 0x88, 0x20,
@@ -467,8 +465,8 @@ mod test {
             0x7f, 0x8b, 0x63, 0x2b, 0xe7, 0x55,
         ];
         let sn = vec![0x41, 0x30, 0x09, 0x83, 0x33, 0x1f, 0x9d, 0x4f];
-        let certid = CertId::new(oid, &name, &key, &sn).await;
-        let v = certid.to_der().await.unwrap();
+        let certid = CertId::new(oid, &name, &key, &sn);
+        let v = certid.to_der().unwrap();
         let c = vec![
             0x30, 0x41, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00, 0x04,
             0x14, 0x69, 0x4d, 0x18, 0xa9, 0xbe, 0x42, 0xf7, 0x80, 0x26, 0x14, 0xd4, 0x84, 0x4f,
@@ -481,10 +479,10 @@ mod test {
     }
 
     /// test oid to ASN.1 DER
-    #[tokio::test]
-    async fn oid_to_der() {
-        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).await.unwrap();
-        let v = oid.to_der_with_null().await.unwrap();
+    #[test]
+    fn oid_to_der() {
+        let oid = Oid::new_from_dot(ALGO_SHA1_DOT).unwrap();
+        let v = oid.to_der_with_null().unwrap();
         assert_eq!(
             vec![0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05, 0x00],
             v
@@ -492,16 +490,16 @@ mod test {
     }
 
     /// test oid dot notation to internal
-    #[tokio::test]
-    async fn oid_dot_new() {
+    #[test]
+    fn oid_dot_new() {
         let dot = OCSP_EXT_CRL_REASON_DOT;
-        let d = Oid::new_from_dot(dot).await.unwrap().index;
+        let d = Oid::new_from_dot(dot).unwrap().index;
         assert_eq!(d, OCSP_EXT_CRL_REASON_ID);
     }
 
     /// test generalized time to der
-    #[tokio::test]
-    async fn generalized_time_to_der_utc() {
+    #[test]
+    fn generalized_time_to_der_utc() {
         let gt = GeneralizedTime {
             year: 2021,
             month: 1,
@@ -511,7 +509,7 @@ mod test {
             sec: 25,
         };
 
-        let der = gt.to_der_utc().await.unwrap();
+        let der = gt.to_der_utc().unwrap();
         assert_eq!(
             vec![
                 0x18, 0x0f, 0x32, 0x30, 0x32, 0x31, 0x30, 0x31, 0x31, 0x33, 0x30, 0x33, 0x30, 0x39,
@@ -522,22 +520,22 @@ mod test {
     }
 
     /// test asn1 encoding with length requires more than one byte
-    #[tokio::test]
-    async fn asn1_length_4934() {
-        let v = asn1_encode_length(4934).await.unwrap();
+    #[test]
+    fn asn1_length_4934() {
+        let v = asn1_encode_length(4934).unwrap();
         assert_eq!(vec![0x82, 0x13, 0x46], v);
     }
 
     /// test asn1 encoding with one byte length
-    #[tokio::test]
-    async fn asn1_length_127() {
-        let v = asn1_encode_length(52).await.unwrap();
+    #[test]
+    fn asn1_length_127() {
+        let v = asn1_encode_length(52).unwrap();
         assert_eq!(vec![0x34], v)
     }
 
     /// generalized time conversion
-    #[tokio::test]
-    async fn num2hex() {
+    #[test]
+    fn num2hex() {
         let num: u32 = 2021;
         let hex = num.to_string();
         let hex = hex.as_bytes();
@@ -545,8 +543,8 @@ mod test {
     }
 
     // generalized time conversion
-    #[tokio::test]
-    async fn hex2time() {
+    #[test]
+    fn hex2time() {
         let hex = "32303231303131333033303932355a";
         let hex = Vec::from_hex(hex).unwrap();
         let time = std::str::from_utf8(&hex).unwrap();
