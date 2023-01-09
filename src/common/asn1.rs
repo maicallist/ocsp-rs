@@ -11,7 +11,7 @@ use tracing::{error, trace};
 use crate::err::OcspError;
 use crate::oid::{b2i_oid, d2i_oid, i2b_oid};
 
-/// Aliasing Vec<u8> with Bytes
+/// Aliasing `Vec<u8>` with Bytes
 pub type Bytes = Vec<u8>;
 
 /// ASN.1 explicit tag 0
