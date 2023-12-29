@@ -8,10 +8,8 @@
 
 ## Features
 
-- request encoding [WIP]
 - request decoding
 - response encoding
-- response decoding [WIP]
 
 ## Usage
 
@@ -20,7 +18,7 @@
 ocsp = "0.4"
 ```
 
-### Server side
+### Responder Side
 
 #### 1. Parsing OCSP request
 
@@ -110,4 +108,9 @@ let resp_binary = ocsp.to_der().unwrap();
 
 ---
 
-### Client side [WIP]
+### Requestor Side
+
+> This is the your application making ocsp requests and validating responses.
+
+The are too good crates like OpenSSL already provide requestor side functions.
+I may implement functions on requestor side but not interested at the moment.
