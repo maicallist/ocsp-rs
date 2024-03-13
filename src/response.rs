@@ -380,9 +380,14 @@ impl BasicResponse {
         let mut pad = vec![0x00u8];
         pad.extend(&self.signature);
         v.extend(asn1_encode_bit_string(&pad)?);
-        // FIXME:
-        if let Some(_c) = &self.certs {
-            unimplemented!()
+        if let Some(c) = &self.certs {
+            let d =
+                yasna::construct_der_seq(|w| w.next().write_sequence_of(|w| w.next().write_der(c)));
+            let tag = yasna::Tag::context(0);
+            let pc = yasna::PCBit::Constructed;
+            let tv = yasna::models::TaggedDerValue::from_tag_pc_and_bytes(tag, pc, d);
+            let der = yasna::construct_der(|w| w.write_tagged_der(&tv));
+            v.extend(der);
         }
 
         let len = asn1_encode_length(v.len())?;
