@@ -355,17 +355,17 @@ pub struct BasicResponse {
     /// the certs field of BasicOCSPResponse that help the OCSP client verify  
     /// the responder's signature.  
     /// If no certificates are included, then certs SHOULD be absent
-    pub certs: Option<Bytes>,
+    pub certs: Option<Vec<Bytes>>,
 }
 
 impl BasicResponse {
     /// return new response data
-    pub fn new(data: ResponseData, algo: Oid, sign: Bytes, cert: Option<Bytes>) -> Self {
+    pub fn new(data: ResponseData, algo: Oid, sign: Bytes, certs: Option<Vec<Bytes>>) -> Self {
         BasicResponse {
             tbs_resp_data: data,
             signature_algo: algo,
             signature: sign,
-            certs: cert,
+            certs,
         }
     }
 
@@ -380,9 +380,19 @@ impl BasicResponse {
         let mut pad = vec![0x00u8];
         pad.extend(&self.signature);
         v.extend(asn1_encode_bit_string(&pad)?);
-        // FIXME:
-        if let Some(_c) = &self.certs {
-            unimplemented!()
+        if let Some(certs) = &self.certs {
+            let d =
+                yasna::construct_der_seq(|w| {
+                    w.next().write_sequence_of(|w| 
+                        for c in certs {
+                            w.next().write_der(c)
+                        })
+                    });
+            let tag = yasna::Tag::context(0);
+            let pc = yasna::PCBit::Constructed;
+            let tv = yasna::models::TaggedDerValue::from_tag_pc_and_bytes(tag, pc, d);
+            let der = yasna::construct_der(|w| w.write_tagged_der(&tv));
+            v.extend(der);
         }
 
         let len = asn1_encode_length(v.len())?;
