@@ -91,6 +91,9 @@ pub enum OcspExt {
         /// EXPLICIT 2 GeneralizedTime OPTIONAL
         time: Option<Bytes>,
     },
+    /// 4.4.8
+    // SHALL be NULL per RFC 6960
+    ExtRevocation,
 }
 
 impl OcspExt {
@@ -154,13 +157,15 @@ impl OcspExt {
 
                 OcspExt::CrlRef { url, num, time }
             }
+            OCSP_EXT_EXTENDED_REVOKE_ID => {
+                todo!()
+            }
             OCSP_EXT_RESP_TYPE_ID
             | OCSP_EXT_ARCHIVE_CUTOFF_ID
             | OCSP_EXT_CRL_REASON_ID
             | OCSP_EXT_INVALID_DATE_ID
             | OCSP_EXT_SERVICE_LOCATOR_ID
-            | OCSP_EXT_PREF_SIG_ALGS_ID
-            | OCSP_EXT_EXTENDED_REVOKE_ID => {
+            | OCSP_EXT_PREF_SIG_ALGS_ID => {
                 unimplemented!()
             }
             _ => return Err(OcspError::OcspExtUnknown),
@@ -184,6 +189,19 @@ impl OcspExt {
                 let nc = asn1_encode_octet(nonce)?;
                 id.extend(nc);
                 let len = asn1_encode_length(id.len())?;
+                v.extend(len);
+                v.extend(id);
+            }
+            OcspExt::ExtRevocation => {
+                trace!("Encoding extended revocation");
+                let asn1_null = [0x05u8, 0x00];
+
+                let mut id = vec![
+                    0x06, 0x09, 0x2b, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x09,
+                ];
+                id.extend(asn1_null);
+                let len = asn1_encode_length(id.len())?;
+                println!("{:?}", len);
                 v.extend(len);
                 v.extend(id);
             }
@@ -241,6 +259,18 @@ mod test {
             0x30, 0x1f, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x02, 0x04,
             0x12, 0x04, 0x10, 0x5E, 0x7A, 0x74, 0xE5, 0x1C, 0x86, 0x1A, 0x3F, 0x79, 0x45, 0x46,
             0x58, 0xBB, 0x09, 0x02, 0x44,
+        ];
+
+        assert_eq!(c, v);
+    }
+
+    #[test]
+    fn ext_revocation_to_der() {
+        let ext_rev = OcspExt::ExtRevocation;
+        let v = ext_rev.to_der().unwrap();
+        let c = vec![
+            0x30, 0x0D, 0x06, 0x09, 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x30, 0x01, 0x09, 0x05,
+            0x00,
         ];
 
         assert_eq!(c, v);
