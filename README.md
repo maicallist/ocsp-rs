@@ -110,7 +110,7 @@ let resp_binary = ocsp.to_der().unwrap();
 
 ### Requestor Side
 
-> This is the your application making ocsp requests and validating responses.
+> This is the side that your application making ocsp requests and validating responses.
 
-The are too good crates like OpenSSL already provide requestor side functions.
+There are too good crates like OpenSSL already provide requestor side functions.
 I may implement functions on requestor side but not interested at the moment.
